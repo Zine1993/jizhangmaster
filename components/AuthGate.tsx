@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -6,7 +6,7 @@ import { LogIn, UserPlus, KeyRound, ArrowLeft } from 'lucide-react-native';
 
 type Mode = 'login' | 'register' | 'reset';
 
-export default function AuthGate() {
+export default function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, skipped, signInWithPassword, signUpWithPassword, resetPassword, skipLogin } = useAuth();
   const { colors } = useTheme();
 
@@ -72,7 +72,7 @@ export default function AuthGate() {
   }
 
   if (user || skipped) {
-    return null;
+    return <>{children}</>;
   }
 
   return (
@@ -86,7 +86,7 @@ export default function AuthGate() {
 
       <TextInput
         placeholder="邮箱"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colors.textTertiary}
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
@@ -97,7 +97,7 @@ export default function AuthGate() {
         <>
           <TextInput
             placeholder="密码（至少6位）"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.textTertiary}
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -106,7 +106,7 @@ export default function AuthGate() {
           {mode === 'register' && (
             <TextInput
               placeholder="确认密码"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colors.textTertiary}
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -121,18 +121,18 @@ export default function AuthGate() {
         onPress={handleSubmit}
         style={[
           styles.primaryBtn,
-          { backgroundColor: canSubmit ? colors.primary : colors.disabled },
+          { backgroundColor: canSubmit ? colors.primary : colors.border },
         ]}
       >
-        <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
+        <Text style={[styles.primaryBtnText, { color: '#fff' }]}>
           {mode === 'login' ? '登录' : mode === 'register' ? '注册' : '发送重置邮件'}
         </Text>
         {mode === 'login' ? (
-          <LogIn size={20} color={colors.onPrimary} />
+          <LogIn size={20} color={'#fff'} />
         ) : mode === 'register' ? (
-          <UserPlus size={20} color={colors.onPrimary} />
+          <UserPlus size={20} color={'#fff'} />
         ) : (
-          <KeyRound size={20} color={colors.onPrimary} />
+          <KeyRound size={20} color={'#fff'} />
         )}
       </TouchableOpacity>
 
@@ -155,8 +155,8 @@ export default function AuthGate() {
       </View>
 
       <TouchableOpacity style={styles.skip} onPress={skipLogin}>
-        <ArrowLeft size={18} color={colors.muted} />
-        <Text style={[styles.skipText, { color: colors.muted }]}> 先跳过</Text>
+        <ArrowLeft size={18} color={colors.textSecondary} />
+        <Text style={[styles.skipText, { color: colors.textSecondary }]}> 先跳过</Text>
       </TouchableOpacity>
     </View>
   );

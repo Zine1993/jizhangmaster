@@ -23,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.jizhangmaster.app",
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "bundler": "metro",
