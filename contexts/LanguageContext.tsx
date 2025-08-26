@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Localization from 'expo-localization';
 
 type Language = 'en' | 'zh' | 'es' | 'fr' | 'de' | 'ja' | 'ko';
 
@@ -76,6 +78,11 @@ const translations = {
     
     // Currency
     currency: 'Currency',
+    
+    // App Info
+    appName: 'Finance Assistant',
+    appVersion: 'v1.0.0',
+    appDescription: 'Simple and easy-to-use personal finance tool',
   },
   zh: {
     // Tabs
@@ -142,6 +149,11 @@ const translations = {
     
     // Currency
     currency: '货币',
+    
+    // App Info
+    appName: '记账助手',
+    appVersion: 'v1.0.0',
+    appDescription: '简单易用的个人财务管理工具',
   },
   es: {
     // Tabs
@@ -208,6 +220,11 @@ const translations = {
     
     // Currency
     currency: 'Moneda',
+    
+    // App Info
+    appName: 'Asistente Financiero',
+    appVersion: 'v1.0.0',
+    appDescription: 'Herramienta de finanzas personales simple y fácil de usar',
   },
   fr: {
     // Tabs
@@ -274,6 +291,11 @@ const translations = {
     
     // Currency
     currency: 'Devise',
+    
+    // App Info
+    appName: 'Assistant Financier',
+    appVersion: 'v1.0.0',
+    appDescription: 'Outil de finances personnelles simple et facile à utiliser',
   },
   de: {
     // Tabs
@@ -340,6 +362,11 @@ const translations = {
     
     // Currency
     currency: 'Währung',
+    
+    // App Info
+    appName: 'Finanzassistent',
+    appVersion: 'v1.0.0',
+    appDescription: 'Einfaches und benutzerfreundliches Tool für persönliche Finanzen',
   },
   ja: {
     // Tabs
@@ -406,6 +433,11 @@ const translations = {
     
     // Currency
     currency: '通貨',
+    
+    // App Info
+    appName: '家計簿アシスタント',
+    appVersion: 'v1.0.0',
+    appDescription: 'シンプルで使いやすい個人財務管理ツール',
   },
   ko: {
     // Tabs
@@ -472,6 +504,11 @@ const translations = {
     
     // Currency
     currency: '통화',
+    
+    // App Info
+    appName: '가계부 도우미',
+    appVersion: 'v1.0.0',
+    appDescription: '간단하고 사용하기 쉬운 개인 재무 관리 도구',
   },
 };
 
@@ -480,10 +517,56 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [language, setLanguage] = useState<Language>('zh');
+  const detectDeviceLang = (): Language => {
+    try {
+      const locales = (Localization as any)?.getLocales?.() ?? [];
+      const tag = locales[0]?.languageCode ?? locales[0]?.languageTag ?? '';
+      const lc = String(tag || '').toLowerCase();
+      if (lc.startsWith('zh')) return 'zh';
+      if (lc.startsWith('en')) return 'en';
+      if (lc.startsWith('es')) return 'es';
+      if (lc.startsWith('fr')) return 'fr';
+      if (lc.startsWith('de')) return 'de';
+      if (lc.startsWith('ja')) return 'ja';
+      if (lc.startsWith('ko')) return 'ko';
+    } catch {}
+    return 'en';
+  };
+  const [language, setLanguage] = useState<Language>(detectDeviceLang());
+
+  // 从 AsyncStorage 加载语言设置
+  useEffect(() => {
+    loadLanguage();
+  }, []);
+
+  // 保存语言设置到 AsyncStorage
+  useEffect(() => {
+    saveLanguage();
+  }, [language]);
+
+  const loadLanguage = async () => {
+    try {
+      const storedLanguage = await AsyncStorage.getItem('@expense_tracker_language');
+      if (storedLanguage && ['en', 'zh', 'es', 'fr', 'de', 'ja', 'ko'].includes(storedLanguage)) {
+        setLanguage(storedLanguage as Language);
+      }
+    } catch (error) {
+      console.error('Failed to load language:', error);
+    }
+  };
+
+  const saveLanguage = async () => {
+    try {
+      await AsyncStorage.setItem('@expense_tracker_language', language);
+    } catch (error) {
+      console.error('Failed to save language:', error);
+    }
+  };
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations[Language]] || key;
+    const dict = (translations as Record<Language, Record<string, string>>)[language];
+    const fallback = (translations as Record<Language, Record<string, string>>)['en'];
+    return dict[key] ?? fallback[key] ?? key;
   };
 
   return (

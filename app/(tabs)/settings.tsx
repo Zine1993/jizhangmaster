@@ -6,12 +6,16 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  TextInput,
+  Share,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Languages, Sun, Moon, Smartphone, DollarSign, ChevronDown, Check, X } from 'lucide-react-native';
+import { Languages, Sun, Moon, Smartphone, DollarSign, ChevronDown, Check, X, LogIn, LogOut, Upload, Download } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTransactions, Currency } from '@/contexts/TransactionContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Language = 'en' | 'zh' | 'es' | 'fr' | 'de' | 'ja' | 'ko';
 
@@ -74,11 +78,14 @@ const currencies: CurrencyInfo[] = [
 export default function SettingsScreen() {
   const { t, language, setLanguage } = useLanguage();
   const { colors, themeMode, setThemeMode } = useTheme();
-  const { currency, setCurrency } = useTransactions();
+  const { currency, setCurrency, exportData, importData } = useTransactions();
+  const { user, signOut, requireLogin } = useAuth();
   
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
 
   const themes: ThemeInfo[] = [
     { mode: 'light', name: t('lightTheme'), icon: <Sun size={20} color={colors.primary} /> },
@@ -119,6 +126,31 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
+  const ActionItem = ({
+    icon,
+    title,
+    danger,
+    onPress,
+  }: {
+    icon: React.ReactNode;
+    title: string;
+    danger?: boolean;
+    onPress: () => void;
+  }) => (
+    <TouchableOpacity
+      style={[styles.actionItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.settingLeft}>
+        <View style={[styles.settingIcon, { backgroundColor: (danger ? '#ff3b3015' : colors.primary + '15') }]}>
+          {icon}
+        </View>
+        <Text style={[styles.settingTitle, { color: danger ? '#ff3b30' : colors.text }]}>{title}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
@@ -126,6 +158,39 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* 账户（移动到最上方） */}
+        <View style={styles.section}>
+          {user ? (
+            <>
+              <View style={[styles.accountRow, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                <Text style={[styles.accountText, { color: colors.textSecondary }]}>已登录账号</Text>
+                <Text style={[styles.accountEmail, { color: colors.text }]} numberOfLines={1}>{user.email}</Text>
+              </View>
+              <ActionItem
+                icon={<LogOut size={20} color={'#ff3b30'} />}
+                title={'退出登录'}
+                danger
+                onPress={async () => {
+                  const res = await signOut();
+                  if (!res?.ok) {
+                    Alert.alert('退出失败', res?.error || '请重试');
+                  }
+                }}
+              />
+            </>
+          ) : (
+            <ActionItem
+              icon={<LogIn size={20} color={colors.primary} />}
+              title={'登录 / 注册'}
+              onPress={() => {
+                // 触发登录页（AuthGate 会在根布局拦截）
+                requireLogin().catch(() => {});
+              }}
+            />
+          )}
+        </View>
+
+        {/* 外观与偏好 */}
         <View style={styles.section}>
           <SettingItem
             icon={<Sun size={20} color={colors.primary} />}
@@ -147,9 +212,30 @@ export default function SettingsScreen() {
           />
         </View>
 
+        {/* 数据 */}
+        <View style={styles.section}>
+          <ActionItem
+            icon={<Upload size={20} color={colors.primary} />}
+            title={'导出数据（JSON）'}
+            onPress={async () => {
+              try {
+                const payload = exportData();
+                await Share.share({ message: payload });
+              } catch (e) {
+                Alert.alert('导出失败', '请重试');
+              }
+            }}
+          />
+          <ActionItem
+            icon={<Download size={20} color={colors.primary} />}
+            title={'导入数据（粘贴 JSON）'}
+            onPress={() => setShowImportModal(true)}
+          />
+        </View>
+
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>记账助手 v1.0.0</Text>
-          <Text style={[styles.footerSubText, { color: colors.textTertiary }]}>简单易用的个人财务管理工具</Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('appName')} {t('appVersion')}</Text>
+          <Text style={[styles.footerSubText, { color: colors.textTertiary }]}>{t('appDescription')}</Text>
         </View>
       </ScrollView>
 
@@ -168,14 +254,14 @@ export default function SettingsScreen() {
                 <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <View style={styles.modalContent}>
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
               {themes.map((theme) => (
                 <TouchableOpacity
                   key={theme.mode}
                   style={[
                     styles.modalOption,
                     { borderBottomColor: colors.border },
-                    themeMode === theme.mode && { backgroundColor: colors.primary + '15' }
+                    (themeMode === theme.mode) && { backgroundColor: colors.primary + '15' }
                   ]}
                   onPress={() => {
                     setThemeMode(theme.mode);
@@ -188,12 +274,12 @@ export default function SettingsScreen() {
                       <Text style={[styles.modalOptionText, { color: colors.text }]}>{theme.name}</Text>
                     </View>
                   </View>
-                  {themeMode === theme.mode && (
+                  {(themeMode === theme.mode) && (
                     <Check size={20} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -213,14 +299,14 @@ export default function SettingsScreen() {
                 <X size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
-            <View style={styles.modalContent}>
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
               {languages.map((lang) => (
                 <TouchableOpacity
                   key={lang.code}
                   style={[
                     styles.modalOption,
                     { borderBottomColor: colors.border },
-                    language === lang.code && { backgroundColor: colors.primary + '15' }
+                    (language === lang.code) && { backgroundColor: colors.primary + '15' }
                   ]}
                   onPress={() => {
                     setLanguage(lang.code);
@@ -233,12 +319,12 @@ export default function SettingsScreen() {
                       <Text style={[styles.modalOptionSubText, { color: colors.textSecondary }]}>{lang.name}</Text>
                     </View>
                   </View>
-                  {language === lang.code && (
+                  {(language === lang.code) && (
                     <Check size={20} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -265,10 +351,18 @@ export default function SettingsScreen() {
                   style={[
                     styles.modalOption,
                     { borderBottomColor: colors.border },
-                    currency === curr.code && { backgroundColor: colors.primary + '15' }
+                    (currency === curr.code) && { backgroundColor: colors.primary + '15' }
                   ]}
                   onPress={() => {
                     setCurrency(curr.code);
+                    // 明确一对一联动语言（避免误覆盖）
+                    if (curr.code === 'CNY' || curr.code === 'HKD' || curr.code === 'TWD') {
+                      setLanguage('zh');
+                    } else if (curr.code === 'JPY') {
+                      setLanguage('ja');
+                    } else if (curr.code === 'KRW') {
+                      setLanguage('ko');
+                    }
                     setShowCurrencyModal(false);
                   }}
                 >
@@ -281,12 +375,57 @@ export default function SettingsScreen() {
                       </View>
                     </View>
                   </View>
-                  {currency === curr.code && (
+                  {(currency === curr.code) && (
                     <Check size={20} color={colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Import Modal */}
+      <Modal
+        visible={showImportModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowImportModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>导入数据</Text>
+              <TouchableOpacity onPress={() => setShowImportModal(false)}>
+                <X size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
+              <Text style={[{ marginBottom: 8, color: colors.textSecondary }]}>将导出的 JSON 内容粘贴到下方：</Text>
+              <TextInput
+                style={[styles.importInput, { borderColor: colors.border, color: colors.text }]}
+                placeholder="粘贴 JSON"
+                placeholderTextColor={colors.textTertiary}
+                value={importText}
+                onChangeText={setImportText}
+                multiline
+              />
+              <TouchableOpacity
+                style={[styles.primaryBtn, { backgroundColor: colors.primary, marginTop: 12 }]}
+                onPress={() => {
+                  const res = importData(importText);
+                  if (res.ok) {
+                    Alert.alert('导入成功', `共导入 ${res.imported} 条记录`);
+                    setShowImportModal(false);
+                    setImportText('');
+                  } else {
+                    Alert.alert('导入失败', res.error || '请检查 JSON 内容');
+                  }
+                }}
+              >
+                <Text style={styles.primaryText}>开始导入</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -331,6 +470,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
+  },
+  actionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  accountRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  accountText: {
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  accountEmail: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   settingLeft: {
     flexDirection: 'row',
@@ -382,7 +542,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     borderRadius: 16,
-    maxHeight: '70%',
+    maxHeight: '80%',
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: {
@@ -445,4 +605,13 @@ const styles = StyleSheet.create({
     minWidth: 32,
     textAlign: 'center',
   },
+  importInput: {
+    borderWidth: 1,
+    minHeight: 160,
+    borderRadius: 10,
+    padding: 12,
+    textAlignVertical: 'top',
+  },
+  primaryBtn: { borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+  primaryText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });
