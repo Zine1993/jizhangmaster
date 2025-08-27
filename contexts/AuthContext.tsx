@@ -80,10 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async (): Promise<{ ok: boolean; error?: string }> => {
     try {
       const { error } = await supabase.auth.signOut();
-      await AsyncStorage.removeItem(SKIP_KEY);
+      await AsyncStorage.setItem(SKIP_KEY, '1');
       setUser(null);
       setSession(null);
-      setSkipped(false);
+      setSkipped(true);
       if (error) return { ok: false, error: error.message };
       return { ok: true };
     } catch (e: any) {

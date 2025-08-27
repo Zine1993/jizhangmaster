@@ -1,14 +1,20 @@
 import React, { useMemo, useState, ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { LogIn, UserPlus, KeyRound, ArrowLeft } from 'lucide-react-native';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LogIn, UserPlus, KeyRound, ArrowLeft, Heart, BarChart3, Brain, Shield } from 'lucide-react-native';
+import GradientHeader from '@/components/ui/GradientHeader';
+import Card from '@/components/ui/Card';
+import PrimaryButton from '@/components/ui/PrimaryButton';
+import Input from '@/components/ui/Input';
 
 type Mode = 'login' | 'register' | 'reset';
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, skipped, signInWithPassword, signUpWithPassword, resetPassword, skipLogin } = useAuth();
   const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -32,29 +38,25 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     try {
       if (mode === 'login') {
         const res = await signInWithPassword(email.trim(), password);
-        if (!res.ok) {
-          setErr(res.error || '登录失败');
-        }
+        if (!res.ok) setErr(res.error || ((t ? t('loginFailed') : '') || 'Login failed'));
       } else if (mode === 'register') {
         if (password !== confirmPassword) {
-          setErr('两次输入的密码不一致');
+          setErr((t ? t('passwordMismatch') : '') || 'Passwords do not match');
           return;
         }
         const res = await signUpWithPassword(email.trim(), password);
-        if (!res.ok) {
-          setErr(res.error || '注册失败');
-        } else {
-          setMsg('注册成功，请检查邮箱验证或直接登录');
+        if (!res.ok) setErr(res.error || ((t ? t('registerFailed') : '') || 'Register failed'));
+        else {
+          setMsg((t ? t('registerSuccessCheckEmail') : '') || 'Registration successful. Check your email or log in directly');
           setPassword('');
           setConfirmPassword('');
           setMode('login');
         }
       } else if (mode === 'reset') {
         const res = await resetPassword(email.trim());
-        if (!res.ok) {
-          setErr(res.error || '重置密码邮件发送失败');
-        } else {
-          setMsg('重置密码邮件已发送，请检查邮箱');
+        if (!res.ok) setErr(res.error || ((t ? t('resetEmailFailed') : '') || 'Failed to send reset email'));
+        else {
+          setMsg((t ? t('resetEmailSent') : '') || 'Reset email sent. Please check your inbox');
           setMode('login');
         }
       }
@@ -75,104 +77,188 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
+  const title = (t ? t('authTitle') : '') || 'Emotion Ledger';
+  const subtitle = (t ? t('authSubtitle') : '') || 'Track spending, understand emotions, improve life';
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>
-        {mode === 'login' ? '登录' : mode === 'register' ? '注册' : '忘记密码'}
-      </Text>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <GradientHeader title={title} subtitle={subtitle} height={180}>
+          <View style={styles.avatarWrap}>
+            <View style={styles.avatar}>{/* 简易头像/emoji */}<Text style={styles.emoji}>🌈</Text></View>
+          </View>
+        </GradientHeader>
 
-      {!!err && <Text style={[styles.error, { color: colors.error }]}>{err}</Text>}
-      {!!msg && <Text style={[styles.message, { color: colors.text }]}>{msg}</Text>}
+        <Card padding={0}>
+          <View style={{ padding: 20 }}>
+            <View style={styles.welcomeRow}>
+              <Heart size={16} color={colors.primary} />
+              <Text style={[styles.welcome, { color: colors.text }]}>
+                {mode === 'login'
+                  ? (t ? t('welcomeBack') : 'Welcome back')
+                  : mode === 'register'
+                  ? (t ? t('createAccount') : 'Create your account')
+                  : (t ? t('resetPassword') : 'Reset password')}
+              </Text>
+            </View>
 
-      <TextInput
-        placeholder="邮箱"
-        placeholderTextColor={colors.textTertiary}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-        style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-      />
-      {mode !== 'reset' && (
-        <>
-          <TextInput
-            placeholder="密码（至少6位）"
-            placeholderTextColor={colors.textTertiary}
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-          />
-          {mode === 'register' && (
-            <TextInput
-              placeholder="确认密码"
-              placeholderTextColor={colors.textTertiary}
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              style={[styles.input, { borderColor: colors.border, color: colors.text }]}
+            {!!err && <Text style={[styles.error, { color: colors.error }]}>{err}</Text>}
+            {!!msg && <Text style={[styles.message, { color: colors.text }]}>{msg}</Text>}
+
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{(t ? t('emailLabel') : '') || 'Email'}</Text>
+            <Input
+              placeholder={(t ? t('emailPlaceholder') : '') || 'Enter your email'}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
             />
-          )}
-        </>
-      )}
 
-      <TouchableOpacity
-        disabled={!canSubmit}
-        onPress={handleSubmit}
-        style={[
-          styles.primaryBtn,
-          { backgroundColor: canSubmit ? colors.primary : colors.border },
-        ]}
-      >
-        <Text style={[styles.primaryBtnText, { color: '#fff' }]}>
-          {mode === 'login' ? '登录' : mode === 'register' ? '注册' : '发送重置邮件'}
-        </Text>
-        {mode === 'login' ? (
-          <LogIn size={20} color={'#fff'} />
-        ) : mode === 'register' ? (
-          <UserPlus size={20} color={'#fff'} />
-        ) : (
-          <KeyRound size={20} color={'#fff'} />
-        )}
-      </TouchableOpacity>
+            {mode !== 'reset' && (
+              <>
+                <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>{(t ? t('passwordLabel') : '') || 'Password'}</Text>
+                <Input
+                  placeholder={(t ? t('passwordPlaceholder') : '') || 'Enter your password'}
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                {mode === 'register' && (
+                  <>
+                    <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>{(t ? t('confirmPasswordLabel') : '') || 'Confirm password'}</Text>
+                    <Input
+                      placeholder={(t ? t('confirmPasswordPlaceholder') : '') || 'Re-enter password'}
+                      secureTextEntry
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                    />
+                  </>
+                )}
+              </>
+            )}
 
-      <View style={styles.row}>
-        {mode !== 'login' && (
-          <TouchableOpacity onPress={() => { setMode('login'); setErr(null); setMsg(null); }}>
-            <Text style={[styles.link, { color: colors.primary }]}>返回登录</Text>
-          </TouchableOpacity>
-        )}
-        {mode !== 'register' && (
-          <TouchableOpacity onPress={() => { setMode('register'); setErr(null); setMsg(null); }}>
-            <Text style={[styles.link, { color: colors.primary }]}>去注册</Text>
-          </TouchableOpacity>
-        )}
-        {mode !== 'reset' && (
-          <TouchableOpacity onPress={() => { setMode('reset'); setErr(null); setMsg(null); }}>
-            <Text style={[styles.link, { color: colors.primary }]}>忘记密码</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+            <View style={{ marginTop: 16 }}>
+              <PrimaryButton
+                label={
+                  mode === 'login'
+                    ? (t ? t('login') : 'Login')
+                    : mode === 'register'
+                    ? (t ? t('register') : 'Register')
+                    : (t ? t('sendResetEmail') : 'Send reset email')
+                }
+                onPress={handleSubmit}
+                disabled={!canSubmit}
+              />
+            </View>
 
-      <TouchableOpacity style={styles.skip} onPress={skipLogin}>
-        <ArrowLeft size={18} color={colors.textSecondary} />
-        <Text style={[styles.skipText, { color: colors.textSecondary }]}> 先跳过</Text>
-      </TouchableOpacity>
+            <View style={styles.linksRow}>
+              {mode !== 'login' && (
+                <TouchableOpacity onPress={() => { setMode('login'); setErr(null); setMsg(null); }}>
+                  <Text style={[styles.link, { color: colors.primary }]}>{(t ? t('backToLogin') : '') || 'Back to login'}</Text>
+                </TouchableOpacity>
+              )}
+              {mode !== 'register' && (
+                <TouchableOpacity onPress={() => { setMode('register'); setErr(null); setMsg(null); }}>
+                  <Text style={[styles.link, { color: colors.primary }]}>{(t ? t('goRegister') : '') || 'Go register'}</Text>
+                </TouchableOpacity>
+              )}
+              {mode !== 'reset' && (
+                <TouchableOpacity onPress={() => { setMode('reset'); setErr(null); setMsg(null); }}>
+                  <Text style={[styles.link, { color: colors.primary }]}>{(t ? t('forgotPassword') : '') || 'Forgot password'}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={[styles.quickBox, { borderColor: '#FDBA74' + '66', backgroundColor: '#FFEDD5' }]}>
+              <Text style={[styles.quickTitle, { color: '#EA580C' }]}>{(t ? t('quickTryTitle') : '') || 'Quick Try'}</Text>
+              <Text style={[styles.quickDesc, { color: '#9A3412' }]}>{(t ? t('quickTryDesc') : '') || 'No signup needed, try all features now'}</Text>
+              <TouchableOpacity style={styles.quickBtn} onPress={skipLogin}>
+                <ArrowLeft size={16} color={'#EA580C'} />
+                <Text style={[styles.quickBtnText, { color: '#EA580C' }]}>{' '}{(t ? t('skipForNow') : '') || 'Skip for now'}</Text>
+              </TouchableOpacity>
+            </View>
+
+          </View>
+        </Card>
+
+        <View style={styles.featuresRow}>
+          <View style={[styles.feature, { backgroundColor: colors.surface }]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.primary + '15' }]}>
+              <BarChart3 size={18} color={colors.primary} />
+            </View>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{(t ? t('featureAnalytics') : '') || 'Analytics'}</Text>
+            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{(t ? t('featureAnalyticsSub') : '') || 'Spending distribution and trends'}</Text>
+          </View>
+          <View style={[styles.feature, { backgroundColor: colors.surface }]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.primary + '15' }]}>
+              <Brain size={18} color={colors.primary} />
+            </View>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{(t ? t('featureInsights') : '') || 'Insights'}</Text>
+            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{(t ? t('featureInsightsSub') : '') || 'Discover emotion patterns'}</Text>
+          </View>
+          <View style={[styles.feature, { backgroundColor: colors.surface }]}>
+            <View style={[styles.featureIcon, { backgroundColor: colors.primary + '15' }]}>
+              <Shield size={18} color={colors.primary} />
+            </View>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{(t ? t('featurePrivacy') : '') || 'Privacy'}</Text>
+            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{(t ? t('featurePrivacySub') : '') || 'Local and cloud sync'}</Text>
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { flex: 1, padding: 24, gap: 12, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
-  input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 16 },
-  primaryBtn: { marginTop: 8, height: 48, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  primaryBtnText: { fontSize: 16, fontWeight: '600' },
-  row: { marginTop: 12, flexDirection: 'row', gap: 16, justifyContent: 'center' },
+  avatarWrap: { alignItems: 'center', marginTop: 8 },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emoji: { fontSize: 28 },
+  welcomeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  welcome: { fontSize: 16, fontWeight: '600' },
+  label: { fontSize: 13, marginBottom: 6 },
+  linksRow: { marginTop: 12, flexDirection: 'row', gap: 16, justifyContent: 'center' },
   link: { fontSize: 14 },
-  error: { textAlign: 'center', marginBottom: 4 },
-  message: { textAlign: 'center', marginBottom: 4 },
-  skip: { marginTop: 16, alignSelf: 'center', flexDirection: 'row', alignItems: 'center' },
-  skipText: { fontSize: 12 },
+  error: { textAlign: 'center', marginBottom: 6 },
+  message: { textAlign: 'center', marginBottom: 6 },
+  quickBox: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+  },
+  quickTitle: { fontSize: 14, fontWeight: '700' },
+  quickDesc: { fontSize: 12, marginTop: 4 },
+  quickBtn: { alignSelf: 'flex-start', marginTop: 8, flexDirection: 'row', alignItems: 'center' },
+  quickBtnText: { fontSize: 13, fontWeight: '600' },
+  demoBox: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+  },
+  demoTitle: { fontSize: 14, fontWeight: '700' },
+  demoRow: { marginTop: 4, fontSize: 13 },
+  featuresRow: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    gap: 12,
+    flexDirection: 'row',
+  },
+  feature: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  featureTitle: { fontWeight: '700', fontSize: 14 },
+  featureSub: { fontSize: 12, marginTop: 4 },
+  featureIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,11 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { X, DollarSign } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions, Transaction } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 
 interface AddTransactionModalProps {
   visible: boolean;
@@ -20,13 +21,17 @@ interface AddTransactionModalProps {
   editTransaction?: Transaction;
 }
 
-const categories = [
+const expenseCategories = [
   'food',
   'transport',
   'shopping',
   'entertainment',
   'health',
   'education',
+  'other',
+];
+
+const incomeCategories = [
   'salary',
   'freelance',
   'investment',
@@ -35,30 +40,31 @@ const categories = [
 
 export default function AddTransactionModal({ visible, onClose, editTransaction }: AddTransactionModalProps) {
   const { t } = useLanguage();
-  const { addTransaction, updateTransaction, getCurrencySymbol } = useTransactions();
+  const { addTransaction, updateTransaction, getCurrencySymbol, emotions } = useTransactions();
   const { colors } = useTheme();
   
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('food');
   const [description, setDescription] = useState('');
+  const [emotion, setEmotion] = useState<string>('');
 
   const isEditing = !!editTransaction;
   const currencySymbol = getCurrencySymbol();
 
-  // Load edit data when modal opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (editTransaction && visible) {
       setType(editTransaction.type);
-      setAmount(editTransaction.amount.toString());
+      setAmount(String(editTransaction.amount));
       setCategory(editTransaction.category);
       setDescription(editTransaction.description);
+      setEmotion(editTransaction.emotion || '');
     } else if (!editTransaction && visible) {
-      // Reset form for new transaction
       setType('expense');
       setAmount('');
       setCategory('food');
       setDescription('');
+      setEmotion('');
     }
   }, [editTransaction, visible]);
 
@@ -68,37 +74,39 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
       return;
     }
 
-    const transaction: Omit<Transaction, 'id'> = {
+    const list = type === 'expense' ? expenseCategories : incomeCategories;
+    const safeCategory = (category && list.includes(category)) ? category : list[0];
+
+    const tx: Omit<Transaction, 'id'> = {
       type,
       amount: parseFloat(amount),
-      category,
+      category: safeCategory,
       description: description.trim(),
       date: new Date(),
+      emotion: emotion || '',
     };
 
     if (isEditing && editTransaction) {
-      updateTransaction(editTransaction.id, transaction);
+      updateTransaction(editTransaction.id, tx);
     } else {
-      addTransaction(transaction);
+      addTransaction(tx);
     }
-    
-    // Reset form
     setType('expense');
     setAmount('');
     setCategory('food');
     setDescription('');
-    
+    setEmotion('');
     onClose();
   };
 
-  const TypeButton = ({ 
-    transactionType, 
-    label, 
-    color 
-  }: { 
-    transactionType: 'income' | 'expense'; 
-    label: string; 
-    color: string; 
+  const TypeButton = ({
+    transactionType,
+    label,
+    color,
+  }: {
+    transactionType: 'income' | 'expense';
+    label: string;
+    color: string;
   }) => (
     <TouchableOpacity
       style={[
@@ -106,7 +114,11 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
         { backgroundColor: colors.inputBackground, borderColor: colors.border },
         type === transactionType && { backgroundColor: color, borderColor: color },
       ]}
-      onPress={() => setType(transactionType)}
+      onPress={() => {
+        setType(transactionType);
+        const list = transactionType === 'expense' ? expenseCategories : incomeCategories;
+        setCategory((prev) => (list.includes(prev) ? prev : list[0]));
+      }}
     >
       <Text
         style={[
@@ -141,6 +153,23 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
     </TouchableOpacity>
   );
 
+  const EmotionTag = ({ name, emoji }: { name: string; emoji: string }) => (
+    <TouchableOpacity
+      style={[
+        styles.emotionTag,
+        { borderColor: colors.border, backgroundColor: colors.inputBackground },
+        emotion === name && { borderColor: colors.primary, backgroundColor: colors.primary + '22' },
+      ]}
+      onPress={() => setEmotion(name)}
+    >
+      <Text style={{ fontSize: 16, marginRight: 6 }}>{emoji}</Text>
+      {(() => {
+        const translated = t(name);
+        return <Text style={{ color: colors.text }}>{!translated || translated === '...' ? name : translated}</Text>;
+      })()}
+    </TouchableOpacity>
+  );
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={[styles.container, { backgroundColor: colors.modalBackground }]}>
@@ -156,18 +185,10 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>交易类型</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{(() => { const s = t('transactionType'); return s && s !== '...' ? s : '交易类型'; })()}</Text>
             <View style={styles.typeContainer}>
-              <TypeButton
-                transactionType="expense"
-                label={t('expense')}
-                color={colors.expense}
-              />
-              <TypeButton
-                transactionType="income"
-                label={t('income')}
-                color={colors.income}
-              />
+              <TypeButton transactionType="expense" label={t('expense')} color={colors.expense} />
+              <TypeButton transactionType="income" label={t('income')} color={colors.income} />
             </View>
           </View>
 
@@ -190,8 +211,17 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('category')}</Text>
             <View style={styles.categoryContainer}>
-              {categories.map(cat => (
+              {(type === 'expense' ? expenseCategories : incomeCategories).map((cat) => (
                 <CategoryButton key={cat} categoryKey={cat} />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{(() => { const s = t('currentEmotion'); return s && s !== '...' ? s : '当前情绪'; })()}</Text>
+            <View style={styles.emotionContainer}>
+              {emotions.map((e) => (
+                <EmotionTag key={e.id} name={e.name} emoji={e.emoji} />
               ))}
             </View>
           </View>
@@ -202,7 +232,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
               style={[styles.descriptionInput, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
               value={description}
               onChangeText={setDescription}
-              placeholder="备注信息（可选）"
+              placeholder={(() => { const s = t('notePlaceholder'); return s && s !== '...' ? s : '备注信息（可选）'; })()}
               placeholderTextColor={colors.textTertiary}
               multiline
               numberOfLines={3}
@@ -214,9 +244,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
           <TouchableOpacity style={[styles.cancelButton, { borderColor: colors.border }]} onPress={onClose}>
             <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>{t('cancel')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={handleSave}>
-            <Text style={styles.saveButtonText}>{isEditing ? t('update') : t('save')}</Text>
-          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <PrimaryButton label={isEditing ? t('update') : t('save')} onPress={handleSave} />
+          </View>
         </View>
       </View>
     </Modal>
@@ -224,9 +254,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -235,32 +263,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-  closeButton: {
-    padding: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  typeContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  closeButton: { padding: 8 },
+  title: { fontSize: 18, fontWeight: '600' },
+  placeholder: { width: 40 },
+  content: { flex: 1, padding: 16 },
+  section: { marginBottom: 20 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 12 },
+  typeContainer: { flexDirection: 'row', gap: 12 },
   typeButton: {
     flex: 1,
     paddingVertical: 12,
@@ -269,10 +278,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
   },
-  typeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  typeButtonText: { fontSize: 16, fontWeight: '600' },
   amountContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -281,67 +287,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderWidth: 1,
   },
-  currencySymbol: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  amountInput: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  categoryContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  categoryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  descriptionInput: {
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    fontSize: 16,
-    textAlignVertical: 'top',
-    minHeight: 80,
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
+  currencySymbol: { fontSize: 18, fontWeight: '600', marginRight: 8 },
+  amountInput: { flex: 1, fontSize: 18, fontWeight: '600' },
+  categoryContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  categoryButton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1 },
+  categoryButtonText: { fontSize: 14, fontWeight: '500' },
+  emotionContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  emotionTag: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 18, borderWidth: 1 },
+  descriptionInput: { borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, fontSize: 16, textAlignVertical: 'top', minHeight: 80 },
+  footer: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingVertical: 16, borderTopWidth: 1 },
+  cancelButton: { flex: 1, paddingVertical: 12, borderRadius: 8, borderWidth: 1, alignItems: 'center' },
+  cancelButtonText: { fontSize: 16, fontWeight: '500' },
 });

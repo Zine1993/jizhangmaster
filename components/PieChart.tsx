@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Text as SvgText, Circle } from 'react-native-svg';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -28,6 +28,9 @@ export default function PieChart({ data, size = 200 }: PieChartProps) {
   }
 
   const total = data.reduce((sum, item) => sum + item.amount, 0);
+  const nonZero = data.filter((i) => i.amount > 0);
+  const isFullCircle = total > 0 && nonZero.length === 1;
+
   const radius = size / 2 - 20;
   const centerX = size / 2;
   const centerY = size / 2;
@@ -69,26 +72,34 @@ export default function PieChart({ data, size = 200 }: PieChartProps) {
   return (
     <View style={styles.container}>
       <Svg width={size} height={size}>
-        {slices.map((slice, index) => (
-          <Path
-            key={index}
-            d={slice.path}
-            fill={slice.color}
-            stroke={colors.background}
-            strokeWidth={2}
-          />
-        ))}
+        {isFullCircle ? (
+          <Circle cx={centerX} cy={centerY} r={radius} fill={nonZero[0].color} />
+        ) : (
+          slices
+            .filter((s) => s.amount > 0)
+            .map((slice, index) => (
+              <Path
+                key={index}
+                d={slice.path}
+                fill={slice.color}
+                stroke={colors.background}
+                strokeWidth={2}
+              />
+            ))
+        )}
       </Svg>
       
       <View style={styles.legend}>
-        {slices.map((slice, index) => (
-          <View key={index} style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: slice.color }]} />
-            <Text style={[styles.legendText, { color: colors.text }]}>
-              {t(slice.category)} ({slice.percentage.toFixed(1)}%)
-            </Text>
-          </View>
-        ))}
+        {slices
+          .filter((s) => s.amount > 0)
+          .map((slice, index) => (
+            <View key={index} style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: slice.color }]} />
+              <Text style={[styles.legendText, { color: colors.text }]}>
+                {t(slice.category)} ({slice.percentage.toFixed(1)}%)
+              </Text>
+            </View>
+          ))}
       </View>
     </View>
   );

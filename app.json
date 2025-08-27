@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "记账助手",
-    "slug": "jizhangmaster",
-    "version": "1.0.1",
+    "name": "MoodLedger",
+    "slug": "moodledger",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "splash": {
@@ -10,20 +10,20 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "scheme": "myapp",
+    "scheme": "moodledger",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.jizhangmaster.app",
-      "versionCode": 6
+      "package": "com.moodledger.app",
+      "versionCode": 7
     },
     "web": {
       "bundler": "metro",

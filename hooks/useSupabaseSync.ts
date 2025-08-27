@@ -8,6 +8,7 @@ export type ServerTransaction = {
   description?: string | null;
   occurred_at: string; // ISO string
   currency: string;
+  emotion?: string | null;
 };
 
 export type UserSettings = {

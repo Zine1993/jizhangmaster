@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
 import { useSupabaseSync, type ServerTransaction } from '@/hooks/useSupabaseSync';
@@ -15,6 +15,13 @@ export interface Transaction {
   category: string;
   description: string;
   date: Date;
+  emotion?: string; // 新增：情绪标签名称
+}
+
+export interface EmotionTag {
+  id: string;
+  name: string;   // 例如 "开心"
+  emoji: string;  // 例如 "😊"
 }
 
 interface TransactionContextType {
@@ -28,12 +35,31 @@ interface TransactionContextType {
   getCurrencySymbol: () => string;
   exportData: () => string;
   importData: (json: string) => { ok: boolean; imported: number; error?: string };
+  // 情绪扩展
+  emotions: EmotionTag[];
+  addEmotionTag: (name: string, emoji: string) => void;
+  removeEmotionTag: (id: string) => void;
+  getEmotionStats: () => { name: string; emoji: string; count: number; amount: number }[];
+  getTopEmotion: () => { name: string; emoji: string; count: number } | null;
+  getUsageDaysCount: () => number;
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 const STORAGE_KEY = '@expense_tracker_transactions';
 const CURRENCY_STORAGE_KEY = '@expense_tracker_currency';
+const EMOTION_STORAGE_KEY = '@expense_tracker_emotions';
+
+const defaultEmotions: EmotionTag[] = [
+  { id: 'happy', name: '开心', emoji: '😊' },
+  { id: 'anxious', name: '焦虑', emoji: '😰' },
+  { id: 'lonely', name: '孤独', emoji: '😔' },
+  { id: 'bored', name: '无聊', emoji: '😑' },
+  { id: 'reward', name: '奖励自己', emoji: '🎉' },
+  { id: 'stress', name: '压力大', emoji: '😣' },
+  { id: 'excited', name: '兴奋', emoji: '😄' },
+  { id: 'sad', name: '难过', emoji: '😢' },
+];
 
 interface TransactionProviderProps {
   children: ReactNode;
@@ -45,6 +71,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currency, setCurrencyState] = useState<Currency>('CNY');
+  const [emotions, setEmotions] = useState<EmotionTag[]>([]);
   const [syncing, setSyncing] = useState(false);
 
   const lastSyncedUserIdRef = React.useRef<string | null>(null);
@@ -53,6 +80,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
   useEffect(() => {
     loadTransactions();
     loadCurrency();
+    loadEmotions();
   }, []);
 
   // Persist locally
@@ -64,7 +92,11 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     saveCurrency();
   }, [currency]);
 
-  // On login: push local -> pull remote; apply server settings
+  useEffect(() => {
+    saveEmotions();
+  }, [emotions]);
+
+  // On login: pull server (emotions 仅本地，不同步)
   useEffect(() => {
     if (!user) { lastSyncedUserIdRef.current = null; return; }
     if (lastSyncedUserIdRef.current === user.id) return;
@@ -86,6 +118,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
             description: t.description || null,
             occurred_at: t.date.toISOString(),
             currency,
+            emotion: t.emotion || null,
           };
           const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
           if (uuidRegex.test(t.id)) {
@@ -105,6 +138,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
           category: r.category,
           description: r.description ?? '',
           date: new Date(r.occurred_at),
+          emotion: r.emotion ? String(r.emotion) : '',
         }));
         setTransactions(toLocal);
       } finally {
@@ -147,6 +181,19 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     }
   };
 
+  const loadEmotions = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(EMOTION_STORAGE_KEY);
+      if (stored) {
+        setEmotions(JSON.parse(stored));
+      } else {
+        setEmotions(defaultEmotions);
+      }
+    } catch {
+      setEmotions(defaultEmotions);
+    }
+  };
+
   const saveTransactions = async () => {
     try {
       await AsyncStorage.setItem(
@@ -166,6 +213,12 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     } catch (error) {
       console.error('Failed to save currency:', error);
     }
+  };
+
+  const saveEmotions = async () => {
+    try {
+      await AsyncStorage.setItem(EMOTION_STORAGE_KEY, JSON.stringify(emotions));
+    } catch {}
   };
 
   const isValidCurrency = (value: string): boolean => {
@@ -188,6 +241,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         description: t.description || null,
         occurred_at: t.date.toISOString(),
         currency,
+        emotion: t.emotion || null,
       };
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (uuidRegex.test(t.id)) {
@@ -207,6 +261,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
           category: r.category,
           description: r.description ?? '',
           date: new Date(r.occurred_at),
+          emotion: r.emotion ? String(r.emotion) : '',
         }));
         setTransactions(toLocal);
       } catch (e) {
@@ -257,7 +312,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         if (uuidRegex.test(id)) {
           serverIds = [id];
         } else if (target) {
-          // 非 UUID：到远端查出对应记录的 UUID
           const remote = await fetchTransactions(user.id);
           const match = remote.find((r: any) =>
             String(r.type) === target.type &&
@@ -273,7 +327,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
           await deleteTransactions(user.id, serverIds);
         }
 
-        // 以远端为准刷新本地，防“复活”
         const remoteAfter = await fetchTransactions(user.id);
         const toLocal = remoteAfter.map((r: any): Transaction => ({
           id: String(r.id),
@@ -282,6 +335,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
           category: r.category,
           description: r.description ?? '',
           date: new Date(r.occurred_at),
+          emotion: r.emotion ? String(r.emotion) : '',
         }));
         setTransactions(toLocal);
       } catch (e) {
@@ -352,9 +406,10 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
 
   const exportData = () => {
     const payload = {
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       currency,
+      emotions,
       transactions: transactions.map(t => ({
         id: t.id,
         type: t.type,
@@ -362,6 +417,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         category: t.category,
         description: t.description,
         date: t.date.toISOString(),
+        emotion: t.emotion ?? '',
       })),
     };
     return JSON.stringify(payload, null, 2);
@@ -379,10 +435,20 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         category: String(r.category ?? 'Other'),
         description: String(r.description ?? ''),
         date: new Date(r.date ?? Date.now()),
+        emotion: r.emotion ? String(r.emotion) : '',
       }));
       setTransactions(toLocal);
       if (data.currency && isValidCurrency(String(data.currency))) {
         setCurrencyState(String(data.currency) as Currency);
+      }
+      if (Array.isArray(data.emotions) && data.emotions.length) {
+        setEmotions(
+          data.emotions.map((e: any, i: number) => ({
+            id: String(e.id ?? i + '_' + Date.now()),
+            name: String(e.name ?? '自定义'),
+            emoji: String(e.emoji ?? '🙂'),
+          }))
+        );
       }
       triggerSync(toLocal);
       return { ok: true, imported: toLocal.length };
@@ -391,21 +457,68 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     }
   };
 
+  const addEmotionTag = (name: string, emoji: string) => {
+    setEmotions(prev => [...prev, { id: (globalThis as any)?.crypto?.randomUUID?.() ?? Date.now().toString(), name, emoji }]);
+  };
+
+  const removeEmotionTag = (id: string) => {
+    setEmotions(prev => prev.filter(e => e.id !== id));
+  };
+
+  const getEmotionStats = () => {
+    const map = new Map<string, { name: string; emoji: string; count: number; amount: number }>();
+    const nameToEmoji = new Map<string, string>(emotions.map(e => [e.name, e.emoji]));
+    transactions.forEach(t => {
+      const name = t.emotion || '';
+      if (!name) return;
+      const emoji = nameToEmoji.get(name) || '🙂';
+      const hit = map.get(name) || { name, emoji, count: 0, amount: 0 };
+      hit.count += 1;
+      hit.amount += t.amount;
+      map.set(name, hit);
+    });
+    return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
+  };
+
+  const getTopEmotion = () => {
+    const stats = getEmotionStats();
+    return stats.length ? { name: stats[0].name, emoji: stats[0].emoji, count: stats[0].count } : null;
+  };
+
+  const getUsageDaysCount = () => {
+    const set = new Set<string>();
+    transactions.forEach(t => {
+      const d = new Date(t.date);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      set.add(key);
+    });
+    return set.size;
+  };
+
+  const value = useMemo<TransactionContextType>(
+    () => ({
+      transactions,
+      currency,
+      setCurrency,
+      addTransaction,
+      updateTransaction,
+      deleteTransaction,
+      getMonthlyStats,
+      getCurrencySymbol,
+      exportData,
+      importData,
+      emotions,
+      addEmotionTag,
+      removeEmotionTag,
+      getEmotionStats,
+      getTopEmotion,
+      getUsageDaysCount,
+    }),
+    [transactions, currency, emotions]
+  );
+
   return (
-    <TransactionContext.Provider
-      value={{
-        transactions,
-        currency,
-        setCurrency,
-        addTransaction,
-        updateTransaction,
-        deleteTransaction,
-        getMonthlyStats,
-        getCurrencySymbol,
-        exportData,
-        importData,
-      }}
-    >
+    <TransactionContext.Provider value={value}>
       {children}
     </TransactionContext.Provider>
   );

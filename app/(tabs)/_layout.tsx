@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, List, ChartBar as BarChart3, Settings } from 'lucide-react-native';
+import { Chrome as Home, List, ChartBar as BarChart3, Settings, Brain } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -51,6 +51,15 @@ export default function TabLayout() {
           title: t('stats'),
           tabBarIcon: ({ size, color }) => (
             <BarChart3 size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="insights"
+        options={{
+          title: t('insights'),
+          tabBarIcon: ({ size, color }) => (
+            <Brain size={size} color={color} />
           ),
         }}
       />

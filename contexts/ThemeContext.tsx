@@ -24,16 +24,19 @@ interface Colors {
   modalBackground: string;
   inputBackground: string;
   sectionBackground: string;
+  gradientFrom: string;
+  gradientTo: string;
 }
 
 const lightColors: Colors = {
-  background: '#F9FAFB',
+  background: '#F6F7FB',
   surface: '#FFFFFF',
   card: '#FFFFFF',
   text: '#111827',
   textSecondary: '#6B7280',
   textTertiary: '#9CA3AF',
-  primary: '#10B981',
+  // 主色改为紫色，和截图一致（按钮/高亮）
+  primary: '#8B5CF6',
   success: '#10B981',
   error: '#EF4444',
   border: '#E5E7EB',
@@ -42,30 +45,35 @@ const lightColors: Colors = {
   expense: '#EF4444',
   tabBarBackground: '#FFFFFF',
   tabBarBorder: '#E5E7EB',
-  modalBackground: '#F9FAFB',
-  inputBackground: '#FFFFFF',
+  modalBackground: '#F6F7FB',
+  inputBackground: '#F3F4F6',
   sectionBackground: '#F3F4F6',
+  // 渐变（紫粉）
+  gradientFrom: '#FF3D9A',
+  gradientTo: '#7C3AED',
 };
 
 const darkColors: Colors = {
-  background: '#111827',
-  surface: '#1F2937',
-  card: '#374151',
-  text: '#F9FAFB',
-  textSecondary: '#D1D5DB',
-  textTertiary: '#9CA3AF',
-  primary: '#10B981',
+  background: '#0F172A',
+  surface: '#1E293B',
+  card: '#334155',
+  text: '#F8FAFC',
+  textSecondary: '#CBD5E1',
+  textTertiary: '#94A3B8',
+  primary: '#8B5CF6',
   success: '#10B981',
   error: '#F87171',
-  border: '#4B5563',
+  border: '#475569',
   shadow: '#000000',
   income: '#34D399',
   expense: '#F87171',
-  tabBarBackground: '#1F2937',
+  tabBarBackground: '#111827',
   tabBarBorder: '#374151',
-  modalBackground: '#111827',
-  inputBackground: '#374151',
-  sectionBackground: '#374151',
+  modalBackground: '#0B1220',
+  inputBackground: '#1F2937',
+  sectionBackground: '#1F2937',
+  gradientFrom: '#A855F7',
+  gradientTo: '#EC4899',
 };
 
 interface ThemeContextType {

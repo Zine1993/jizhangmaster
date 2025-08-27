@@ -4,15 +4,17 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, Search } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTransactions } from '@/contexts/TransactionContext';
+import { useTransactions, Transaction } from '@/contexts/TransactionContext';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import TransactionItem from '@/components/TransactionItem';
 import { useTheme } from '@/contexts/ThemeContext';
+import GradientHeader from '@/components/ui/GradientHeader';
+import Card from '@/components/ui/Card';
+import Fab from '@/components/ui/Fab';
 
 export default function TransactionsScreen() {
   const { t } = useLanguage();
@@ -43,9 +45,9 @@ export default function TransactionsScreen() {
     return groups;
   }, {} as Record<string, typeof transactions>);
 
-  const sections = Object.entries(groupedTransactions).map(([date, transactions]) => ({
+  const sections = Object.entries(groupedTransactions).map(([date, txs]) => ({
     title: date,
-    data: transactions,
+    data: txs,
   }));
 
   const handleEditTransaction = (transaction: Transaction) => {
@@ -74,36 +76,35 @@ export default function TransactionsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('transactions')}</Text>
-      </View>
-
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <GradientHeader variant="userInfo" />
+      <Card padding={16}>
+        <Text style={[styles.pageTitle, { color: colors.text }]}>{t('transactions')}</Text>
+        <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }}>{t('recordsSubtitle')}</Text>
+      </Card>
       {transactions.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Search size={48} color={colors.textTertiary} />
-          <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>{t('noTransactions')}</Text>
-          <Text style={[styles.emptyStateSubText, { color: colors.textTertiary }]}>{t('addFirst')}</Text>
-        </View>
+        <Card>
+          <View style={styles.emptyState}>
+            <Search size={48} color={colors.textTertiary} />
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>{t('noTransactions')}</Text>
+            <Text style={[styles.emptyStateSubText, { color: colors.textTertiary }]}>{t('addFirst')}</Text>
+          </View>
+        </Card>
       ) : (
-        <FlatList
-          data={sections}
-          renderItem={renderSection}
-          keyExtractor={item => item.title}
-          style={styles.list}
-          showsVerticalScrollIndicator={false}
-        />
+        <Card padding={0}>
+          <FlatList
+            data={sections}
+            renderItem={renderSection}
+            keyExtractor={item => item.title}
+            style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16 }}
+            showsVerticalScrollIndicator={false}
+          />
+        </Card>
       )}
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          setEditingTransaction(undefined);
-          setShowAddModal(true);
-        }}
-      >
-        <Plus size={28} color="#FFFFFF" />
-      </TouchableOpacity>
+      <Fab onPress={() => { setEditingTransaction(undefined); setShowAddModal(true); }}>
+        <Plus size={28} color="#fff" />
+      </Fab>
 
       <AddTransactionModal
         visible={showAddModal}
@@ -115,38 +116,24 @@ export default function TransactionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  list: {
-    flex: 1,
-    padding: 16,
-  },
   sectionHeader: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     marginBottom: 8,
     marginTop: 16,
+  },
+  pageTitle: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
   },
   emptyState: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingVertical: 48,
   },
   emptyStateText: {
     fontSize: 18,
@@ -157,24 +144,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: 100,
-    right: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#10B981',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
   },
 });
