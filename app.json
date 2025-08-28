@@ -2,7 +2,7 @@
   "expo": {
     "name": "MoodLedger",
     "slug": "moodledger",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "splash": {
@@ -12,10 +12,10 @@
     },
     "scheme": "moodledger",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,17 +23,18 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.moodledger.app",
-      "versionCode": 7
+      "versionCode": 8
     },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
@@ -41,8 +42,11 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "ef65fa0c-4655-42f8-b827-be2e70b1a403"
-      }
-    }
+        "projectId": "cbfac040-7764-4bcb-b6b3-580a45419568"
+      },
+      "supabaseUrl": "https://ddindapkkfgiwzfitbjk.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkaW5kYXBra2ZnaXd6Zml0YmprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMDcyNjIsImV4cCI6MjA3MTY4MzI2Mn0.n82gsuuC0gIgutVBcUGly243T-Vha1N7upsYRgpc2Ms"
+    },
+    "owner": "cocbang"
   }
 }
