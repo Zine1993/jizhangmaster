@@ -103,7 +103,7 @@ export default function SettingsScreen() {
   const { t, language, setLanguage } = useLanguage();
   const { emotions, removeEmotionTag, clearAllData, exportData, importData } = useTransactions();
   const { user, requireLogin, resetPassword, recoveryPending, completePasswordReset, signOut } = useAuth();
-  const { upsertUserSettings } = useSupabaseSync();
+  const { upsertUserSettings, wipeAllUserData } = useSupabaseSync();
 
   const [showThemeModal, setShowThemeModal] = React.useState(false);
   const [showLanguageModal, setShowLanguageModal] = React.useState(false);
@@ -747,6 +747,14 @@ export default function SettingsScreen() {
                   [
                     { text: t('cancel'), style: 'cancel' },
                     { text: t('reset'), style: 'destructive', onPress: async () => {
+                      try {
+                        if (user?.id) {
+                          await wipeAllUserData(user.id);
+                        }
+                      } catch (e: any) {
+                        Alert.alert(t('operationFailed') || '操作失败', '云端数据清理失败，请检查网络后重试');
+                        return;
+                      }
                       await clearAllData();
                       await AsyncStorage.removeItem(PWD_KEY);
                       try { if (user?.id) { await upsertUserSettings(user.id, { gate_pwd_hash: null }); } } catch {}

@@ -49,6 +49,7 @@ export function useSupabaseSync() {
       upsertAccounts: async (_userId: string, _acs: ServerAccount[]) => [] as any[],
       deleteAccounts: async (_userId: string, _ids: string[]) => [] as any[],
       fetchAccounts: async (_userId: string) => [] as any[],
+      wipeAllUserData: async (_userId: string) => {},
       fullSync: async (_userId: string, _localTxs: ServerTransaction[]) => [] as any[],
     };
   }
@@ -210,6 +211,19 @@ export function useSupabaseSync() {
     return data as any[];
   };
 
+  const wipeAllUserData = async (userId: string) => {
+    const { error: tErr } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('user_id', userId);
+    if (tErr) throw tErr;
+    const { error: aErr } = await supabase
+      .from('accounts')
+      .delete()
+      .eq('user_id', userId);
+    if (aErr) throw aErr;
+  };
+
   const fullSync = async (userId: string, localTxs: ServerTransaction[]) => {
     await upsertTransactions(userId, localTxs);
     const remote = await fetchTransactions(userId);
@@ -226,6 +240,7 @@ export function useSupabaseSync() {
     upsertAccounts,
     deleteAccounts,
     fetchAccounts,
+    wipeAllUserData,
     fullSync,
   };
 }
