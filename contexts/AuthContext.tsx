@@ -134,8 +134,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) return;
     const handleUrl = async (url: string) => {
       try {
-        const part = url.includes('#') ? url.split('#')[1] : (url.split('?')[1] || '');
-        const sp = new URLSearchParams(part);
+        // 合并解析 query、hash 与桥接页注入的 __hash，确保能获取 Supabase 令牌
+        const q = url.includes('?') ? url.split('?')[1].split('#')[0] : '';
+        const h = url.includes('#') ? url.split('#')[1] : '';
+        const sp = new URLSearchParams(q || '');
+        if (h) {
+          const hp = new URLSearchParams(h.startsWith('?') ? h.slice(1) : h);
+          hp.forEach((v, k) => sp.set(k, v));
+        }
+        const rawHash = sp.get('__hash');
+        if (rawHash) {
+          try {
+            const decoded = decodeURIComponent(rawHash);
+            const hsp = new URLSearchParams(decoded);
+            hsp.forEach((v, k) => sp.set(k, v));
+          } catch {}
+        }
         const type = sp.get('type') || sp.get('event'); // recovery/magiclink 等
         const access_token = sp.get('access_token') || sp.get('accessToken') || undefined;
         const refresh_token = sp.get('refresh_token') || sp.get('refreshToken') || undefined;

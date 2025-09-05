@@ -2,46 +2,74 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>正在跳转到 App…</title>
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>MoodLedger · Auth Redirect</title>
     <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 24px; line-height: 1.6; color: #111; }
-      .hint { display:none; margin-top: 16px; }
-      code { background: #f4f4f5; padding: 2px 6px; border-radius: 4px; }
-      a.btn { display:inline-block; margin-top:12px; padding:10px 14px; background:#4f46e5; color:#fff; text-decoration:none; border-radius:8px; }
+      html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0b0b0f;color:#eaeaf0}
+      .wrap{max-width:760px;margin:10vh auto;padding:24px}
+      a{color:#9ecbff}
+      .card{background:#14151a;border:1px solid #23242b;border-radius:12px;padding:20px}
+      code{background:#1b1c22;border:1px solid #2a2b33;border-radius:6px;padding:2px 6px;word-break:break-all}
+      .btn{display:inline-block;background:#2563eb;color:#fff;text-decoration:none;border-radius:10px;padding:10px 14px}
+      .muted{opacity:.75}
     </style>
     <script>
-      (function() {
-        try {
-          // 取回 Supabase 邮件回调中的参数（可能在 hash 或 query）
-          var hash = window.location.hash || '';
-          var query = window.location.search || '';
-          var suffix = hash ? hash : (query ? ('#' + query.slice(1)) : '');
-
-          // 你的 App 自定义 scheme（与 app.json 的 "scheme" 保持一致）
-          var deep = 'moodledger://auth/reset' + suffix;
-
-          // 直接尝试打开 App
-          window.location.replace(deep);
-
-          // 若未成功（浏览器限制等），展示备用链接
-          setTimeout(function() {
-            var a = document.getElementById('openLink');
-            a.href = deep;
-            document.getElementById('hint').style.display = 'block';
-            document.getElementById('url').textContent = deep;
-          }, 1200);
-        } catch (e) {}
+      (function () {
+        function qs() { return window.location.search || ''; }
+        function hash() { return window.location.hash || ''; }
+        function buildDeepLink() {
+          var dl = 'moodledger://auth/reset';
+          var q = qs();
+          var h = hash();
+          // 将查询与 hash 原样拼接
+          if (q && q !== '?') dl += q;
+          if (h && h !== '#') {
+            // 如果已有 query，用 & 拼接，否则用 ? 开头
+            if (dl.indexOf('?')>=0) dl += '&__hash=' + encodeURIComponent(h.substring(1));
+            else dl += '?' + '__hash=' + encodeURIComponent(h.substring(1));
+          }
+          return dl;
+        }
+        function openApp(url) {
+          // 尝试跳转到 App
+          window.location.href = url;
+          // 兜底：2秒后仍在网页，显示手动步骤
+          setTimeout(function () {
+            var hint = document.getElementById('hint');
+            if (hint) hint.style.display = 'block';
+          }, 2000);
+        }
+        window.addEventListener('DOMContentLoaded', function () {
+          var deep = buildDeepLink();
+          var out = document.getElementById('deeplink');
+          if (out) out.textContent = deep;
+          // 自动尝试打开
+          openApp(deep);
+          var btn = document.getElementById('openBtn');
+          if (btn) btn.addEventListener('click', function(e){ e.preventDefault(); openApp(deep); });
+          var copyBtn = document.getElementById('copyBtn');
+          if (copyBtn) copyBtn.addEventListener('click', function(){
+            navigator.clipboard && navigator.clipboard.writeText(deep).then(function(){
+              copyBtn.textContent = '已复制';
+              setTimeout(function(){copyBtn.textContent='复制链接';}, 1500);
+            });
+          });
+        });
       })();
     </script>
   </head>
   <body>
-    <h1>正在打开应用…</h1>
-    <p>如果几秒内未自动跳转，请点击下面的按钮或复制链接手动打开：</p>
-    <p class="hint" id="hint">
-      深链：<code id="url"></code><br />
-      <a id="openLink" class="btn" href="#">打开 App</a>
-    </p>
-    <p>若仍无法打开，请将链接复制到系统浏览器地址栏，或确认已安装最新版本 App。</p>
+    <div class="wrap">
+      <h1>正在跳转到 App...</h1>
+      <div class="card">
+        <p class="muted">如未自动唤起，请点击按钮或复制链接在系统浏览器打开。</p>
+        <p><a id="openBtn" class="btn" href="#">打开 App</a>
+           <a id="copyBtn" class="btn" style="background:#334155;margin-left:8px" href="javascript:">复制链接</a></p>
+        <p class="muted">深链：</p>
+        <p><code id="deeplink">moodledger://auth/reset</code></p>
+        <p id="hint" class="muted" style="display:none">若仍无法打开，请确认已安装 App 且已配置 scheme=“moodledger”。</p>
+      </div>
+    </div>
   </body>
 </html>
