@@ -19,11 +19,20 @@
         function qs() { return window.location.search || ''; }
         function hash() { return window.location.hash || ''; }
         function buildDeepLink() {
-          var dl = 'moodledger://auth/reset';
+          // 允许用 ?dl=exp://... 覆盖目标（开发期用于 Expo Go）
+          var url = new URL(window.location.href);
+          var base = url.searchParams.get('dl') || 'moodledger://auth/reset';
+          var dl = base;
           var q = qs();
           var h = hash();
-          // 将查询与 hash 原样拼接
-          if (q && q !== '?') dl += q;
+          // 将查询与 hash 原样拼接（但保留 dl 本身）
+          if (q && q !== '?') {
+            // 去掉 dl 参数，避免污染传递给 App 的查询
+            var sp = new URLSearchParams(q.startsWith('?') ? q.slice(1) : q);
+            sp.delete('dl');
+            var q2 = sp.toString();
+            if (q2) dl += (base.indexOf('?')>=0 ? '&' : '?') + q2;
+          }
           if (h && h !== '#') {
             // 如果已有 query，用 & 拼接，否则用 ? 开头
             if (dl.indexOf('?')>=0) dl += '&__hash=' + encodeURIComponent(h.substring(1));
@@ -68,7 +77,7 @@
            <a id="copyBtn" class="btn" style="background:#334155;margin-left:8px" href="javascript:">复制链接</a></p>
         <p class="muted">深链：</p>
         <p><code id="deeplink">moodledger://auth/reset</code></p>
-        <p id="hint" class="muted" style="display:none">若仍无法打开，请确认已安装 App 且已配置 scheme=“moodledger”。</p>
+        <p id="hint" class="muted" style="display:none">若仍无法打开：开发期请在 URL 追加 ?dl=exp://<你的 Expo 链接>；真机包/商店版使用默认 moodledger://。</p>
       </div>
     </div>
   </body>
