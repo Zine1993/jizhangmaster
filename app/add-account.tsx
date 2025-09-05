@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,7 +16,7 @@ export default function AddAccountScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { addAccount } = useTransactions();
+  const { addAccount, accounts } = useTransactions();
 
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('cash');
@@ -27,21 +27,60 @@ export default function AddAccountScreen() {
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
+  // 仅允许数字与单个小数点的输入过滤
+  const sanitizeDecimal = useCallback((text: string) => {
+    if (!text) return '';
+    let s = text.replace(/[^\d.]/g, '');
+    const firstDot = s.indexOf('.');
+    if (firstDot !== -1) {
+      s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, '');
+    }
+    return s;
+  }, []);
+
   const handleSave = () => {
-    if (!name) return; // Basic validation
-    const ib = parseFloat(initialBalance) || 0;
-    if ((type === 'cash' || type === 'debit_card' || type === 'prepaid_card') && ib < 0) {
-      Alert.alert(t('account') || 'Account', t('initialBalanceNonNegative') || 'Initial balance cannot be negative');
+    const trimmedName = (name || '').trim();
+    if (!trimmedName) {
+      Alert.alert(t('tip') || '提示', t('pleaseEnterName') || '请输入账户名');
       return;
     }
+
+    // 名称唯一性（忽略大小写/空白）
+    const duplicate = (accounts || []).some(a => (a.name || '').trim().toLowerCase() === trimmedName.toLowerCase());
+    if (duplicate) {
+      Alert.alert(t('tip') || '提示', t('accountNameExists') || '账户名已存在');
+      return;
+    }
+
+    // 初始余额必须是数字
+    const ibNum = Number(initialBalance);
+    const isIbNumeric = initialBalance.trim() !== '' && Number.isFinite(ibNum);
+    if (!isIbNumeric) {
+      Alert.alert(t('tip') || '提示', t('initialBalanceMustBeNumber') || '初始余额必须为数字');
+      return;
+    }
+    const ib = ibNum;
+
+    if ((type === 'cash' || type === 'debit_card' || type === 'prepaid_card') && ib < 0) {
+      Alert.alert(t('tip') || '提示', t('initialBalanceNonNegative') || '初始余额不能为负');
+      return;
+    }
+
     let cl: number | undefined = undefined;
     if (type === 'credit_card') {
-      const v = parseFloat(creditLimit);
-      cl = Number.isFinite(v) && v > 0 ? v : undefined;
+      if (creditLimit && creditLimit.trim() !== '') {
+        const v = Number(creditLimit);
+        if (!Number.isFinite(v) || v <= 0) {
+          Alert.alert(t('tip') || '提示', t('creditLimitMustBeNumber') || '信用额度必须是大于 0 的数字');
+          return;
+        }
+        cl = v;
+      }
     }
+
     try {
       addAccount({
-        name,
+        name: trimmedName,
         type,
         initialBalance: ib,
         currency: currency as any,
@@ -51,9 +90,11 @@ export default function AddAccountScreen() {
     } catch (e: any) {
       const msg = String(e?.message || '');
       if (msg === 'INITIAL_BALANCE_NEGATIVE') {
-        Alert.alert(t('account') || 'Account', t('initialBalanceNonNegative') || 'Initial balance cannot be negative');
+        Alert.alert(t('tip') || '提示', t('initialBalanceNonNegative') || '初始余额不能为负');
+      } else if (msg === 'ACCOUNT_NAME_DUPLICATE') {
+        Alert.alert(t('tip') || '提示', t('accountNameExists') || '账户名已存在');
       } else {
-        Alert.alert(t('account') || 'Account', t('operationFailed') || 'Operation failed');
+        Alert.alert(t('tip') || '提示', t('operationFailed') || '操作失败，请稍后重试');
       }
     }
   };
@@ -209,10 +250,10 @@ export default function AddAccountScreen() {
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.border }]}
             value={initialBalance}
-            onChangeText={setInitialBalance}
+            onChangeText={(txt) => setInitialBalance(sanitizeDecimal(txt))}
             placeholder="0.00"
             placeholderTextColor={colors.textTertiary}
-            keyboardType="numeric"
+            keyboardType="decimal-pad"
           />
           {type === 'credit_card' && (
             <>
@@ -220,10 +261,10 @@ export default function AddAccountScreen() {
               <TextInput
                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
                 value={creditLimit}
-                onChangeText={setCreditLimit}
+                onChangeText={(txt) => setCreditLimit(sanitizeDecimal(txt))}
                 placeholder="0.00"
                 placeholderTextColor={colors.textTertiary}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
               />
             </>
           )}

@@ -20,13 +20,30 @@ export default function EmotionsScreen() {
   const { emotions, removeEmotionTag, addEmotionTag, resetEmotionTagsToDefault } = useTransactions();
 
   const [addModalVisible, setAddModalVisible] = React.useState(false);
-  const [newEmoji, setNewEmoji] = React.useState('🙂');
+  const [newEmoji, setNewEmoji] = React.useState('');
   const [newName, setNewName] = React.useState('');
+
+
+
+  const firstGrapheme = (s: string) => {
+    try {
+      const Seg: any = (Intl as any)?.Segmenter;
+      if (Seg) {
+        const seg = new Seg('zh', { granularity: 'grapheme' }) as any;
+        const iterator = (seg.segment(String(s)) as any)[Symbol.iterator]();
+        const next = iterator.next();
+        const g = next && next.value && next.value.segment;
+        if (g) return String(g);
+      }
+    } catch {}
+    const arr = Array.from(String(s));
+    return arr.length ? String(arr[0]) : '';
+  };
 
 
   const handleSaveNew = () => {
     const name = newName.trim();
-    const emoji = newEmoji.trim();
+    const emoji = firstGrapheme(newEmoji.trim());
     if (!name) {
       Alert.alert(t('nameRequired') || '请填写名称');
       return;
@@ -41,7 +58,7 @@ export default function EmotionsScreen() {
     }
     addEmotionTag(name, emoji);
     setAddModalVisible(false);
-    setNewEmoji('🙂');
+    setNewEmoji('');
     setNewName('');
   };
 
@@ -98,7 +115,7 @@ export default function EmotionsScreen() {
           </View>
           <View style={styles.emotionList}>
             <TouchableOpacity
-              onPress={() => setAddModalVisible(true)}
+              onPress={() => { setNewEmoji(''); setNewName(''); setAddModalVisible(true); }}
               style={{ paddingVertical: 10, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
             >
               <Plus size={16} color={colors.text} />
@@ -110,8 +127,10 @@ export default function EmotionsScreen() {
             ) : emotions.map(item => (
               <View key={item.id} style={[styles.emotionRow, { borderColor: colors.border, backgroundColor: colors.background }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                  <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
-                  <Text style={{ color: colors.text }} numberOfLines={1}>{item.name}</Text>
+                  <View style={{ width: 28, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 18 }} numberOfLines={1}>{item.emoji}</Text>
+                  </View>
+                  <Text style={{ color: colors.text, flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, overflow: 'hidden' }} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
                 </View>
                 <TouchableOpacity onPress={() => handleRemove(item.id, item.name)}>
                   <Trash2 size={18} color={colors.textSecondary} />
@@ -126,22 +145,23 @@ export default function EmotionsScreen() {
         <View style={styles.modalMask}>
           <View style={[styles.modalCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{tt('customEmotionPack', '自定义表情包')}</Text>
-            <View style={{ gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <TextInput
                 value={newEmoji}
-                onChangeText={setNewEmoji}
-                placeholder={tt('emojiPlaceholder', '例如：😊')}
-                placeholderTextColor={colors.textSecondary}
-                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, textAlign: 'center', fontSize: 18 }]}
-                maxLength={4}
+                onChangeText={(txt) => setNewEmoji(firstGrapheme(txt))}
+
+
+                style={[styles.input, { width: 48, textAlign: 'center', fontSize: 18, color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, paddingHorizontal: 0 }]}
+                maxLength={10}
               />
               <TextInput
                 value={newName}
                 onChangeText={setNewName}
-                placeholder={tt('namePlaceholder', '例如：开心')}
-                placeholderTextColor={colors.textSecondary}
-                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
+
+
+                style={[styles.input, { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
                 maxLength={20}
+                multiline={false}
               />
             </View>
             <View style={styles.modalActions}>

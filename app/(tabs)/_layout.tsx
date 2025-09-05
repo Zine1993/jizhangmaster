@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   addButtonPressable: {
     position: 'absolute',
-    top: -25, // Elevates the button
+    top: -45, // Elevates the button
   },
   addButtonGradient: {
     width: 60,

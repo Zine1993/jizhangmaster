@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Alert } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useRouter } from 'expo-router';
@@ -25,6 +25,16 @@ export default function AccountsScreen() {
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showTypeModal, setShowTypeModal] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+
+  // 缓存筛选结果，避免每次渲染重复 filter
+  const filteredAccounts = useMemo(() => {
+    return accounts.filter(a =>
+      !a.archived &&
+      (selectedCurrency === 'ALL' || a.currency === selectedCurrency) &&
+      (selectedType === 'ALL' || a.type === selectedType)
+    );
+  }, [accounts, selectedCurrency, selectedType]);
 
 
 
@@ -42,19 +52,30 @@ export default function AccountsScreen() {
           </Text>
           <Text style={[styles.currency, { color: colors.textSecondary }]}>{item.currency}</Text>
           <TouchableOpacity
-            onPress={() => {
+            onPress={async () => {
+              if (Math.abs(balance) > 1e-8 || archivingId === item.id) return;
               try {
-                archiveAccount(item.id);
+                setArchivingId(item.id);
+                await Promise.resolve(archiveAccount(item.id));
               } catch (e) {
-                Alert.alert(t('operationFailed') || 'Operation failed', t('balanceMustBeZeroToArchive') || 'Balance must be zero to archive');
+                Alert.alert(
+                  t('operationFailed') || 'Operation failed',
+                  t('balanceMustBeZeroToArchive') || 'Balance must be zero to archive'
+                );
+              } finally {
+                setArchivingId(null);
               }
             }}
-            disabled={Math.abs(balance) > 1e-8}
-            style={{ marginTop: 6, opacity: Math.abs(balance) <= 1e-8 ? 1 : 0.5 }}
+            disabled={Math.abs(balance) > 1e-8 || archivingId === item.id}
+            style={{ marginTop: 6, opacity: (Math.abs(balance) <= 1e-8 && archivingId !== item.id) ? 1 : 0.5 }}
           >
-            <Text style={{ color: Math.abs(balance) <= 1e-8 ? colors.primary : colors.textTertiary, fontSize: 12 }}>
-              {t('archive') || 'Archive'}
-            </Text>
+            {archivingId === item.id ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Text style={{ color: Math.abs(balance) <= 1e-8 ? colors.primary : colors.textTertiary, fontSize: 12 }}>
+                {t('archive') || 'Archive'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </Card>
@@ -179,14 +200,14 @@ export default function AccountsScreen() {
 
       <FlatList
         style={{ flex: 1 }}
-        data={accounts.filter(a =>
-          !a.archived &&
-          (selectedCurrency === 'ALL' || a.currency === selectedCurrency) &&
-          (selectedType === 'ALL' || a.type === selectedType)
-        )}
+        data={filteredAccounts}
         renderItem={renderAccountItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
+        extraData={archivingId}
+        initialNumToRender={10}
+        windowSize={5}
+        removeClippedSubviews
       />
 
     </SafeAreaView>

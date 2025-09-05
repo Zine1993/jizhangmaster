@@ -131,7 +131,7 @@ export default function InsightsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <GradientHeader
-        variant="userInfo"
+        variant="emojiTicker"
         right={
           <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
             <Settings size={24} color="#fff" />

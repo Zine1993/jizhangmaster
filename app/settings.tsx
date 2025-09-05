@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Share, TextInput, Vibration } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput, Vibration, Platform, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -10,25 +10,31 @@ import { useTransactions } from '@/contexts/TransactionContext';
 import {
   ChevronLeft,
   LogIn,
+  LogOut,
   UserCircle,
   Sun,
   Moon,
   Monitor,
   Languages,
   ArrowUpFromLine,
-  ArrowDownToLine,
   Wallet,
   Smile,
   Plus,
   Trash2,
   ChevronRight,
-  AlertTriangle,
+
   Check,
   Lock,
+  Unlock,
 } from 'lucide-react-native';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
+import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import Constants from 'expo-constants';
 
 // 新的、符合图片风格的设置行组件
 const SettingRow = ({ icon, title, value, onPress, titleColor }: { icon: React.ReactNode, title: string, value?: string, onPress?: () => void, titleColor?: string }) => {
@@ -49,20 +55,65 @@ const SettingRow = ({ icon, title, value, onPress, titleColor }: { icon: React.R
   );
 };
 
+/** avatar utilities: deterministic color + initial by seed (email/id) */
+function _hashCode(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+function _hslToHex(h: number, s: number, l: number): string {
+  s /= 100; l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+  const R = Math.round((r + m) * 255), G = Math.round((g + m) * 255), B = Math.round((b + m) * 255);
+  const toHex = (n: number) => n.toString(16).padStart(2, '0');
+  return '#' + toHex(R) + toHex(G) + toHex(B);
+}
+function _contrastOn(hex: string): '#fff' | '#111' {
+  const v = hex.replace('#','');
+  const r = parseInt(v.substring(0,2),16), g = parseInt(v.substring(2,4),16), b = parseInt(v.substring(4,6),16);
+  const lum = (0.2126*r + 0.7152*g + 0.0722*b)/255;
+  return lum < 0.6 ? '#fff' : '#111';
+}
+function pickAvatarColors(seed: string): { bg: string; fg: string } {
+  const h = _hashCode(seed) % 360;
+  const bg = _hslToHex(h, 65, 55);
+  const fg = _contrastOn(bg);
+  return { bg, fg };
+}
+function pickInitial(seed: string): string {
+  const m = seed.match(/[A-Za-z0-9]/);
+  return (m ? m[0] : 'U').toUpperCase();
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const { colors, themeMode, setThemeMode } = useTheme();
   const { t, language, setLanguage } = useLanguage();
   const { emotions, removeEmotionTag, clearAllData, exportData, importData } = useTransactions();
-  const { user, requireLogin, resetPassword, recoveryPending, completePasswordReset } = useAuth();
+  const { user, requireLogin, resetPassword, recoveryPending, completePasswordReset, signOut } = useAuth();
   const { upsertUserSettings } = useSupabaseSync();
 
   const [showThemeModal, setShowThemeModal] = React.useState(false);
   const [showLanguageModal, setShowLanguageModal] = React.useState(false);
-  const [showExportModal, setShowExportModal] = React.useState(false);
-  const [exportJson, setExportJson] = React.useState('');
-  const [showImportModal, setShowImportModal] = React.useState(false);
-  const [importText, setImportText] = React.useState('');
+  const [showDataModal, setShowDataModal] = React.useState(false);
+  const [busyExport, setBusyExport] = React.useState(false);
+  const [busyImport, setBusyImport] = React.useState(false);
+  // Edit nickname modal states
+  const [showEditName, setShowEditName] = React.useState(false);
+  const [editName, setEditName] = React.useState('');
+  const [displayNameLocal, setDisplayNameLocal] = React.useState<string | null>(null);
 
   // Password gate states (simplified)
   const [pwdSet, setPwdSet] = React.useState(false);
@@ -75,6 +126,44 @@ export default function SettingsScreen() {
   const [pwdError, setPwdError] = React.useState(false);
   const [newPwd, setNewPwd] = React.useState('');
   const [newPwd2, setNewPwd2] = React.useState('');
+
+  // 锁图标开锁动画
+  const lockAnim = React.useRef(new Animated.Value(0)).current;
+  const lockRotate = lockAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['0deg', '-20deg', '0deg'],
+  });
+  const lockScale = lockAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 1.15, 1],
+  });
+  const lockOpacity = lockAnim.interpolate({
+    inputRange: [0, 0.4, 0.5, 1],
+    outputRange: [1, 1, 0, 0],
+  });
+  const unlockOpacity = lockAnim.interpolate({
+    inputRange: [0, 0.4, 0.5, 1],
+    outputRange: [0, 0, 1, 1],
+  });
+  // avatar computed values
+  const avatarSeed = (user?.email || user?.id || 'guest');
+  const { bg, fg } = React.useMemo(() => pickAvatarColors(avatarSeed), [avatarSeed]);
+  const initial = React.useMemo(() => pickInitial(user?.email || user?.id || 'U'), [user?.email, user?.id]);
+  // display name: prefer nickname/full name from user_metadata, fallback to email local-part, else neutral
+  const displayName = React.useMemo(() => {
+    if (!user) return (t('login') as string) || '登录';
+    const md: any = (user as any)?.user_metadata || {};
+    const candidate = (md.full_name || md.name || md.nickname || '').trim?.();
+    if (candidate) return candidate;
+    const local = (user.email || '').split('@')[0] || '';
+    const alias = local.replace(/[._]+/g, ' ').trim();
+    if (alias) return alias;
+    return t('myAccount') || '我的账户';
+  }, [user, t]);
+
+  const appName = (Constants?.expoConfig?.name as string) || ((Constants as any)?.manifest?.name) || '记账大师';
+  const version = (Constants?.expoConfig?.version as string) || ((Constants as any)?.manifest?.version) || '';
+
 
   const PWD_KEY = '@account_password_hash_v2';
   const MIGRATION_KEY = '@password_logic_migrated_v2';
@@ -123,16 +212,7 @@ export default function SettingsScreen() {
 
 
 
-  const handleClearData = () => {
-    Alert.alert(
-      t('clearAllData') || 'Clear All Data',
-      t('areYouSureYouWantToClearAllData') || 'This will delete all transactions, accounts, and settings. This action cannot be undone.',
-      [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('clear'), style: 'destructive', onPress: clearAllData },
-      ],
-    );
-  };
+
 
   const handleRemoveEmotion = (id: string, name: string) => {
     Alert.alert(
@@ -167,25 +247,102 @@ export default function SettingsScreen() {
             onPress={() => {
               if (!user) {
                 requireLogin();
+              } else {
+                const md: any = (user as any)?.user_metadata || {};
+                const base = (md.full_name || md.name || md.nickname || (user.email || '').split('@')[0] || '').toString();
+                setEditName(base);
+                setShowEditName(true);
               }
-              // TODO: Add navigation to user profile if logged in
             }}
           >
-            <UserCircle size={48} color={colors.textSecondary} />
+            {user ? (
+              <View style={[styles.avatar, { backgroundColor: bg }]}>
+                <Text style={[styles.avatarText, { color: fg }]}>{initial}</Text>
+              </View>
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: colors.background }]}>
+                <UserCircle size={28} color={colors.textSecondary} />
+              </View>
+            )}
             <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: colors.text }]}>
-                {user ? (user.email || 'User') : t('loginOrRegister')}
+              <Text style={[styles.profileName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="middle">
+                {displayNameLocal || displayName}
               </Text>
-              <Text style={{ color: colors.textSecondary }}>
-                {user ? t('loggedInAccount') : t('guestSubtitle')}
-              </Text>
+              
             </View>
-            <LogIn size={24} color={colors.textSecondary} />
+            <TouchableOpacity
+              onPress={async () => {
+                if (user) {
+                  const r = await signOut();
+                  if (!r.ok) Alert.alert(t('operationFailed') || '操作失败', r.error || '');
+                } else {
+                  requireLogin();
+                }
+              }}
+              style={{ padding: 8, marginLeft: 8 }}
+            >
+              {user ? <LogOut size={22} color={colors.textSecondary} /> : <LogIn size={22} color={colors.textSecondary} />}
+            </TouchableOpacity>
           </TouchableOpacity>
         </Card>
 
-        {/* 外观设置 */}
+        {/* Account Management */}
         <Card padding={0} style={{ marginBottom: 16 }}>
+          <View style={styles.row}>
+            <View style={styles.rowLeft}>
+              <View style={[styles.iconBg, { backgroundColor: colors.primary + '20' }]}>
+                <Wallet size={20} color={colors.primary} />
+              </View>
+              <Text style={[styles.rowTitle, { color: colors.text }]}>{t('accountManagement')}</Text>
+            </View>
+            <View style={styles.rowRight}>
+              <TouchableOpacity
+                onPress={() => {
+                  const proceed = () => {
+                    if (!pwdSet) setShowPwdSetup(true);
+                    else { setPwdInput(''); setShowPwdPrompt(true); }
+                  };
+                  try { Vibration.vibrate?.(10); } catch {}
+                  lockAnim.setValue(0);
+                  Animated.timing(lockAnim, {
+                    toValue: 1,
+                    duration: 200,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                  }).start(() => {
+                    proceed();
+                    // 重置以便下次点击可再次播放
+                    lockAnim.setValue(0);
+                  });
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityLabel={t('setPassword') || '设置密码'}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, paddingHorizontal: 6, marginRight: -12 }}
+                activeOpacity={0.8}
+              >
+                <Animated.View
+                  style={{
+                    width: 24,
+                    height: 24,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    transform: [{ rotate: lockRotate as any }, { scale: lockScale as any }],
+                  }}
+                >
+                  <Animated.View style={{ position: 'absolute', opacity: lockOpacity as any }}>
+                    <Lock size={18} color={colors.primary} />
+                  </Animated.View>
+                  <Animated.View style={{ position: 'absolute', opacity: unlockOpacity as any }}>
+                    <Unlock size={18} color={colors.primary} />
+                  </Animated.View>
+                </Animated.View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Card>
+
+        {/* 外观设置 */}
+        <Card padding={0} style={{ marginBottom: 8 }}>
           <SettingRow
             icon={<Sun size={20} color={colors.primary} />}
             title={t('theme')}
@@ -208,62 +365,33 @@ export default function SettingsScreen() {
             onPress={() => setShowLanguageModal(true)}
           />
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
-          {/* Account Management row with right lock button */}
-          <View style={styles.row}>
-            <TouchableOpacity onPress={() => { if (!pwdSet) setShowPwdSetup(true); else { setPwdInput(''); setShowPwdPrompt(true); } }} style={styles.rowLeft} activeOpacity={0.8}>
-              <View style={[styles.iconBg, { backgroundColor: colors.primary + '20' }]}>
-                <Wallet size={20} color={colors.primary} />
-              </View>
-              <Text style={[styles.rowTitle, { color: colors.text }]}>{t('accountManagement')}</Text>
-            </TouchableOpacity>
-            <View style={styles.rowRight}>
-              <TouchableOpacity
-                onPress={() => {
-                  if (!pwdSet) setShowPwdSetup(true);
-                  else { setPwdInput(''); setShowPwdPrompt(true); }
-                }}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, paddingHorizontal: 6, marginRight: -12 }}
-              >
-                <Lock size={18} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
             icon={<Smile size={20} color={colors.primary} />}
             title={t('emotionTagManagement')}
             onPress={() => router.push('/emotions')}
           />
-        </Card>
-
-
-
-        {/* 数据管理 */}
-        <Card padding={0} style={{ marginBottom: 16 }}>
-          <SettingRow
-            icon={<ArrowUpFromLine size={20} color={colors.primary} />}
-            title={t('exportDataJSON')}
-            onPress={() => { try { const json = exportData(); setExportJson(json); setShowExportModal(true); } catch { Alert.alert(t('exportFailed') || 'Export failed'); } }}
-          />
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
-            icon={<ArrowDownToLine size={20} color={colors.primary} />}
-            title={t('importData')}
-            onPress={() => { setShowImportModal(true); }}
+            icon={<ArrowUpFromLine size={20} color={colors.primary} />}
+            title={t('importExport') || '导入 / 导出'}
+            onPress={() => setShowDataModal(true)}
           />
         </Card>
 
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginHorizontal: 16, marginTop: 6 }} />
+        <View style={{ alignItems: 'center', paddingVertical: 6 }}>
+          <Text style={{ color: colors.textTertiary, fontSize: 11 }}>
+            {appName}{version ? ` v${version}` : ''}{(Constants as any)?.nativeBuildVersion ? ` (${(Constants as any).nativeBuildVersion})` : ''}
+          </Text>
+        </View>
 
 
-        {/* 危险区域 */}
-        <Card padding={0} style={{ marginBottom: 16 }}>
-           <SettingRow
-            icon={<AlertTriangle size={20} color={colors.expense} />}
-            title={t('clearAllData') || 'Clear All Data'}
-            onPress={handleClearData}
-            titleColor={colors.expense}
-          />
-        </Card>
+
+
+
+
+
+
 
 
       </ScrollView>
@@ -344,19 +472,88 @@ export default function SettingsScreen() {
 
 
 
-      {/* Export Modal */}
-      <Modal transparent visible={showExportModal} animationType="fade" onRequestClose={() => setShowExportModal(false)}>
+      {/* Data Modal: Import / Export */}
+      <Modal transparent visible={showDataModal} animationType="fade" onRequestClose={() => setShowDataModal(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('exportDataJSON')}</Text>
-            <ScrollView style={[styles.jsonBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text selectable style={{ color: colors.text }}>{exportJson}</Text>
-            </ScrollView>
-            <TouchableOpacity style={styles.modalOption} onPress={async () => { try { await Share.share({ message: exportJson }); } catch {} }}>
-              <Text style={{ color: colors.textSecondary }}>Share</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('importExport') || '导入 / 导出'}</Text>
+
+            <TouchableOpacity
+              disabled={busyImport}
+              style={[styles.modalOption, { opacity: busyImport ? 0.6 : 1 }]}
+              onPress={async () => {
+                try {
+                  setBusyImport(true);
+                  const res: any = await DocumentPicker.getDocumentAsync({ type: 'application/json', multiple: false, copyToCacheDirectory: true });
+                  if (res.canceled) { return; }
+                  const asset = (res.assets && res.assets[0]) || res;
+                  const uri = asset?.uri;
+                  if (!uri) { Alert.alert(t('importFailed') || '导入失败'); return; }
+                  const content = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
+                  const r = importData(content);
+                  if ((r as any)?.ok) {
+                    Alert.alert(t('success') || '成功', t('importSuccess') || '导入成功');
+                  } else {
+                    Alert.alert(t('importFailed') || '导入失败', (r as any)?.error || (t('invalidJSON') || 'JSON 内容不合法'));
+                  }
+                } catch (e: any) {
+                  Alert.alert(t('importFailed') || '导入失败', e?.message || '');
+                } finally {
+                  setBusyImport(false);
+                  setShowDataModal(false);
+                }
+              }}
+            >
+              <Text style={{ color: colors.text }}>{t('importJSONFile') || '从 JSON 文件导入'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowExportModal(false)}>
-              <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
+
+            <TouchableOpacity
+              disabled={busyExport}
+              style={[styles.modalOption, { borderColor: colors.primary, backgroundColor: colors.primary + '20', opacity: busyExport ? 0.6 : 1 }]}
+              onPress={async () => {
+                try {
+                  setBusyExport(true);
+                  const json = exportData();
+                  const fileName = `jizhang_export_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+                  const baseDir = FileSystem.cacheDirectory || FileSystem.documentDirectory || '';
+                  const tmpUri = baseDir + fileName;
+                  await FileSystem.writeAsStringAsync(tmpUri, json, { encoding: FileSystem.EncodingType.UTF8 });
+
+                  if (Platform.OS === 'android' && (FileSystem as any).StorageAccessFramework) {
+                    const SAF: any = (FileSystem as any).StorageAccessFramework;
+                    const permissions = await SAF.requestDirectoryPermissionsAsync();
+                    if (permissions.granted) {
+                      const targetUri = await SAF.createFileAsync(permissions.directoryUri, fileName, 'application/json');
+                      const content = await FileSystem.readAsStringAsync(tmpUri, { encoding: FileSystem.EncodingType.UTF8 });
+                      await SAF.writeAsStringAsync(targetUri, content);
+                      Alert.alert(t('success') || '成功', t('exportSuccess') || '已导出 JSON 文件');
+                    } else {
+                      if (await Sharing.isAvailableAsync()) {
+                        await Sharing.shareAsync(tmpUri, { mimeType: 'application/json', dialogTitle: t('exportDataJSON') || '导出 JSON' });
+                      } else {
+                        Alert.alert(t('exportFailed') || '导出失败', t('noSharingAvailable') || '当前环境不支持保存文件');
+                      }
+                    }
+                  } else {
+                    if (await Sharing.isAvailableAsync()) {
+                      await Sharing.shareAsync(tmpUri, { mimeType: 'application/json', dialogTitle: t('exportDataJSON') || '导出 JSON' });
+                    } else {
+                      Alert.alert(t('exportFailed') || '导出失败', t('noSharingAvailable') || '当前环境不支持保存文件');
+                    }
+                  }
+                } catch (e: any) {
+                  Alert.alert(t('exportFailed') || '导出失败', e?.message || '');
+                } finally {
+                  setBusyExport(false);
+                  setShowDataModal(false);
+                }
+              }}
+            >
+              <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('exportJSONFile') || '导出为 JSON 文件'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowDataModal(false)}>
+              <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -572,35 +769,46 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* Import Modal */}
-      <Modal transparent visible={showImportModal} animationType="fade" onRequestClose={() => setShowImportModal(false)}>
+
+
+      {/* Edit Nickname Modal */}
+      <Modal transparent visible={showEditName} animationType="fade" onRequestClose={() => setShowEditName(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('importData')}</Text>
-            <Text style={{ color: colors.textSecondary }}>Paste JSON below</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('editNickname') || '编辑昵称'}</Text>
             <TextInput
-              multiline
-              value={importText}
-              onChangeText={setImportText}
-              placeholder="Paste exported JSON here"
+              placeholder={t('enterNickname') || '请输入昵称'}
               placeholderTextColor={colors.textSecondary}
-              style={[styles.textArea, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
+              value={editName}
+              onChangeText={setEditName}
+              style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
             />
-            <TouchableOpacity style={styles.modalOption} onPress={() => {
-              const res = importData(importText);
-              if ((res as any)?.ok) {
-                Alert.alert(t('importSuccess') || 'Import succeeded');
-                setShowImportModal(false);
-                setImportText('');
-              } else {
-                Alert.alert(t('importFailed') || 'Import failed', (res as any)?.error || 'Please check the JSON content');
-              }
-            }}>
-              <Text style={{ color: colors.text }}>{t('importData')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowImportModal(false)}>
-              <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+              <TouchableOpacity onPress={() => setShowEditName(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
+                <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  const name = (editName || '').trim();
+                  if (!name) { Alert.alert(t('tip') || '提示', t('fillAllFields') || '请填写完整'); return; }
+                  try {
+                    const supa = getSupabase();
+                    const { error } = await supa.auth.updateUser({ data: { full_name: name } });
+                    if (error) {
+                      Alert.alert(t('operationFailed') || '操作失败', error.message || '');
+                    } else {
+                      setDisplayNameLocal(name);
+                      setShowEditName(false);
+                    }
+                  } catch (e: any) {
+                    Alert.alert(t('operationFailed') || '操作失败', e?.message || '');
+                  }
+                }}
+                style={{ paddingVertical: 8, paddingHorizontal: 12, backgroundColor: colors.primary, borderRadius: 8 }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '600' }}>{t('save') || '保存'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -615,7 +823,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   profileSection: {
     flexDirection: 'row',
@@ -625,9 +835,21 @@ const styles = StyleSheet.create({
   profileInfo: {
     flex: 1,
   },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
+    flexShrink: 1,
   },
   row: {
     flexDirection: 'row',

@@ -446,6 +446,11 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
           if (debt - 1e-8 > acc.creditLimit) {
             throw new Error('CREDIT_LIMIT_EXCEEDED');
           }
+        } else if (acc && (acc.type === 'cash' || acc.type === 'debit_card' || acc.type === 'prepaid_card')) {
+          const available = getAccountBalance(accId);
+          if (available < transaction.amount - 1e-8) {
+            throw new Error('INSUFFICIENT_FUNDS');
+          }
         }
       }
     } catch (e) {
@@ -565,14 +570,36 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       );
     });
 
-    const income = monthlyTransactions
+    // 排除转账本金，仅保留普通收支
+    const normalTx = monthlyTransactions.filter(t => !t.isTransfer && t.category !== 'transfer');
+
+    const income = normalTx
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const expense = monthlyTransactions
+    const expenseBase = normalTx
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0);
 
+    // 仅计入转账手续费：同一 transferGroupId 下的支出-收入 即为手续费
+    const transferGroups = new Map<string, { in?: number; out?: number }>();
+    monthlyTransactions
+      .filter(t => t.isTransfer)
+      .forEach(t => {
+        const gid = t.transferGroupId || '';
+        if (!gid) return;
+        const g = transferGroups.get(gid) || {};
+        if (t.type === 'income') g.in = (g.in ?? 0) + t.amount;
+        else g.out = (g.out ?? 0) + t.amount;
+        transferGroups.set(gid, g);
+      });
+    let transferFees = 0;
+    transferGroups.forEach(g => {
+      const fee = Math.max(0, (g.out ?? 0) - (g.in ?? 0));
+      transferFees += fee;
+    });
+
+    const expense = expenseBase + transferFees;
     const balance = income - expense;
 
     return { income, expense, balance };
@@ -593,27 +620,54 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
 
     const statsByCurrency = new Map<Currency, { income: number; expense: number; firstAccountDate: Date }>();
 
-    monthlyTransactions.forEach(t => {
-      const account = accounts.find(a => a.id === t.accountId);
-      const currency = (t as any).currency || account?.currency;
-      if (!currency) return;
-
-      if (!statsByCurrency.has(currency)) {
-        const accountsForCurrency = accounts.filter(a => a.currency === currency);
+    const ensureCurrency = (cur: Currency) => {
+      if (!statsByCurrency.has(cur)) {
+        const accountsForCurrency = accounts.filter(a => a.currency === cur);
         const firstAccountDate = accountsForCurrency.length > 0
-          ? accountsForCurrency.reduce((earliest, current) => 
+          ? accountsForCurrency.reduce((earliest, current) =>
               new Date(current.createdAt) < new Date(earliest.createdAt) ? current : earliest
             ).createdAt
           : new Date();
-
-        statsByCurrency.set(currency, { income: 0, expense: 0, firstAccountDate: new Date(firstAccountDate) });
+        statsByCurrency.set(cur, { income: 0, expense: 0, firstAccountDate: new Date(firstAccountDate) });
       }
+      return statsByCurrency.get(cur)!;
+    };
 
-      const stats = statsByCurrency.get(currency)!;
-      if (t.type === 'income') {
-        stats.income += t.amount;
-      } else {
-        stats.expense += t.amount;
+    // 1) 普通交易：直接计入
+    monthlyTransactions
+      .filter(t => !t.isTransfer && t.category !== 'transfer')
+      .forEach(t => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const cur = ((t as any).currency || account?.currency) as Currency | undefined;
+        if (!cur) return;
+        const stats = ensureCurrency(cur);
+        if (t.type === 'income') stats.income += t.amount;
+        else stats.expense += t.amount;
+      });
+
+    // 2) 转账手续费：按支出侧账户币种计入 expense
+    const groups = new Map<string, { income?: Transaction; expense?: Transaction }>();
+    monthlyTransactions
+      .filter(t => t.isTransfer)
+      .forEach(t => {
+        const gid = t.transferGroupId || '';
+        if (!gid) return;
+        const g = groups.get(gid) || {};
+        if (t.type === 'income') g.income = t;
+        else g.expense = t;
+        groups.set(gid, g);
+      });
+
+    groups.forEach(g => {
+      const outAmt = g.expense?.amount ?? 0;
+      const inAmt = g.income?.amount ?? 0;
+      const fee = Math.max(0, outAmt - inAmt);
+      if (fee > 0 && g.expense) {
+        const acc = accounts.find(a => a.id === g.expense!.accountId);
+        const cur = acc?.currency as Currency | undefined;
+        if (!cur) return;
+        const stats = ensureCurrency(cur);
+        stats.expense += fee;
       }
     });
 
@@ -792,6 +846,11 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     if ((account.type === 'cash' || account.type === 'debit_card' || account.type === 'prepaid_card') && (account.initialBalance ?? 0) < 0) {
       throw new Error('INITIAL_BALANCE_NEGATIVE');
     }
+    // 名称唯一性兜底（忽略大小写与空白）
+    const nameKey = String(account.name ?? '').trim().toLowerCase();
+    if (accounts.some(a => String(a.name ?? '').trim().toLowerCase() === nameKey)) {
+      throw new Error('ACCOUNT_NAME_DUPLICATE');
+    }
     const a: Account = { ...account, id: genUUIDv4(), createdAt: new Date(), archived: false };
     setAccounts(prev => {
       const next = [a, ...prev];
@@ -864,12 +923,25 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     })();
   };
 
+  // 预计算每个账户余额，避免在列表渲染时反复全量遍历交易
+  const balancesByAccount = useMemo(() => {
+    const map = new Map<string, number>();
+    // 基于初始余额初始化
+    accounts.forEach(a => {
+      map.set(a.id, (a.initialBalance ?? 0));
+    });
+    // 累加交易变动
+    transactions.forEach(t => {
+      if (!t.accountId) return;
+      const prev = map.get(t.accountId) ?? 0;
+      const delta = t.type === 'income' ? t.amount : -t.amount;
+      map.set(t.accountId, prev + delta);
+    });
+    return map;
+  }, [accounts, transactions]);
+
   const getAccountBalance = (accountId: string) => {
-    const base = accounts.find(a => a.id === accountId)?.initialBalance ?? 0;
-    const delta = transactions
-      .filter(t => t.accountId === accountId)
-      .reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
-    return base + delta;
+    return balancesByAccount.get(accountId) ?? 0;
   };
 
   const getNetWorth = () => {

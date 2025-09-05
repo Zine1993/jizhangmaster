@@ -83,7 +83,9 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <GradientHeader
-        variant="userInfo"
+        variant="emojiTicker"
+
+        messageIntervalMs={6000}
         right={
           <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
             <Settings size={24} color="#fff" />
@@ -172,6 +174,7 @@ export default function HomeScreen() {
       <AddTransactionModal
         visible={showAddModal}
         onClose={handleCloseModal}
+        autoFocusAmount={params.from === 'tab'}
       />
     </SafeAreaView>
   );

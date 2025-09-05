@@ -27,7 +27,7 @@ const EX = (Constants?.expoConfig?.extra ?? {}) as any;
 const AUTH_REDIRECT: string =
   (process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL as string) ||
   (EX?.authRedirectUrl as string) ||
-  'https://YOUR_HOST/auth/reset.html'; // 请替换为你托管的 HTTPS 中转页地址
+  'https://zine1993.github.io/jizhangmaster/auth/reset.html'; // GitHub Pages 中转页
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => (isSupabaseConfigured() ? getSupabase() : null as any), []);

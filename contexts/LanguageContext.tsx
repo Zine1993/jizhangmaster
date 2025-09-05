@@ -155,7 +155,7 @@ const translations = {
     
     // Header
     greetTitle: 'Enjoy every day',
-    guestSubtitle: 'Sign in to keep your data safe',
+
     logout: 'Sign out',
     insights: 'Insights',
     recordsSubtitle: 'Your income and expense records',
@@ -209,6 +209,11 @@ const translations = {
     authTitle: 'MoodLedger',
     authSubtitle: 'Track spending, understand emotions, improve life',
     slogan: 'Your wallet writes, your heart speaks',
+    warm_1: 'May the world treat you gently',
+    warm_2: 'Stay energetic today',
+    warm_3: 'Bookkeeping is saying hi to your future self',
+    warm_4: 'Spend wisely, live brightly',
+    warm_5: 'Small goals, achieved step by step',
     
     // Initial Balance
     initialBalance: 'Initial Balance',
@@ -221,7 +226,7 @@ const translations = {
     continue: 'Continue',
     skip: 'Skip',
     
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: 'Simple and easy-to-use personal finance tool',
     
     // Settings extensions
@@ -258,6 +263,12 @@ const translations = {
     importedPrefix: 'Imported ',
     importedSuffix: ' records',
     importFailed: 'Import failed',
+    invalidJSON: 'Invalid JSON content',
+    importExport: 'Import / Export',
+    importJSONFile: 'Import from JSON file',
+    exportJSONFile: 'Export to JSON file',
+    exportSuccess: 'Export succeeded',
+    noSharingAvailable: 'Saving is not available on this device',
     checkJson: 'Please check the JSON content',
     emotionTagManagement: 'Emotion tag management',
     add: 'Add',
@@ -271,8 +282,8 @@ const translations = {
     resetEmotionTagsToDefault: 'Reset to default emotions',
     resetEmotionTagsRestored: 'Default emotions restored',
     usageDays: 'Usage days',
-    clearAllData: 'Clear All Data',
-    areYouSureYouWantToClearAllData: 'This will delete all transactions, accounts, and settings. This action cannot be undone.',
+
+
     clear: 'Clear',
     remove: 'Remove',
     areYouSureYouWantToRemoveThisTag: 'Are you sure you want to remove this tag?',
@@ -439,7 +450,12 @@ const translations = {
     
     // Header
     greetTitle: '开心生活每一天',
-    guestSubtitle: '登录数据不丢失',
+    warm_1: '愿你被世界温柔以待',
+    warm_2: '今天也要元气满满',
+    warm_3: '记账是和未来的自己打招呼',
+    warm_4: '花钱有度，生活有光',
+    warm_5: '小目标，一点点实现',
+
     logout: '退出',
     insights: '洞察',
     recordsSubtitle: '你的收支记录',
@@ -505,7 +521,7 @@ const translations = {
     continue: '继续',
     skip: '跳过',
     
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: '简单易用的个人财务管理工具',
     
     // Settings 扩展
@@ -543,6 +559,12 @@ const translations = {
     importedSuffix: ' 条记录',
     importFailed: '导入失败',
     checkJson: '请检查 JSON 内容',
+    invalidJSON: 'JSON 内容不合法',
+    importExport: '导入 / 导出',
+    importJSONFile: '从 JSON 文件导入',
+    exportJSONFile: '导出为 JSON 文件',
+    exportSuccess: '导出成功',
+    noSharingAvailable: '当前环境不支持保存文件',
     emotionTagManagement: '情绪标签管理',
     add: '添加',
     addEmotionTag: '添加情绪标签',
@@ -555,8 +577,8 @@ const translations = {
     resetEmotionTagsToDefault: '恢复默认情绪',
     resetEmotionTagsRestored: '已恢复默认情绪',
     usageDays: '使用天数',
-    clearAllData: '清空所有数据',
-    areYouSureYouWantToClearAllData: '将删除所有交易、账户和设置，此操作不可恢复。',
+
+
     clear: '清空',
     remove: '移除',
     areYouSureYouWantToRemoveThisTag: '确定要移除此标签吗？',
@@ -727,7 +749,7 @@ const translations = {
     
     // Header
     greetTitle: 'Disfruta cada día',
-    guestSubtitle: 'Inicia sesión para mantener tus datos seguros',
+
     logout: 'Cerrar sesión',
     insights: 'Ideas',
     recordsSubtitle: 'Tus registros de ingresos y gastos',
@@ -793,7 +815,7 @@ const translations = {
     continue: 'Continuar',
     skip: 'Saltar',
     
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: 'Herramienta de finanzas personales simple y fácil de usar',
     
     // Settings extensions
@@ -963,7 +985,7 @@ const translations = {
     
     // Header
     greetTitle: 'Profitez de chaque jour',
-    guestSubtitle: 'Connectez-vous pour sécuriser vos données',
+
     logout: 'Se déconnecter',
     insights: 'Aperçus',
     recordsSubtitle: 'Vos enregistrements de revenus et dépenses',
@@ -1029,7 +1051,7 @@ const translations = {
     continue: 'Continuer',
     skip: 'Ignorer',
     
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: 'Outil de finances personnelles simple et facile à utiliser',
     
     // Settings extensions
@@ -1188,7 +1210,7 @@ const translations = {
     
     // Header
     greetTitle: 'Disfruta cada día',
-    guestSubtitle: 'Inicia sesión para proteger tus datos',
+
     logout: 'Cerrar sesión',
     insights: 'Ideas',
     recordsSubtitle: 'Tus registros de ingresos y gastos',
@@ -1238,7 +1260,7 @@ const translations = {
     continue: 'Continuar',
     skip: 'Omitir',
     
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: 'Herramienta financiera simple y fácil de usar',
     
     // Settings extensions
@@ -1409,7 +1431,7 @@ const translations = {
     
     // Header
     greetTitle: 'Genießen Sie jeden Tag',
-    guestSubtitle: 'Melden Sie sich an, um Ihre Daten zu sichern',
+
     logout: 'Abmelden',
     insights: 'Einblicke',
     recordsSubtitle: 'Ihre Einnahmen- und Ausgabenaufzeichnungen',
@@ -1475,7 +1497,7 @@ const translations = {
     continue: 'Weiter',
     skip: 'Überspringen',
     
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: 'Einfache und benutzerfreundliche Finanz-App',
     
     // Settings extensions
@@ -1648,7 +1670,7 @@ const translations = {
 
     // Header
     greetTitle: '毎日を楽しもう',
-    guestSubtitle: 'サインインしてデータを安全に',
+
     logout: 'ログアウト',
     insights: 'インサイト',
     recordsSubtitle: 'あなたの収支記録',
@@ -1714,7 +1736,7 @@ const translations = {
     continue: '続行',
     skip: 'スキップ',
 
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: 'シンプルで使いやすい家計管理ツール',
 
     // Settings extensions
@@ -1889,7 +1911,7 @@ const translations = {
     
     // Header
     greetTitle: '매일을 즐기세요',
-    guestSubtitle: '로그인하여 데이터를 안전하게',
+
     logout: '로그아웃',
     insights: '인사이트',
     recordsSubtitle: '수입과 지출 기록',
@@ -1955,7 +1977,7 @@ const translations = {
     continue: '계속',
     skip: '건너뛰기',
     
-    appVersion: 'v1.0.7',
+    appVersion: 'v1.1.1',
     appDescription: '간단하고 사용하기 쉬운 개인 재무 도구',
     
     // Settings extensions

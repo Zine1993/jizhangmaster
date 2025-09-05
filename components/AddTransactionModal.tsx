@@ -36,6 +36,7 @@ interface AddTransactionModalProps {
   visible: boolean;
   onClose: () => void;
   editTransaction?: Transaction;
+  autoFocusAmount?: boolean;
 }
 
 const expenseCategories = [
@@ -55,9 +56,9 @@ const incomeCategories = [
   'other',
 ];
 
-export default function AddTransactionModal({ visible, onClose, editTransaction }: AddTransactionModalProps) {
+export default function AddTransactionModal({ visible, onClose, editTransaction, autoFocusAmount }: AddTransactionModalProps) {
   const { t } = useLanguage();
-  const { addTransaction, updateTransaction, getCurrencySymbol, emotions, accounts } = useTransactions();
+  const { addTransaction, updateTransaction, getCurrencySymbol, emotions, accounts, getAccountBalance } = useTransactions();
   const { colors } = useTheme();
   const { triggerEmojiRain } = useEmojiRain();
 
@@ -107,7 +108,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
       setCategory('food');
       setDescription('');
       setEmotion('');
-      setAccountId((accounts?.[0]?.id) || '');
+      if (!accountId) setAccountId((accounts?.[0]?.id) || '');
     }
   }, [editTransaction, visible]);
 
@@ -151,6 +152,15 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
     const list = type === 'expense' ? expenseCategories : incomeCategories;
     const safeCategory = (category && list.includes(category)) ? category : list[0];
 
+    // 余额不能为负校验：现金/借记卡/预存卡，支出不得导致余额为负
+    if (type === 'expense' && finalAccount && ['cash','debit_card','prepaid_card'].includes(finalAccount.type)) {
+      const available = getAccountBalance(finalAccountId);
+      if (available < parseFloat(amount) - 1e-8) {
+        Alert.alert(t('insufficientFunds') || '余额不足');
+        return;
+      }
+    }
+
     const tx: Omit<Transaction, 'id'> = {
       type,
       amount: parseFloat(amount),
@@ -166,7 +176,17 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
     if (isEditing && editTransaction) {
       updateTransaction(editTransaction.id, tx);
     } else {
-      addTransaction(tx);
+      try {
+        addTransaction(tx);
+      } catch (e: any) {
+        const msg = String(e?.message || '');
+        if (msg === 'INSUFFICIENT_FUNDS' || msg === 'CREDIT_LIMIT_EXCEEDED') {
+          Alert.alert(t('insufficientFunds') || '余额不足');
+          return;
+        }
+        Alert.alert(t('operationFailed') || '操作失败', msg);
+        return;
+      }
       // 触发表情雨：根据所选情绪名称在有效情绪中查找 emoji，找不到则使用默认
       const emojiChar = (effectiveEmotions.find(e => e.name === (emotion || ''))?.emoji) || '🙂';
       triggerEmojiRain(emojiChar, { count: 16, duration: 3000, size: 28 });
@@ -308,7 +328,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction 
                 placeholder="0.00"
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="decimal-pad"
-                autoFocus={false}
+                autoFocus={!!autoFocusAmount}
               />
             </View>
           </View>

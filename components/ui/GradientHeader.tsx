@@ -1,5 +1,5 @@
-import React, { ReactNode, useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { Mail } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -18,11 +18,13 @@ type Props = {
   right?: ReactNode;
   height?: number;
   children?: ReactNode;
-  variant?: 'default' | 'userInfo';
+  variant?: 'default' | 'userInfo' | 'emojiTicker';
   centered?: boolean;
   centerTitle?: boolean;
   childrenFirst?: boolean;
   shape?: 'flat' | 'wave';
+  messages?: string[];
+  messageIntervalMs?: number;
 };
 
 const StatusBarSync = ({ color }: { color: string }) => {
@@ -37,12 +39,41 @@ const StatusBarSync = ({ color }: { color: string }) => {
   );
 };
 
-export default function GradientHeader({ title, subtitle, left, right, height = 100, children, variant = 'default', centered = false, centerTitle = false, childrenFirst = false, shape = 'wave' }: Props) {
+const defaultWarmMessages = [
+  '愿你被世界温柔以待',
+  '今天也要元气满满',
+  '记账是和未来的自己打招呼',
+  '花钱有度，生活有光',
+  '小目标，一点点实现'
+];
+
+export default function GradientHeader({
+  title,
+  subtitle,
+  left,
+  right,
+  height = 100,
+  children,
+  variant = 'default',
+  centered = false,
+  centerTitle = false,
+  childrenFirst = false,
+  shape = 'wave',
+  messages,
+  messageIntervalMs
+}: Props) {
   const { colors } = useTheme();
   const { user, signOut } = useAuth();
   const { getEmotionStats } = useTransactions();
   const { t } = useLanguage();
   const [avatarEmoji, setAvatarEmoji] = useState('😊');
+  const msgs = useMemo(() => {
+    if (messages && messages.length > 0) return messages;
+    return [t('warm_1'), t('warm_2'), t('warm_3'), t('warm_4'), t('warm_5')];
+  }, [messages, t]);
+  const intervalMs = Math.max(1200, messageIntervalMs ?? 6000);
+  const [msgIndex, setMsgIndex] = useState(0);
+  const fade = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const updateEmoji = () => {
@@ -70,7 +101,19 @@ export default function GradientHeader({ title, subtitle, left, right, height = 
   };
 
   const insets = useSafeAreaInsets();
-  const displayHeight = Math.max(0, (variant === 'userInfo' ? 81 : height) - 5);
+  const displayHeight = Math.max(0, ((variant === 'userInfo' ? 81 : height)) - 5);
+
+  // 轮播动画
+  useEffect(() => {
+    if (variant !== 'emojiTicker') return;
+    const id = setInterval(() => {
+      Animated.timing(fade, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
+        setMsgIndex((i) => (i + 1) % msgs.length);
+        Animated.timing(fade, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      });
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [variant, intervalMs, msgs.length, fade]);
 
   return (
     <View style={{ backgroundColor: colors.background }}>
@@ -118,6 +161,24 @@ export default function GradientHeader({ title, subtitle, left, right, height = 
                     </View>
                   </View>
                 </View>
+                {right}
+              </View>
+            </View>
+          ) : variant === 'emojiTicker' ? (
+            <View style={styles.emojiTickerWrap}>
+              <View style={{ width: 44, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={styles.emojiBig}>{avatarEmoji}</Text>
+              </View>
+              <Animated.Text
+                style={[styles.tickerText, { opacity: fade, flex: 1, textAlign: 'left', paddingHorizontal: 8 }]}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                allowFontScaling
+              >
+                {msgs[msgIndex]}
+              </Animated.Text>
+              <View style={{ marginLeft: 8 }}>
                 {right}
               </View>
             </View>
@@ -258,5 +319,27 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: -1,
     height: 28,
+  },
+  emojiTickerWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 6,
+    paddingBottom: 8,
+  },
+  emojiBigWrap: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  emojiBig: {
+    fontSize: 42,
+    marginLeft: -10,
+  },
+  tickerText: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 12,
   },
 });
