@@ -4,9 +4,11 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Search } from 'lucide-react-native';
+import { Plus, Search, Settings } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions, Transaction } from '@/contexts/TransactionContext';
 import AddTransactionModal from '@/components/AddTransactionModal';
@@ -18,6 +20,7 @@ import Fab from '@/components/ui/Fab';
 
 export default function TransactionsScreen() {
   const { t } = useLanguage();
+  const router = useRouter();
   const { transactions } = useTransactions();
   const { colors } = useTheme();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -61,8 +64,8 @@ export default function TransactionsScreen() {
   };
 
   const renderSectionHeader = (title: string) => (
-    <View style={[styles.sectionHeader, { backgroundColor: colors.sectionBackground }]}>
-      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{title}</Text>
+    <View style={[styles.sectionHeader, { backgroundColor: colors.sectionBackground }]} >
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]} > { title } </Text>
     </View>
   );
 
@@ -76,35 +79,39 @@ export default function TransactionsScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <GradientHeader variant="userInfo" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} >
+      <GradientHeader
+        variant="userInfo"
+        right={
+          <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
+            <Settings size={24} color="#fff" />
+          </TouchableOpacity>
+        }
+      />
       <Card padding={16}>
-        <Text style={[styles.pageTitle, { color: colors.text }]}>{t('transactions')}</Text>
-        <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }}>{t('recordsSubtitle')}</Text>
+        <Text style={[styles.pageTitle, { color: colors.text }]} > { t('transactions') } </Text>
+        <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }} > { t('recordsSubtitle') } </Text>
       </Card>
       {transactions.length === 0 ? (
         <Card>
           <View style={styles.emptyState}>
             <Search size={48} color={colors.textTertiary} />
-            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>{t('noTransactions')}</Text>
-            <Text style={[styles.emptyStateSubText, { color: colors.textTertiary }]}>{t('addFirst')}</Text>
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]} > { t('noTransactions') } </Text>
+            <Text style={[styles.emptyStateSubText, { color: colors.textTertiary }]} > { t('addFirst') } </Text>
           </View>
         </Card>
       ) : (
-        <Card padding={0}>
+        <Card padding={0} style={{ flex: 1 }}>
           <FlatList
             data={sections}
             renderItem={renderSection}
             keyExtractor={item => item.title}
-            style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16 }}
+            style={{ paddingHorizontal: 16, paddingTop: 12 }}
+            contentContainerStyle={{ paddingBottom: 95 }}
             showsVerticalScrollIndicator={false}
           />
         </Card>
       )}
-
-      <Fab onPress={() => { setEditingTransaction(undefined); setShowAddModal(true); }}>
-        <Plus size={28} color="#fff" />
-      </Fab>
 
       <AddTransactionModal
         visible={showAddModal}

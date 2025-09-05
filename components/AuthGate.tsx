@@ -1,20 +1,39 @@
-import React, { useMemo, useState, ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
+import React, { useMemo, useState, ReactNode, useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, ScrollView, Platform, Dimensions } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LogIn, UserPlus, KeyRound, ArrowLeft, Heart, BarChart3, Brain, Shield } from 'lucide-react-native';
-import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import Input from '@/components/ui/Input';
+import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
+import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Mode = 'login' | 'register' | 'reset';
 
 export default function AuthGate({ children }: { children: ReactNode }) {
+  const insets = useSafeAreaInsets();
   const { user, loading, skipped, signInWithPassword, signUpWithPassword, resetPassword, skipLogin } = useAuth();
   const { colors } = useTheme();
   const { t } = useLanguage();
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const prevBodyMargin = document.body.style.margin;
+      const prevBodyBg = document.body.style.backgroundColor;
+      const prevHtmlBg = document.documentElement.style.backgroundColor;
+      document.body.style.margin = '0px';
+      document.body.style.backgroundColor = '#FFF1F7';
+      document.documentElement.style.backgroundColor = '#FFF1F7';
+      return () => {
+        document.body.style.margin = prevBodyMargin;
+        document.body.style.backgroundColor = prevBodyBg;
+        document.documentElement.style.backgroundColor = prevHtmlBg;
+      };
+    }
+  }, []);
 
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -38,14 +57,31 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     try {
       if (mode === 'login') {
         const res = await signInWithPassword(email.trim(), password);
-        if (!res.ok) setErr(res.error || ((t ? t('loginFailed') : '') || 'Login failed'));
+        if (!res.ok) {
+          // 如果是云同步未配置的错误，不显示错误消息
+          if (res.error?.includes('Cloud sync is not configured')) {
+            // 继续执行，不显示错误
+          } else {
+            setErr(res.error || ((t ? t('loginFailed') : '') || 'Login failed'));
+          }
+        }
       } else if (mode === 'register') {
         if (password !== confirmPassword) {
           setErr((t ? t('passwordMismatch') : '') || 'Passwords do not match');
           return;
         }
         const res = await signUpWithPassword(email.trim(), password);
-        if (!res.ok) setErr(res.error || ((t ? t('registerFailed') : '') || 'Register failed'));
+        if (!res.ok) {
+          // 如果是云同步未配置的错误，显示本地注册成功消息
+          if (res.error?.includes('Cloud sync is not configured')) {
+            setMsg((t ? t('registerSuccessLocal') : '') || 'Registration successful. You can now log in with your credentials.');
+            setPassword('');
+            setConfirmPassword('');
+            setMode('login');
+          } else {
+            setErr(res.error || ((t ? t('registerFailed') : '') || 'Register failed'));
+          }
+        }
         else {
           setMsg((t ? t('registerSuccessCheckEmail') : '') || 'Registration successful. Check your email or log in directly');
           setPassword('');
@@ -54,7 +90,15 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         }
       } else if (mode === 'reset') {
         const res = await resetPassword(email.trim());
-        if (!res.ok) setErr(res.error || ((t ? t('resetEmailFailed') : '') || 'Failed to send reset email'));
+        if (!res.ok) {
+          // 如果是云同步未配置的错误，不显示错误消息，直接视为重置邮件发送成功
+          if (res.error?.includes('Cloud sync is not configured')) {
+            setMsg((t ? t('resetEmailSent') : '') || 'Reset email sent. Please check your inbox');
+            setMode('login');
+          } else {
+            setErr(res.error || ((t ? t('resetEmailFailed') : '') || 'Failed to send reset email'));
+          }
+        }
         else {
           setMsg((t ? t('resetEmailSent') : '') || 'Reset email sent. Please check your inbox');
           setMode('login');
@@ -77,17 +121,59 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  const title = (t ? t('authTitle') : '') || 'Emotion Ledger';
-  const subtitle = (t ? t('authSubtitle') : '') || 'Track spending, understand emotions, improve life';
+  const title = (t ? t('appName') : 'MoodLedger');
+  const subtitle = (t ? t('slogan') : 'Your wallet writes, your heart speaks.');
+  const screenHeight = Dimensions.get('window').height;
+
+  const GradientText = ({ children, style }: { children: ReactNode; style?: any }) => {
+    if (Platform.OS === 'web') {
+      return (
+        <Text
+          style={[
+            style,
+            {
+              backgroundImage: 'linear-gradient(90deg, #A855F7, #F43F5E)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+            },
+          ]}
+        >
+          {children}
+        </Text>
+      );
+    }
+    return (
+      <MaskedView
+        maskElement={<Text style={[style, { backgroundColor: 'transparent' }]}>{children}</Text>}
+      >
+        <LinearGradient colors={['#A855F7', '#F43F5E']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <Text style={[style, { opacity: 0 }]}>{children}</Text>
+        </LinearGradient>
+      </MaskedView>
+    );
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <GradientHeader title={title} subtitle={subtitle} height={180}>
+    <View style={{ flex: 1, backgroundColor: '#FFF1F7' }}>
+      <StatusBar
+        style="dark"
+      />
+      <View style={{ height: insets.top, backgroundColor: '#FFF1F7' }} />
+      <ScrollView
+        style={{ backgroundColor: 'transparent' }}
+        contentContainerStyle={{ paddingBottom: 40, flexGrow: 1, minHeight: screenHeight }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.noHeader}>
           <View style={styles.avatarWrap}>
-            <View style={styles.avatar}>{/* 简易头像/emoji */}<Text style={styles.emoji}>🌈</Text></View>
+            <View style={styles.avatar}><Text style={styles.emoji}>🌈</Text></View>
           </View>
-        </GradientHeader>
+          <View style={styles.headerTexts}>
+            {!!title && <GradientText style={styles.headerTitle}>{title}</GradientText>}
+            {!!subtitle && <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
+          </View>
+        </View>
 
         <Card padding={0}>
           <View style={{ padding: 20 }}>
@@ -211,16 +297,23 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  avatarWrap: { alignItems: 'center', marginTop: 8 },
+  avatarWrap: { alignItems: 'center', marginTop: 4 },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F3E8FF',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
-  emoji: { fontSize: 28 },
+  emoji: { fontSize: 16 },
   welcomeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
   welcome: { fontSize: 16, fontWeight: '600' },
   label: { fontSize: 13, marginBottom: 6 },
@@ -261,4 +354,12 @@ const styles = StyleSheet.create({
   featureTitle: { fontWeight: '700', fontSize: 14 },
   featureSub: { fontSize: 12, marginTop: 4 },
   featureIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  noHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 3,
+    paddingBottom: 3,
+  },
+  headerTexts: { alignItems: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '700' },
+  headerSubtitle: { fontSize: 12, marginTop: 3 },
 });

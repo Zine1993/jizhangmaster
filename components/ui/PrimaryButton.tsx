@@ -20,7 +20,9 @@ export default function PrimaryButton({ label, onPress, disabled, style }: Props
         end={{ x: 1, y: 1 }}
         style={[styles.btn, { opacity: disabled ? 0.6 : 1 }]}
       >
-        <Text style={styles.text}>{label}</Text>
+        <Text style={styles.text} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} allowFontScaling>
+          {label}
+        </Text>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -32,10 +34,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   text: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 16,
+    textAlign: 'center',
   },
 });

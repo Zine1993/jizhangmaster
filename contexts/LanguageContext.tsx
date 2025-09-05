@@ -1,13 +1,71 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
+
+const REGION_TO_CURRENCY: Record<string, string> = {
+  CN: 'CNY',
+  US: 'USD',
+  JP: 'JPY',
+  KR: 'KRW',
+  DE: 'EUR',
+  FR: 'EUR',
+  ES: 'EUR',
+  IT: 'EUR',
+  NL: 'EUR',
+  BE: 'EUR',
+  PT: 'EUR',
+  IE: 'EUR',
+  AT: 'EUR',
+  FI: 'EUR',
+  GR: 'EUR',
+  LU: 'EUR',
+  MT: 'EUR',
+  CY: 'EUR',
+  EE: 'EUR',
+  LV: 'EUR',
+  LT: 'EUR',
+  SK: 'EUR',
+  SI: 'EUR',
+  GB: 'GBP',
+  HK: 'HKD',
+  TW: 'TWD',
+  SG: 'SGD',
+  CA: 'CAD',
+  AU: 'AUD',
+  NZ: 'NZD',
+  CH: 'CHF',
+  SE: 'SEK',
+  NO: 'NOK',
+  DK: 'DKK',
+  IN: 'INR',
+  RU: 'RUB',
+  BR: 'BRL',
+  MX: 'MXN',
+  AR: 'ARS'
+};
+
+const inferRegion = (locs: any[]): string => {
+  const loc = locs?.[0];
+  if (!loc) return '';
+  let r = (loc as any).regionCode || (loc as any).countryCode || '';
+  r = (r || '').toUpperCase();
+  if (!r && typeof (loc as any).languageTag === 'string') {
+    const parts = (loc as any).languageTag.split('-');
+    if (parts.length >= 2) r = parts[1].toUpperCase();
+  }
+  return r;
+};
 
 type Language = 'en' | 'zh' | 'es' | 'fr' | 'de' | 'ja' | 'ko';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  /** @deprecated 请改用 useTransactions().currency 作为唯一货币来源 */
+  currency: string;
+  /** @deprecated 请改用 useTransactions().setCurrency(...) 统一修改货币 */
+  setCurrency: (code: string) => void;
+  t: (key: string, vars?: Record<string, string>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -19,6 +77,10 @@ const translations = {
     transactions: 'Transactions',
     stats: 'Statistics',
     settings: 'Settings',
+    assets: 'Assets',
+    netWorth: 'Net worth',
+    account: 'Account',
+    noAccounts: 'No active accounts',
     
     // Home screen
     balance: 'Balance',
@@ -27,6 +89,7 @@ const translations = {
     thisMonth: 'This Month',
     homeSubtitle: 'Data overview',
     statsSubtitle: 'Global data analysis',
+    settingsSubtitle: 'Customize your experience',
     recentTransactions: 'Recent Transactions',
     noTransactions: 'No transactions yet',
     addFirst: 'Add your first transaction!',
@@ -56,11 +119,26 @@ const translations = {
     freelance: 'Freelance',
     investment: 'Investment',
     other: 'Other',
+    // Transfer
+    transfer: 'Transfer',
+    cannotTransferDifferentCurrency: 'Cannot transfer between different currencies',
+    fromAccount: 'From Account',
+    toAccount: 'To Account',
+    fee: 'Fee',
+    operationSuccess: 'Completed',
+    operationFailed: 'Operation failed',
+    insufficientFunds: 'Insufficient funds',
+    cannotTransferSameAccount: 'Cannot transfer to the same account',
     
     // Settings
     language: 'Language',
     english: 'English',
     chinese: '中文',
+    spanish: 'Spanish',
+    french: 'French',
+    german: 'German',
+    japanese: 'Japanese',
+    korean: 'Korean',
     
     // Common
     today: 'Today',
@@ -74,23 +152,48 @@ const translations = {
     operationLogs: 'Operation Logs',
     pieChart: 'Category Distribution',
     noData: 'No data available',
+    
     // Header
     greetTitle: 'Enjoy every day',
     guestSubtitle: 'Sign in to keep your data safe',
     logout: 'Sign out',
     insights: 'Insights',
     recordsSubtitle: 'Your income and expense records',
-    mainEmotion: 'Top spending emotion',
+    mainEmotion: 'Dominant emotion',
+    todayTopEmotion: 'Today\'s dominant emotion',
     spendTimes: 'times',
     topCategories: 'Top Categories',
-    insightsSubtitle: 'AI analyzes your spending emotion patterns',
+    incomeTopCategories: 'Top income categories',
+    expenseTopCategories: 'Top expense categories',
+    timeRange: 'Time range',
+    thisYear: 'This year',
+    all: 'All',
+    metricByAmount: 'By amount',
+    metricByCount: 'By count',
+    last7Days: 'Last 7 days',
+    last30Days: 'Last 30 days',
+    thisWeek: 'This week',
+    lastWeek: 'Last week',
+    last14Days: 'Last 14 days',
+    lastMonth: 'Last month',
+    allTime: 'All time',
+    customRange: 'Custom range',
+    startDate: 'Start date',
+    endDate: 'End date',
+    apply: 'Apply',
+    insightsSubtitle: 'AI analyzes your emotion patterns across income and expenses',
     emotionRanking: 'Emotion ranking',
-    patternAnalysis: 'Spending pattern analysis',
+    weeklyEmotionRanking: 'This week\'s emotion ranking',
+    patternAnalysis: 'Income & expense pattern analysis',
     smartAdvice: 'Smart suggestions',
+    patternTopShareLine: '{emotion} share {share}%, avg {avg} (overall avg {overallAvg})',
+    patternWeekCompareLine: 'This week {amount}, vs last week {delta}%',
+    adviceHighAvg: 'Tip: Set reminder/confirm for "{emotion}" when over {threshold}',
+    adviceBudgetCap: 'Tip: Set weekly budget cap, alert near {cap}',
     recordMoreToSee: 'Record a few entries to see insights',
     usedDaysPrefix: 'Used days:',
     daysUnit: 'days',
-    keepRecordingTip: 'Keep recording to better understand your emotions and spending.',
+    keepRecordingTip: 'Keep recording to better understand your emotions and income/expenses.',
     
     // Theme
     theme: 'Theme',
@@ -105,8 +208,22 @@ const translations = {
     appName: 'MoodLedger',
     authTitle: 'MoodLedger',
     authSubtitle: 'Track spending, understand emotions, improve life',
-    appVersion: 'v1.0.0',
+    slogan: 'Your wallet writes, your heart speaks',
+    
+    // Initial Balance
+    initialBalance: 'Initial Balance',
+    setInitialBalance: 'Set Initial Balance',
+    initialBalanceQuestion: 'What was your account balance before using this app?',
+    initialBalanceDescription: 'This is the amount you had before starting to use this app.',
+    enterInitialBalance: 'Enter your initial balance',
+    initialBalanceIncluded: 'Initial balance included',
+    monthlyBalance: 'Monthly balance',
+    continue: 'Continue',
+    skip: 'Skip',
+    
+    appVersion: 'v1.0.7',
     appDescription: 'Simple and easy-to-use personal finance tool',
+    
     // Settings extensions
     loggedInAccount: 'Logged-in account',
     logoutFailed: 'Sign out failed',
@@ -114,6 +231,24 @@ const translations = {
     loginOrRegister: 'Log in / Register',
     exportDataJSON: 'Export data (JSON)',
     exportFailed: 'Export failed',
+    setPassword: 'Set password',
+    enterPassword: 'Enter password',
+    confirmPassword: 'Confirm password',
+    passwordRecovery: 'Password recovery',
+    resetAccount: 'Reset account',
+    resetAccountWarning: 'This will delete all your accounts and transactions and remove the password. This action cannot be undone.',
+    passwordIncorrect: 'Incorrect password',
+    passwordTooShort: 'Password must be at least 4 characters',
+    passwordNotMatch: 'Passwords do not match',
+    fillAllFields: 'Please fill in all fields',
+    sendEmail: 'Send email',
+    tip: 'Tip',
+    success: 'Success',
+    passwordSet: 'Password set',
+    accountReset: 'Account reset',
+    pleaseLoginToReset: 'Not logged in. Email recovery unavailable. Please reset your account.',
+    verify: 'Verify',
+    willSendResetTo: 'Will send reset email to: ',
     importDataPasteJSON: 'Import data (paste JSON)',
     importData: 'Import data',
     pasteJsonBelow: 'Paste the exported JSON content below:',
@@ -133,7 +268,15 @@ const translations = {
     egHappy: 'e.g. Happy',
     pleaseEnterName: 'Please enter a name',
     emotionTags: 'Emotion tags',
+    resetEmotionTagsToDefault: 'Reset to default emotions',
+    resetEmotionTagsRestored: 'Default emotions restored',
     usageDays: 'Usage days',
+    clearAllData: 'Clear All Data',
+    areYouSureYouWantToClearAllData: 'This will delete all transactions, accounts, and settings. This action cannot be undone.',
+    clear: 'Clear',
+    remove: 'Remove',
+    areYouSureYouWantToRemoveThisTag: 'Are you sure you want to remove this tag?',
+    
     // Emotions (default tags)
     '开心': 'Happy',
     '焦虑': 'Anxious',
@@ -143,8 +286,74 @@ const translations = {
     '压力大': 'Stressed',
     '兴奋': 'Excited',
     '难过': 'Sad',
+    
     // Insights tip
-    analysisTip: 'When you are {emotion}, your average spending is higher. Consider setting a budget reminder to stay rational.',
+    analysisTip: 'When you are {emotion}, your average transaction amount is higher. Consider setting a budget reminder to stay rational.',
+    
+    // Auth/AuthGate
+    welcomeBack: 'Welcome back',
+    createAccount: 'Create your account',
+    resetPassword: 'Reset password',
+    login: 'Login',
+    register: 'Register',
+    sendResetEmail: 'Send reset email',
+    backToLogin: 'Back to login',
+    goRegister: 'Go to register',
+    forgotPassword: 'Forgot password',
+    emailLabel: 'Email',
+    emailPlaceholder: 'Enter your email',
+    passwordLabel: 'Password',
+    passwordPlaceholder: 'Enter your password',
+    confirmPasswordLabel: 'Confirm password',
+    confirmPasswordPlaceholder: 'Re-enter password',
+    passwordMismatch: 'Passwords do not match',
+    quickTryTitle: 'Quick Try',
+    quickTryDesc: 'No signup needed, try all features now',
+    skipForNow: 'Skip for now',
+    featureAnalytics: 'Analytics',
+    featureAnalyticsSub: 'Spending distribution and trends',
+    featureInsights: 'Insights',
+    featureInsightsSub: 'Discover emotion patterns',
+    featurePrivacy: 'Privacy',
+    featurePrivacySub: 'Local and cloud sync',
+    loginFailed: 'Login failed',
+    registerFailed: 'Register failed',
+    registerSuccessCheckEmail: 'Registration successful. Check your email or log in directly',
+    registerSuccessLocal: 'Registration successful. You can now log in with your credentials.',
+    resetEmailFailed: 'Failed to send reset email',
+    resetEmailSent: 'Reset email sent. Please check your inbox',
+    cloudSyncNotConfigured: 'Cloud sync is not configured. Please set Supabase URL and anon key in config and try again',
+    amountInvalidTitle: 'Error',
+    amountInvalidMessage: 'Please enter a valid amount',
+    emotionRequiredTitle: 'Notice',
+    emotionRequiredMessage: 'Please select an emotion',
+    pleaseSelectEmotion: 'Please select an emotion',
+    
+    // Account Management
+    accountManagement: 'Account Management',
+    addAccount: 'Add Account',
+    editAccount: 'Edit Account',
+    unarchiveAccount: 'Unarchive Account',
+    noAccountsFound: 'No accounts found',
+    createFirstAccount: 'Create your first account',
+    accountCreated: 'Account created successfully',
+    accountUpdated: 'Account updated successfully',
+
+    deleteAccountConfirm: 'Are you sure you want to delete this account?',
+    cannotDeleteLastAccount: 'Cannot delete the last account',
+    accountName: 'Account Name',
+    accountType: 'Account Type',
+    selectAccount: 'Select account',
+    noAccountAvailableTitle: 'No available account',
+    noAccountAvailableMessage: 'Please add an account in Settings first',
+    egSavingsAccount: 'e.g., Savings Account',
+    // Account types (for Add Account / Accounts list)
+    cash: 'Cash',
+    debit_card: 'Debit card',
+    credit_card: 'Credit card',
+    prepaid_card: 'Prepaid Card',
+    virtual_card: 'Virtual Card',
+    'e-wallet': 'E-wallet',
   },
   zh: {
     // Tabs
@@ -152,6 +361,10 @@ const translations = {
     transactions: '交易记录',
     stats: '统计',
     settings: '设置',
+    assets: '资产',
+    netWorth: '净资产',
+    account: '账户',
+    noAccounts: '暂无有效账户',
     
     // Home screen
     balance: '余额',
@@ -160,6 +373,7 @@ const translations = {
     thisMonth: '本月',
     homeSubtitle: '数据总览',
     statsSubtitle: '全局数据分析',
+    settingsSubtitle: '定制化你的个性',
     recentTransactions: '最近交易',
     noTransactions: '暂无交易记录',
     addFirst: '添加您的第一笔交易！',
@@ -189,11 +403,26 @@ const translations = {
     freelance: '自由职业',
     investment: '投资',
     other: '其他',
+    // Transfer
+    transfer: '转账',
+    cannotTransferDifferentCurrency: '不能在不同币种账户之间转账',
+    fromAccount: '转出账户',
+    toAccount: '转入账户',
+    fee: '手续费',
+    operationSuccess: '已完成',
+    operationFailed: '操作失败',
+    insufficientFunds: '余额不足',
+    cannotTransferSameAccount: '不能向同一账户转账',
     
     // Settings
     language: '语言',
     english: 'English',
     chinese: '中文',
+    spanish: '西班牙语',
+    french: '法语',
+    german: '德语',
+    japanese: '日语',
+    korean: '韩语',
     
     // Common
     today: '今天',
@@ -207,23 +436,48 @@ const translations = {
     operationLogs: '操作记录',
     pieChart: '分类占比',
     noData: '暂无数据',
+    
     // Header
     greetTitle: '开心生活每一天',
     guestSubtitle: '登录数据不丢失',
     logout: '退出',
     insights: '洞察',
-    recordsSubtitle: '你的消费与收入记录',
-    mainEmotion: '主要消费情绪',
-    spendTimes: '次消费',
+    recordsSubtitle: '你的收支记录',
+    mainEmotion: '主导情绪',
+    todayTopEmotion: '今日主导情绪',
+    spendTimes: '次出现',
     topCategories: '热门分类',
-    insightsSubtitle: 'AI分析你的消费情绪模式',
-    emotionRanking: '消费情绪排行',
-    patternAnalysis: '消费模式分析',
+    incomeTopCategories: '收入热门分类',
+    expenseTopCategories: '支出热门分类',
+    timeRange: '时间范围',
+    thisYear: '本年',
+    all: '全部',
+    metricByAmount: '按金额',
+    metricByCount: '按笔数',
+    last7Days: '近7天',
+    last30Days: '近30天',
+    thisWeek: '本周',
+    lastWeek: '上周',
+    last14Days: '近14天',
+    lastMonth: '上个月',
+    allTime: '所有时间',
+    customRange: '自定义日期',
+    startDate: '开始日期',
+    endDate: '结束日期',
+    apply: '应用',
+    insightsSubtitle: 'AI分析你的情绪与收支关系',
+    emotionRanking: '情绪排行',
+    weeklyEmotionRanking: '本周情绪排行',
+    patternAnalysis: '收支模式分析',
     smartAdvice: '智能建议',
+    patternTopShareLine: '{emotion}占比 {share}%，平均单笔 {avg}（总体均值 {overallAvg}）',
+    patternWeekCompareLine: '本周支出 {amount}，较上周 {delta}%',
+    adviceHighAvg: '建议：为“{emotion}”相关交易设置 >{threshold} 的提醒/二次确认',
+    adviceBudgetCap: '建议：设定本周预算上限，接近上限时提醒（例如 {cap}）',
     recordMoreToSee: '记录几笔后即可看到洞察',
     usedDaysPrefix: '已使用天数：',
     daysUnit: '天',
-    keepRecordingTip: '坚持记录能更好理解你的情绪与消费关系。',
+    keepRecordingTip: '坚持记录能更好理解你的情绪与收支关系。',
     
     // Theme
     theme: '主题',
@@ -238,8 +492,22 @@ const translations = {
     appName: 'MoodLedger',
     authTitle: 'MoodLedger',
     authSubtitle: '记录消费，理解情绪，改善生活',
-    appVersion: 'v1.0.0',
+    slogan: '钱包在写，心在诉说',
+    
+    // Initial Balance
+    initialBalance: '初始余额',
+    setInitialBalance: '设置初始余额',
+    initialBalanceQuestion: '在使用本应用前您的账户余额是多少？',
+    initialBalanceDescription: '这是您在开始使用本应用前已有的金额。',
+    enterInitialBalance: '输入您的初始余额',
+    initialBalanceIncluded: '包含初始余额',
+    monthlyBalance: '本月余额',
+    continue: '继续',
+    skip: '跳过',
+    
+    appVersion: 'v1.0.7',
     appDescription: '简单易用的个人财务管理工具',
+    
     // Settings 扩展
     loggedInAccount: '已登录账号',
     logoutFailed: '退出失败',
@@ -247,6 +515,24 @@ const translations = {
     loginOrRegister: '登录 / 注册',
     exportDataJSON: '导出数据（JSON）',
     exportFailed: '导出失败',
+    setPassword: '设置密码',
+    enterPassword: '输入密码',
+    confirmPassword: '确认密码',
+    passwordRecovery: '密码恢复',
+    resetAccount: '重置账户',
+    resetAccountWarning: '这将删除您所有的账户和交易数据，并移除密码。此操作无法撤销。',
+    passwordIncorrect: '密码不正确',
+    passwordTooShort: '密码至少 4 位',
+    passwordNotMatch: '两次密码不一致',
+    fillAllFields: '请填写完整',
+    sendEmail: '发送邮件',
+    tip: '提示',
+    success: '成功',
+    passwordSet: '已设置密码',
+    accountReset: '账户已重置',
+    pleaseLoginToReset: '未登录，无法使用邮箱找回。请重置账户',
+    verify: '验证',
+    willSendResetTo: '将发送重置邮件到：',
     importDataPasteJSON: '导入数据（粘贴 JSON）',
     importData: '导入数据',
     pasteJsonBelow: '将导出的 JSON 内容粘贴到下方：',
@@ -266,7 +552,15 @@ const translations = {
     egHappy: '例如 开心',
     pleaseEnterName: '请输入名称',
     emotionTags: '情绪标签',
+    resetEmotionTagsToDefault: '恢复默认情绪',
+    resetEmotionTagsRestored: '已恢复默认情绪',
     usageDays: '使用天数',
+    clearAllData: '清空所有数据',
+    areYouSureYouWantToClearAllData: '将删除所有交易、账户和设置，此操作不可恢复。',
+    clear: '清空',
+    remove: '移除',
+    areYouSureYouWantToRemoveThisTag: '确定要移除此标签吗？',
+    
     // Emotions (default tags)
     '开心': '开心',
     '焦虑': '焦虑',
@@ -276,35 +570,109 @@ const translations = {
     '压力大': '压力大',
     '兴奋': '兴奋',
     '难过': '难过',
+    
     // Insights tip
-    analysisTip: '你在 {emotion} 时，平均消费较高。建议设置预算提醒，保持理性消费。',
+    analysisTip: '当你处于 {emotion} 时，你的平均交易金额更高。建议设置预算提醒，保持理性。',
+    
+    // Auth/AuthGate
+    welcomeBack: '欢迎回来',
+    createAccount: '创建你的账号',
+    resetPassword: '重置密码',
+    login: '登录',
+    register: '注册',
+    sendResetEmail: '发送重置邮件',
+    backToLogin: '返回登录',
+    goRegister: '去注册',
+    forgotPassword: '忘记密码',
+    emailLabel: '邮箱',
+    emailPlaceholder: '输入你的邮箱',
+    passwordLabel: '密码',
+    passwordPlaceholder: '输入你的密码',
+    confirmPasswordLabel: '确认密码',
+    confirmPasswordPlaceholder: '再次输入密码',
+    passwordMismatch: '两次输入的密码不一致',
+    quickTryTitle: '快速体验',
+    quickTryDesc: '无需注册，立即体验所有功能',
+    skipForNow: '暂时跳过',
+    featureAnalytics: '数据分析',
+    featureAnalyticsSub: '支出分布与趋势',
+    featureInsights: '智能洞察',
+    featureInsightsSub: '发现情绪模式',
+    featurePrivacy: '隐私保护',
+    featurePrivacySub: '本地与云端同步',
+    loginFailed: '登录失败',
+    registerFailed: '注册失败',
+    registerSuccessCheckEmail: '注册成功。请到邮箱确认或直接登录',
+    registerSuccessLocal: '注册成功。您现在可以使用您的凭据登录。',
+    resetEmailFailed: '重置邮件发送失败',
+    resetEmailSent: '已发送重置邮件，请查收',
+    cloudSyncNotConfigured: '未配置云同步。请在配置中填写 Supabase URL 与匿名密钥后再试',
+    amountInvalidTitle: '错误',
+    amountInvalidMessage: '请输入有效金额',
+    emotionRequiredTitle: '提示',
+    emotionRequiredMessage: '请选择一个情绪',
+    pleaseSelectEmotion: '请选择一个情绪',
+    
+    // Account Management
+    accountManagement: '账户管理',
+    addAccount: '添加账户',
+    editAccount: '编辑账户',
+    unarchiveAccount: '取消归档',
+    noAccountsFound: '未找到账户',
+    createFirstAccount: '创建您的第一个账户',
+    accountCreated: '账户创建成功',
+    accountUpdated: '账户更新成功',
+    accountArchived: '账户归档成功',
+    accountUnarchived: '账户取消归档成功',
+    deleteAccountConfirm: '确定要删除此账户吗？',
+    cannotDeleteLastAccount: '不能删除最后一个账户',
+    accountName: '账户名称',
+    accountType: '账户类型',
+    selectAccount: '选择账户',
+    noAccountAvailableTitle: '无可用账户',
+    noAccountAvailableMessage: '请先在设置中添加一个账户',
+    egSavingsAccount: '例如 储蓄账户',
+    // 账户类型（新增账户/账户列表）
+    cash: '现金',
+    debit_card: '借记卡',
+    credit_card: '信用卡',
+    prepaid_card: '预充卡',
+    virtual_card: '虚拟卡',
+    'e-wallet': '电子钱包',
   },
-  es: {
+  // Spanish translations
+  es_old: {
     // Tabs
     home: 'Inicio',
     transactions: 'Transacciones',
     stats: 'Estadísticas',
-    settings: 'Configuración',
+    settings: 'Ajustes',
     
     // Home screen
-    balance: 'Balance',
-    totalIncome: 'Ingresos Totales',
-    totalExpense: 'Gastos Totales',
-    thisMonth: 'Este Mes',
-    recentTransactions: 'Transacciones Recientes',
-    noTransactions: 'No hay transacciones aún',
+    balance: 'Saldo',
+    totalIncome: 'Ingreso total',
+    totalExpense: 'Gasto total',
+    thisMonth: 'Este mes',
+    homeSubtitle: 'Resumen de datos',
+    statsSubtitle: 'Análisis global de datos',
+    settingsSubtitle: 'Personaliza tu experiencia',
+    recentTransactions: 'Transacciones recientes',
+    noTransactions: 'Aún no hay transacciones',
     addFirst: '¡Añade tu primera transacción!',
     
     // Add transaction
-    addTransaction: 'Añadir Transacción',
+    addTransaction: 'Añadir transacción',
     income: 'Ingreso',
     expense: 'Gasto',
-    amount: 'Cantidad',
+    amount: 'Monto',
     category: 'Categoría',
     description: 'Descripción',
     date: 'Fecha',
     save: 'Guardar',
     cancel: 'Cancelar',
+    transactionType: 'Tipo de transacción',
+    currentEmotion: 'Emoción actual',
+    notePlaceholder: 'Notas (opcional)',
     
     // Categories
     food: 'Comida',
@@ -317,11 +685,32 @@ const translations = {
     freelance: 'Freelance',
     investment: 'Inversión',
     other: 'Otro',
+    // Transfer
+    transfer: 'Transferencia',
+    fromAccount: 'Cuenta origen',
+    toAccount: 'Cuenta destino',
+    fee: 'Comisión',
+    operationSuccess: 'Completado',
+    operationFailed: 'Operación fallida',
+    insufficientFunds: 'Fondos insuficientes',
+    cannotTransferSameAccount: 'No se puede transferir a la misma cuenta',
+    account: 'Cuenta',
+    creditLimit: 'Límite de crédito',
+    creditLimitExceeded: 'Se superó el límite de crédito',
+    initialBalanceNonNegative: 'El saldo inicial no puede ser negativo',
+    selectAccount: 'Seleccionar cuenta',
+    noAccountAvailableMessage: 'Primero elige cuentas',
+    cannotTransferDifferentCurrency: 'No se puede transferir entre diferentes monedas',
     
     // Settings
     language: 'Idioma',
-    english: 'English',
-    chinese: '中文',
+    english: 'Inglés',
+    chinese: 'Chino',
+    spanish: 'Español',
+    french: 'Francés',
+    german: 'Alemán',
+    japanese: 'Japonés',
+    korean: 'Coreano',
     
     // Common
     today: 'Hoy',
@@ -329,45 +718,165 @@ const translations = {
     edit: 'Editar',
     delete: 'Eliminar',
     confirm: 'Confirmar',
-    editTransaction: 'Editar Transacción',
+    editTransaction: 'Editar transacción',
     update: 'Actualizar',
-    deleteConfirm: '¿Estás seguro de que quieres eliminar esta transacción?',
-    operationLogs: 'Registros de Operación',
-    pieChart: 'Distribución por Categoría',
-    noData: 'No hay datos disponibles',
+    deleteConfirm: '¿Seguro que desea eliminar esta transacción?',
+    operationLogs: 'Registro de operaciones',
+    pieChart: 'Distribución por categoría',
+    noData: 'No hay datos',
+    
     // Header
     greetTitle: 'Disfruta cada día',
-    guestSubtitle: 'Inicia sesión para no perder tus datos',
+    guestSubtitle: 'Inicia sesión para mantener tus datos seguros',
     logout: 'Cerrar sesión',
-    insights: 'Perspectivas',
+    insights: 'Ideas',
     recordsSubtitle: 'Tus registros de ingresos y gastos',
-    mainEmotion: 'Emoción principal de gasto',
+    mainEmotion: 'Emoción dominante',
+    todayTopEmotion: 'Emoción dominante de hoy',
     spendTimes: 'veces',
-    topCategories: 'Categorías destacadas',
-    insightsSubtitle: 'La IA analiza tus patrones de emociones de gasto',
-    emotionRanking: 'Ranking de emociones',
-    patternAnalysis: 'Análisis de patrones de gasto',
+    topCategories: 'Categorías principales',
+    incomeTopCategories: 'Categorías de ingresos destacadas',
+    expenseTopCategories: 'Categorías de gastos destacadas',
+    timeRange: 'Rango de tiempo',
+    thisYear: 'Este año',
+    all: 'Todos',
+    metricByAmount: 'Por monto',
+    metricByCount: 'Por conteo',
+    last7Days: 'Últimos 7 días',
+    last30Days: 'Últimos 30 días',
+    thisWeek: 'Esta semana',
+    lastWeek: 'La semana pasada',
+    last14Days: 'Últimos 14 días',
+    lastMonth: 'El mes pasado',
+    allTime: 'Todo el tiempo',
+    customRange: 'Rango personalizado',
+    startDate: 'Fecha de inicio',
+    endDate: 'Fecha de fin',
+    apply: 'Aplicar',
+    insightsSubtitle: 'La IA analiza la relación entre tus emociones y tus ingresos/gastos',
+    emotionRanking: 'Clasificación de emociones',
+    weeklyEmotionRanking: 'Clasificación de emociones de esta semana',
+    patternAnalysis: 'Análisis de patrones de ingresos y gastos',
     smartAdvice: 'Sugerencias inteligentes',
-    recordMoreToSee: 'Registra algunas transacciones para ver perspectivas',
+    patternTopShareLine: '{emotion} participación {share}%, promedio {avg} (promedio general {overallAvg})',
+    patternWeekCompareLine: 'Esta semana {amount}, vs la semana pasada {delta}%',
+    adviceHighAvg: 'Consejo: Configura recordatorio/confirmación para "{emotion}" cuando supere {threshold}',
+    adviceBudgetCap: 'Consejo: Establece tope de presupuesto semanal, alerta cerca de {cap}',
+    recordMoreToSee: 'Registra algunas entradas para ver ideas',
     usedDaysPrefix: 'Días de uso:',
     daysUnit: 'días',
-    keepRecordingTip: 'Sigue registrando para entender mejor tus emociones y gastos.',
+    keepRecordingTip: 'Sigue registrando para comprender mejor tus emociones y tus ingresos/gastos.',
     
     // Theme
     theme: 'Tema',
     lightTheme: 'Claro',
     darkTheme: 'Oscuro',
-    systemTheme: 'Seguir Sistema',
+    systemTheme: 'Seguir sistema',
     
     // Currency
     currency: 'Moneda',
     
     // App Info
     appName: 'MoodLedger',
-    authSubtitle: 'Registra gastos, comprende las emociones, mejora tu vida',
-    appVersion: 'v1.0.0',
+    authTitle: 'MoodLedger',
+    authSubtitle: 'Rastrea gastos, entiende emociones, mejora tu vida',
+    slogan: 'Tu billetera escribe, tu corazón habla',
+    
+    // Initial Balance
+    initialBalance: 'Saldo inicial',
+    setInitialBalance: 'Establecer saldo inicial',
+    initialBalanceQuestion: '¿Cuál era tu saldo antes de usar esta app?',
+    initialBalanceDescription: 'Este es el monto que tenías antes de empezar a usar la app.',
+    enterInitialBalance: 'Introduce tu saldo inicial',
+    initialBalanceIncluded: 'Incluye saldo inicial',
+    monthlyBalance: 'Saldo mensual',
+    continue: 'Continuar',
+    skip: 'Saltar',
+    
+    appVersion: 'v1.0.7',
     appDescription: 'Herramienta de finanzas personales simple y fácil de usar',
+    
+    // Settings extensions
+    loggedInAccount: 'Cuenta iniciada',
+    logoutFailed: 'Cerrar sesión falló',
+    pleaseRetry: 'Por favor, inténtalo de nuevo',
+    loginOrRegister: 'Iniciar sesión / Registrarse',
+    exportDataJSON: 'Exportar datos (JSON)',
+    exportFailed: 'Exportación fallida',
+    importDataPasteJSON: 'Importar datos (pegar JSON)',
+    importData: 'Importar datos',
+    pasteJsonBelow: 'Pega el contenido JSON exportado abajo:',
+    pasteJsonPlaceholder: 'Pegar JSON',
+    startImport: 'Iniciar importación',
+    importSuccess: 'Importación exitosa',
+    importedPrefix: 'Importadas ',
+    importedSuffix: ' registros',
+    importFailed: 'Importación fallida',
+    checkJson: 'Por favor revisa el contenido JSON',
+    emotionTagManagement: 'Gestión de etiquetas de emoción',
+    add: 'Añadir',
+    addEmotionTag: 'Añadir etiqueta de emoción',
+    emoji: 'Emoji',
+    egEmoji: 'p. ej. 😊',
+    name: 'Nombre',
+    egHappy: 'p. ej. Feliz',
+    pleaseEnterName: 'Por favor introduce un nombre',
+    emotionTags: 'Etiquetas de emoción',
+    resetEmotionTagsToDefault: 'Restablecer emociones predeterminadas',
+    resetEmotionTagsRestored: 'Emociones predeterminadas restauradas',
+    usageDays: 'Días de uso',
+    
+    // Emotions (default tags)
+    '开心': 'Feliz',
+    '焦虑': 'Ansioso',
+    '孤独': 'Solitario',
+    '无聊': 'Aburrido',
+    '奖励自己': 'Premiarme',
+    '压力大': 'Estresado',
+    '兴奋': 'Emocionado',
+    '难过': 'Triste',
+    
+    // Insights tip
+    analysisTip: 'Cuando estás {emotion}, el importe medio de tus transacciones es mayor. Considera configurar un recordatorio de presupuesto para mantenerte racional.',
+    
+    // Auth/AuthGate
+    welcomeBack: 'Bienvenido de nuevo',
+    createAccount: 'Crea tu cuenta',
+    resetPassword: 'Restablecer contraseña',
+    login: 'Iniciar sesión',
+    register: 'Registrarse',
+    sendResetEmail: 'Enviar correo de restablecimiento',
+    backToLogin: 'Volver al inicio de sesión',
+    goRegister: 'Ir a registrarse',
+    forgotPassword: 'Olvidé mi contraseña',
+    emailLabel: 'Correo electrónico',
+    emailPlaceholder: 'Introduce tu correo',
+    passwordLabel: 'Contraseña',
+    passwordPlaceholder: 'Introduce tu contraseña',
+    confirmPasswordLabel: 'Confirmar contraseña',
+    confirmPasswordPlaceholder: 'Vuelve a introducir la contraseña',
+    passwordMismatch: 'Las contraseñas no coinciden',
+    quickTryTitle: 'Prueba rápida',
+    quickTryDesc: 'No necesitas registrarte, prueba todas las funciones ahora',
+    skipForNow: 'Omitir por ahora',
+    featureAnalytics: 'Analítica',
+    featureAnalyticsSub: 'Distribución y tendencias de gasto',
+    featureInsights: 'Ideas',
+    featureInsightsSub: 'Descubre patrones de emoción',
+    featurePrivacy: 'Privacidad',
+    featurePrivacySub: 'Sincronización local y en la nube',
+    loginFailed: 'Inicio de sesión fallido',
+    registerFailed: 'Registro fallido',
+    registerSuccessCheckEmail: 'Registro exitoso. Verifique su correo electrónico o inicie sesión directamente',
+    registerSuccessLocal: 'Registro exitoso. Ahora puede iniciar sesión con sus credenciales.',
+    resetEmailFailed: 'Error al enviar el correo de restablecimiento',
+    resetEmailSent: 'Correo de restablecimiento enviado. Por favor revisa tu bandeja de entrada',
+    cloudSyncNotConfigured: 'La sincronización en la nube no está configurada. Configure la URL y clave anon de Supabase e inténtelo de nuevo',
+    amountInvalidTitle: 'Error',
+    amountInvalidMessage: 'Por favor introduce un monto válido',
   },
+  
+  // French translations
   fr: {
     // Tabs
     home: 'Accueil',
@@ -377,15 +886,18 @@ const translations = {
     
     // Home screen
     balance: 'Solde',
-    totalIncome: 'Revenus Totaux',
-    totalExpense: 'Dépenses Totales',
-    thisMonth: 'Ce Mois',
-    recentTransactions: 'Transactions Récentes',
+    totalIncome: 'Revenus totaux',
+    totalExpense: 'Dépenses totales',
+    thisMonth: 'Ce mois-ci',
+    homeSubtitle: 'Aperçu des données',
+    statsSubtitle: 'Analyse globale des données',
+    settingsSubtitle: 'Personnalisez votre expérience',
+    recentTransactions: 'Transactions récentes',
     noTransactions: 'Aucune transaction pour le moment',
     addFirst: 'Ajoutez votre première transaction !',
     
     // Add transaction
-    addTransaction: 'Ajouter Transaction',
+    addTransaction: 'Ajouter une transaction',
     income: 'Revenu',
     expense: 'Dépense',
     amount: 'Montant',
@@ -394,11 +906,14 @@ const translations = {
     date: 'Date',
     save: 'Enregistrer',
     cancel: 'Annuler',
+    transactionType: 'Type de transaction',
+    currentEmotion: 'Émotion actuelle',
+    notePlaceholder: 'Notes (optionnel)',
     
     // Categories
-    food: 'Nourriture',
+    food: 'Alimentation',
     transport: 'Transport',
-    shopping: 'Achats',
+    shopping: 'Shopping',
     entertainment: 'Divertissement',
     health: 'Santé',
     education: 'Éducation',
@@ -406,11 +921,32 @@ const translations = {
     freelance: 'Freelance',
     investment: 'Investissement',
     other: 'Autre',
+    // Transfer
+    transfer: 'Virement',
+    fromAccount: 'Compte source',
+    toAccount: 'Compte destinataire',
+    fee: 'Frais',
+    operationSuccess: 'Terminé',
+    operationFailed: 'Échec de l\'opération',
+    insufficientFunds: 'Fonds insuffisants',
+    cannotTransferSameAccount: 'Impossible de transférer vers le même compte',
+    account: 'Compte',
+    creditLimit: 'Plafond de crédit',
+    creditLimitExceeded: 'Plafond de crédit dépassé',
+    initialBalanceNonNegative: 'Le solde initial ne peut pas être négatif',
+    selectAccount: 'Sélectionner un compte',
+    noAccountAvailableMessage: 'Veuillez d\'abord choisir des comptes',
+    cannotTransferDifferentCurrency: 'Impossible de transférer entre des devises différentes',
     
     // Settings
     language: 'Langue',
-    english: 'English',
-    chinese: '中文',
+    english: 'Anglais',
+    chinese: 'Chinois',
+    spanish: 'Espagnol',
+    french: 'Français',
+    german: 'Allemand',
+    japanese: 'Japonais',
+    korean: 'Coréen',
     
     // Common
     today: 'Aujourd\'hui',
@@ -418,45 +954,375 @@ const translations = {
     edit: 'Modifier',
     delete: 'Supprimer',
     confirm: 'Confirmer',
-    editTransaction: 'Modifier Transaction',
+    editTransaction: 'Modifier la transaction',
     update: 'Mettre à jour',
     deleteConfirm: 'Êtes-vous sûr de vouloir supprimer cette transaction ?',
-    operationLogs: 'Journaux d\'Opération',
-    pieChart: 'Répartition par Catégorie',
-    noData: 'Aucune donnée disponible',
+    operationLogs: 'Journaux d\'opérations',
+    pieChart: 'Répartition par catégorie',
+    noData: 'Aucune donnée',
+    
     // Header
     greetTitle: 'Profitez de chaque jour',
-    guestSubtitle: 'Connectez-vous pour ne pas perdre vos données',
+    guestSubtitle: 'Connectez-vous pour sécuriser vos données',
     logout: 'Se déconnecter',
     insights: 'Aperçus',
-    recordsSubtitle: 'Vos enregistrements de revenus et de dépenses',
-    mainEmotion: 'Émotion principale de dépense',
+    recordsSubtitle: 'Vos enregistrements de revenus et dépenses',
+    mainEmotion: 'Émotion dominante',
+    todayTopEmotion: 'Émotion dominante d\'aujourd\'hui',
     spendTimes: 'fois',
-    topCategories: 'Catégories populaires',
-    insightsSubtitle: 'L’IA analyse vos schémas d’émotions de dépense',
+    topCategories: 'Catégories principales',
+    incomeTopCategories: 'Catégories de revenus populaires',
+    expenseTopCategories: 'Catégories de dépenses populaires',
+    timeRange: 'Période',
+    thisYear: 'Cette année',
+    all: 'Tout',
+    metricByAmount: 'Par montant',
+    metricByCount: 'Par nombre',
+    last7Days: '7 derniers jours',
+    last30Days: '30 derniers jours',
+    thisWeek: 'Cette semaine',
+    lastWeek: 'La semaine dernière',
+    last14Days: '14 derniers jours',
+    lastMonth: 'Le mois dernier',
+    allTime: 'Toute la période',
+    customRange: 'Plage personnalisée',
+    startDate: 'Date de début',
+    endDate: 'Date de fin',
+    apply: 'Appliquer',
+    insightsSubtitle: 'L\'IA analyse la relation entre vos émotions et vos revenus/dépenses',
     emotionRanking: 'Classement des émotions',
-    patternAnalysis: 'Analyse des schémas de dépense',
+    weeklyEmotionRanking: 'Classement des émotions de la semaine',
+    patternAnalysis: 'Analyse des modèles de revenus et de dépenses',
     smartAdvice: 'Conseils intelligents',
-    recordMoreToSee: 'Enregistrez quelques opérations pour voir des aperçus',
-    usedDaysPrefix: 'Jours d’utilisation :',
+    patternTopShareLine: 'Part de {emotion} {share} %, moy. {avg} (moy. globale {overallAvg})',
+    patternWeekCompareLine: 'Cette semaine {amount}, vs la semaine dernière {delta} %',
+    adviceHighAvg: 'Conseil : Définir rappel/confirmation pour « {emotion} » au-delà de {threshold}',
+    adviceBudgetCap: 'Conseil : Définir un plafond de budget hebdo, alerte près de {cap}',
+    recordMoreToSee: 'Enregistrez quelques entrées pour voir les aperçus',
+    usedDaysPrefix: 'Jours d\'utilisation :',
     daysUnit: 'jours',
-    keepRecordingTip: 'Continuez à enregistrer pour mieux comprendre vos émotions et dépenses.',
+    keepRecordingTip: 'Continuez à enregistrer pour mieux comprendre vos émotions et vos revenus/dépenses.',
     
     // Theme
     theme: 'Thème',
     lightTheme: 'Clair',
     darkTheme: 'Sombre',
-    systemTheme: 'Suivre Système',
+    systemTheme: 'Suivre le système',
     
     // Currency
     currency: 'Devise',
     
     // App Info
     appName: 'MoodLedger',
+    authTitle: 'MoodLedger',
     authSubtitle: 'Suivez vos dépenses, comprenez vos émotions, améliorez votre vie',
-    appVersion: 'v1.0.0',
+    slogan: 'Votre portefeuille écrit, votre cœur parle',
+    
+    // Initial Balance
+    initialBalance: 'Solde initial',
+    setInitialBalance: 'Définir le solde initial',
+    initialBalanceQuestion: 'Quel était votre solde avant d\'utiliser cette application ?',
+    initialBalanceDescription: 'C\'est le montant que vous aviez avant de commencer à utiliser l\'application.',
+    enterInitialBalance: 'Saisissez votre solde initial',
+    initialBalanceIncluded: 'Solde initial inclus',
+    monthlyBalance: 'Solde mensuel',
+    continue: 'Continuer',
+    skip: 'Ignorer',
+    
+    appVersion: 'v1.0.7',
     appDescription: 'Outil de finances personnelles simple et facile à utiliser',
+    
+    // Settings extensions
+    loggedInAccount: 'Compte connecté',
+    logoutFailed: 'Échec de la déconnexion',
+    pleaseRetry: 'Veuillez réessayer',
+    loginOrRegister: 'Se connecter / S\'inscrire',
+    exportDataJSON: 'Exporter les données (JSON)',
+    exportFailed: 'Échec de l\'exportation',
+    importDataPasteJSON: 'Importer des données (coller JSON)',
+    importData: 'Importer des données',
+    pasteJsonBelow: 'Collez ci-dessous le contenu JSON exporté :',
+    pasteJsonPlaceholder: 'Coller JSON',
+    startImport: 'Commencer l\'importation',
+    importSuccess: 'Importation réussie',
+    importedPrefix: 'Importé ',
+    importedSuffix: ' enregistrements',
+    importFailed: 'Échec de l\'importation',
+    checkJson: 'Veuillez vérifier le contenu JSON',
+    emotionTagManagement: 'Gestion des étiquettes d\'émotion',
+    add: 'Ajouter',
+    addEmotionTag: 'Ajouter une étiquette d\'émotion',
+    emoji: 'Emoji',
+    egEmoji: 'ex. 😊',
+    name: 'Nom',
+    egHappy: 'ex. Heureux',
+    pleaseEnterName: 'Veuillez entrer un nom',
+    emotionTags: 'Étiquettes d\'émotion',
+    resetEmotionTagsToDefault: 'Réinitialiser les émotions par défaut',
+    resetEmotionTagsRestored: 'Émotions par défaut rétablies',
+    usageDays: 'Jours d\'utilisation',
+    
+    // Emotions (default tags)
+    '开心': 'Heureux',
+    '焦虑': 'Anxieux',
+    '孤独': 'Solitaire',
+    '无聊': 'Ennuyé',
+    '奖励自己': 'Me récompenser',
+    '压力大': 'Stressé',
+    '兴奋': 'Excité',
+    '难过': 'Triste',
+    
+    // Insights tip
+    analysisTip: 'Quand vous êtes {emotion}, le montant moyen de vos transactions est plus élevé. Envisagez de définir un rappel de budget pour rester rationnel.',
+    
+    // Auth/AuthGate
+    welcomeBack: 'Bon retour',
+    createAccount: 'Créez votre compte',
+    resetPassword: 'Réinitialiser le mot de passe',
+    login: 'Connexion',
+    register: 'S\'inscrire',
+    sendResetEmail: 'Envoyer l\'e-mail de réinitialisation',
+    backToLogin: 'Retour à la connexion',
+    goRegister: 'Aller à l\'inscription',
+    forgotPassword: 'Mot de passe oublié',
+    emailLabel: 'E-mail',
+    emailPlaceholder: 'Entrez votre e-mail',
+    passwordLabel: 'Mot de passe',
+    passwordPlaceholder: 'Entrez votre mot de passe',
+    confirmPasswordLabel: 'Confirmez le mot de passe',
+    confirmPasswordPlaceholder: 'Saisissez à nouveau le mot de passe',
+    passwordMismatch: 'Les mots de passe ne correspondent pas',
+    quickTryTitle: 'Essai rapide',
+    quickTryDesc: 'Pas d\'inscription requise, essayez toutes les fonctionnalités maintenant',
+    skipForNow: 'Passer pour l\'instant',
+    featureAnalytics: 'Analyses',
+    featureAnalyticsSub: 'Répartition et tendances des dépenses',
+    featureInsights: 'Aperçus',
+    featureInsightsSub: 'Découvrir des schémas d\'émotions',
+    featurePrivacy: 'Confidentialité',
+    featurePrivacySub: 'Synchronisation locale et cloud',
+    loginFailed: 'Échec de la connexion',
+    registerFailed: 'Échec de l\'inscription',
+    registerSuccessCheckEmail: 'Inscription réussie. Vérifiez votre e-mail ou connectez-vous directement',
+    registerSuccessLocal: 'Inscription réussie. Vous pouvez maintenant vous connecter avec vos identifiants.',
+    resetEmailFailed: 'Échec de l\'envoi de l\'e-mail de réinitialisation',
+    resetEmailSent: 'E-mail de réinitialisation envoyé. Veuillez vérifier votre boîte de réception',
+    cloudSyncNotConfigured: 'La synchronisation cloud n\'est pas configurée. Veuillez définir l\'URL Supabase et la clé anonyme dans la configuration puis réessayer',
+    amountInvalidTitle: 'Erreur',
+    amountInvalidMessage: 'Veuillez saisir un montant valide',
+    emotionRequiredTitle: 'Avertissement',
+    emotionRequiredMessage: 'Veuillez sélectionner une émotion',
+    pleaseSelectEmotion: 'Veuillez sélectionner une émotion',
   },
+  
+  // Spanish translations
+  es: {
+    // Tabs
+    home: 'Inicio',
+    transactions: 'Transacciones',
+    stats: 'Estadísticas',
+    settings: 'Ajustes',
+    
+    // Home screen
+    balance: 'Saldo',
+    totalIncome: 'Ingresos totales',
+    totalExpense: 'Gastos totales',
+    thisMonth: 'Este mes',
+    homeSubtitle: 'Resumen de datos',
+    statsSubtitle: 'Análisis global de datos',
+    settingsSubtitle: 'Personaliza tu experiencia',
+    recentTransactions: 'Transacciones recientes',
+    noTransactions: 'Aún no hay transacciones',
+    addFirst: '¡Agrega tu primera transacción!',
+    
+    // Add transaction
+    addTransaction: 'Agregar transacción',
+    income: 'Ingreso',
+    expense: 'Gasto',
+    amount: 'Monto',
+    category: 'Categoría',
+    description: 'Descripción',
+    date: 'Fecha',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    transactionType: 'Tipo de transacción',
+    currentEmotion: 'Emoción actual',
+    notePlaceholder: 'Notas (opcional)',
+    
+    // Categories
+    food: 'Comida',
+    transport: 'Transporte',
+    shopping: 'Compras',
+    entertainment: 'Entretenimiento',
+    health: 'Salud',
+    education: 'Educación',
+    salary: 'Salario',
+    freelance: 'Freelance',
+    investment: 'Inversión',
+    other: 'Otros',
+    // Transfer
+    transfer: 'Transferencia',
+    
+    // Settings
+    language: 'Idioma',
+    english: 'Inglés',
+    chinese: 'Chino',
+    spanish: 'Español',
+    french: 'Francés',
+    german: 'Alemán',
+    japanese: 'Japonés',
+    korean: 'Coreano',
+    
+    // Common
+    today: 'Hoy',
+    yesterday: 'Ayer',
+    edit: 'Editar',
+    delete: 'Eliminar',
+    confirm: 'Confirmar',
+    editTransaction: 'Editar transacción',
+    update: 'Actualizar',
+    deleteConfirm: '¿Seguro que deseas eliminar esta transacción?',
+    operationLogs: 'Registros de operaciones',
+    pieChart: 'Distribución por categorías',
+    noData: 'No hay datos',
+    
+    // Header
+    greetTitle: 'Disfruta cada día',
+    guestSubtitle: 'Inicia sesión para proteger tus datos',
+    logout: 'Cerrar sesión',
+    insights: 'Ideas',
+    recordsSubtitle: 'Tus registros de ingresos y gastos',
+    mainEmotion: 'Emoción dominante',
+    spendTimes: 'veces',
+    topCategories: 'Categorías principales',
+    incomeTopCategories: 'Categorías de ingresos destacadas',
+    expenseTopCategories: 'Categorías de gastos destacadas',
+    timeRange: 'Rango de tiempo',
+    thisYear: 'Este año',
+    all: 'Todos',
+    metricByAmount: 'Por monto',
+    metricByCount: 'Por conteo',
+    insightsSubtitle: 'La IA analiza la relación entre tus emociones y tus ingresos/gastos',
+    emotionRanking: 'Ranking de emociones',
+    weeklyEmotionRanking: 'Ranking de emociones de esta semana',
+    patternAnalysis: 'Análisis de patrones de ingresos y gastos',
+    smartAdvice: 'Sugerencias inteligentes',
+    recordMoreToSee: 'Registra algunas entradas para ver ideas',
+    usedDaysPrefix: 'Días de uso:',
+    daysUnit: 'días',
+    keepRecordingTip: 'Sigue registrando para comprender mejor tus emociones y tus ingresos/gastos.',
+    
+    // Theme
+    theme: 'Tema',
+    lightTheme: 'Claro',
+    darkTheme: 'Oscuro',
+    systemTheme: 'Seguir sistema',
+    
+    // Currency
+    currency: 'Moneda',
+    
+    // App Info
+    appName: 'MoodLedger',
+    authTitle: 'MoodLedger',
+    authSubtitle: 'Registra gastos, entiende emociones, mejora tu vida',
+    slogan: 'Tu cartera escribe, tu corazón habla',
+    
+    // Initial Balance
+    initialBalance: 'Saldo inicial',
+    setInitialBalance: 'Establecer saldo inicial',
+    initialBalanceQuestion: '¿Cuál era tu saldo antes de usar la app?',
+    initialBalanceDescription: 'Es la cantidad que tenías antes de empezar a usar la app.',
+    enterInitialBalance: 'Introduce tu saldo inicial',
+    initialBalanceIncluded: 'Saldo inicial incluido',
+    monthlyBalance: 'Saldo mensual',
+    continue: 'Continuar',
+    skip: 'Omitir',
+    
+    appVersion: 'v1.0.7',
+    appDescription: 'Herramienta financiera simple y fácil de usar',
+    
+    // Settings extensions
+    loggedInAccount: 'Cuenta iniciada',
+    logoutFailed: 'Cerrar sesión falló',
+    pleaseRetry: 'Intenta de nuevo',
+    loginOrRegister: 'Iniciar sesión / Registrarse',
+    exportDataJSON: 'Exportar datos (JSON)',
+    exportFailed: 'Exportación fallida',
+    importDataPasteJSON: 'Importar datos (pegar JSON)',
+    importData: 'Importar datos',
+    pasteJsonBelow: 'Pega abajo el JSON exportado:',
+    pasteJsonPlaceholder: 'Pegar JSON',
+    startImport: 'Iniciar importación',
+    importSuccess: 'Importación exitosa',
+    importedPrefix: 'Importados ',
+    importedSuffix: ' elementos',
+    importFailed: 'Importación fallida',
+    checkJson: 'Verifica el contenido JSON',
+    emotionTagManagement: 'Gestión de etiquetas de emoción',
+    add: 'Añadir',
+    addEmotionTag: 'Añadir etiqueta de emoción',
+    emoji: 'Emoji',
+    egEmoji: 'p. ej. 😊',
+    name: 'Nombre',
+    egHappy: 'p. ej. Feliz',
+    pleaseEnterName: 'Introduce un nombre',
+    emotionTags: 'Etiquetas de emoción',
+    usageDays: 'Días de uso',
+    
+    // Emotions (default tags)
+    '开心': 'Feliz',
+    '焦虑': 'Ansioso',
+    '孤独': 'Solitario',
+    '无聊': 'Aburrido',
+    '奖励自己': 'Recompensarme',
+    '压力大': 'Estresado',
+    '兴奋': 'Emocionado',
+    '难过': 'Triste',
+    
+    // Insights tip
+    analysisTip: 'Cuando estás {emotion}, el importe medio de tus transacciones es mayor. Considera configurar un recordatorio de presupuesto para mantenerte racional.',
+    
+    // Auth/AuthGate
+    welcomeBack: 'Bienvenido de nuevo',
+    createAccount: 'Crea tu cuenta',
+    resetPassword: 'Restablecer contraseña',
+    login: 'Iniciar sesión',
+    register: 'Registrarse',
+    sendResetEmail: 'Enviar correo de restablecimiento',
+    backToLogin: 'Volver al inicio de sesión',
+    goRegister: 'Ir a registrarse',
+    forgotPassword: '¿Olvidaste tu contraseña?',
+    emailLabel: 'Correo',
+    emailPlaceholder: 'Introduce tu correo',
+    passwordLabel: 'Contraseña',
+    passwordPlaceholder: 'Introduce tu contraseña',
+    confirmPasswordLabel: 'Confirmar contraseña',
+    confirmPasswordPlaceholder: 'Vuelve a introducir',
+    passwordMismatch: 'Las contraseñas no coinciden',
+    quickTryTitle: 'Prueba rápida',
+    quickTryDesc: 'Sin registro, prueba todas las funciones ahora',
+    skipForNow: 'Saltar por ahora',
+    featureAnalytics: 'Analítica',
+    featureAnalyticsSub: 'Distribución y tendencias de gasto',
+    featureInsights: 'Ideas',
+    featureInsightsSub: 'Descubre patrones emocionales',
+    featurePrivacy: 'Privacidad',
+    featurePrivacySub: 'Sincronización local y en la nube',
+    loginFailed: 'Inicio de sesión fallido',
+    registerFailed: 'Registro fallido',
+    registerSuccessCheckEmail: 'Registro exitoso. Revisa tu correo o inicia sesión directamente',
+    registerSuccessLocal: 'Registro exitoso. Ahora puedes iniciar sesión con tus credenciales.',
+    resetEmailFailed: 'Fallo al enviar el correo de restablecimiento',
+    resetEmailSent: 'Correo de restablecimiento enviado. Revisa tu bandeja',
+    cloudSyncNotConfigured: 'La sincronización en la nube no está configurada. Define la URL de Supabase y la clave anon en la configuración y vuelve a intentarlo',
+    amountInvalidTitle: 'Error',
+    amountInvalidMessage: 'Por favor, introduce un monto válido',
+    emotionRequiredTitle: 'Aviso',
+    emotionRequiredMessage: 'Por favor, selecciona una emoción',
+    pleaseSelectEmotion: 'Por favor, selecciona una emoción',
+  },
+
+  // German translations
   de: {
     // Tabs
     home: 'Startseite',
@@ -465,17 +1331,20 @@ const translations = {
     settings: 'Einstellungen',
     
     // Home screen
-    balance: 'Saldo',
-    totalIncome: 'Gesamteinkommen',
+    balance: 'Kontostand',
+    totalIncome: 'Gesamteinnahmen',
     totalExpense: 'Gesamtausgaben',
     thisMonth: 'Diesen Monat',
+    homeSubtitle: 'Datenübersicht',
+    statsSubtitle: 'Globale Datenanalyse',
+    settingsSubtitle: 'Personalisieren Sie Ihr Erlebnis',
     recentTransactions: 'Letzte Transaktionen',
     noTransactions: 'Noch keine Transaktionen',
     addFirst: 'Fügen Sie Ihre erste Transaktion hinzu!',
     
     // Add transaction
     addTransaction: 'Transaktion hinzufügen',
-    income: 'Einkommen',
+    income: 'Einnahme',
     expense: 'Ausgabe',
     amount: 'Betrag',
     category: 'Kategorie',
@@ -483,23 +1352,47 @@ const translations = {
     date: 'Datum',
     save: 'Speichern',
     cancel: 'Abbrechen',
+    transactionType: 'Transaktionsart',
+    currentEmotion: 'Aktuelle Emotion',
+    notePlaceholder: 'Notizen (optional)',
     
     // Categories
     food: 'Essen',
     transport: 'Transport',
-    shopping: 'Einkaufen',
+    shopping: 'Einkauf',
     entertainment: 'Unterhaltung',
     health: 'Gesundheit',
     education: 'Bildung',
     salary: 'Gehalt',
-    freelance: 'Freelance',
+    freelance: 'Freiberuflich',
     investment: 'Investition',
-    other: 'Andere',
+    other: 'Sonstiges',
+    // Transfer
+    transfer: 'Überweisung',
+    fromAccount: 'Quellkonto',
+    toAccount: 'Zielkonto',
+    fee: 'Gebühr',
+    operationSuccess: 'Abgeschlossen',
+    operationFailed: 'Vorgang fehlgeschlagen',
+    insufficientFunds: 'Unzureichendes Guthaben',
+    cannotTransferSameAccount: 'Überweisung auf dasselbe Konto ist nicht möglich',
+    account: 'Konto',
+    creditLimit: 'Kreditlimit',
+    creditLimitExceeded: 'Kreditlimit überschritten',
+    initialBalanceNonNegative: 'Anfangssaldo darf nicht negativ sein',
+    selectAccount: 'Konto auswählen',
+    noAccountAvailableMessage: 'Bitte zuerst Konten auswählen',
+    cannotTransferDifferentCurrency: 'Überweisungen zwischen unterschiedlichen Währungen sind nicht möglich',
     
     // Settings
     language: 'Sprache',
-    english: 'English',
-    chinese: '中文',
+    english: 'Englisch',
+    chinese: 'Chinesisch',
+    spanish: 'Spanisch',
+    french: 'Französisch',
+    german: 'Deutsch',
+    japanese: 'Japanisch',
+    korean: 'Koreanisch',
     
     // Common
     today: 'Heute',
@@ -509,30 +1402,55 @@ const translations = {
     confirm: 'Bestätigen',
     editTransaction: 'Transaktion bearbeiten',
     update: 'Aktualisieren',
-    deleteConfirm: 'Sind Sie sicher, dass Sie diese Transaktion löschen möchten?',
-    operationLogs: 'Betriebsprotokolle',
-    pieChart: 'Kategorieverteilung',
+    deleteConfirm: 'Möchten Sie diese Transaktion wirklich löschen?',
+    operationLogs: 'Vorgangsprotokolle',
+    pieChart: 'Kategorienverteilung',
     noData: 'Keine Daten verfügbar',
+    
     // Header
-    greetTitle: 'Genieße jeden Tag',
-    guestSubtitle: 'Melde dich an, um deine Daten zu behalten',
+    greetTitle: 'Genießen Sie jeden Tag',
+    guestSubtitle: 'Melden Sie sich an, um Ihre Daten zu sichern',
     logout: 'Abmelden',
     insights: 'Einblicke',
-    recordsSubtitle: 'Deine Einnahmen- und Ausgabenaufzeichnungen',
-    mainEmotion: 'Hauptausgaben-Emotion',
+    recordsSubtitle: 'Ihre Einnahmen- und Ausgabenaufzeichnungen',
+    mainEmotion: 'Dominierende Emotion',
+    todayTopEmotion: 'Heutige dominierende Emotion',
     spendTimes: 'mal',
-    topCategories: 'Beliebte Kategorien',
-    insightsSubtitle: 'KI analysiert deine Ausgaben-Emotionsmuster',
-    emotionRanking: 'Emotions-Rangliste',
-    patternAnalysis: 'Analyse der Ausgabenmuster',
+    topCategories: 'Top-Kategorien',
+    incomeTopCategories: 'Beliebte Einnahmenkategorien',
+    expenseTopCategories: 'Beliebte Ausgabenkategorien',
+    timeRange: 'Zeitraum',
+    thisYear: 'Dieses Jahr',
+    all: 'Alle',
+    metricByAmount: 'Nach Betrag',
+    metricByCount: 'Nach Anzahl',
+    last7Days: 'Letzte 7 Tage',
+    last30Days: 'Letzte 30 Tage',
+    thisWeek: 'Diese Woche',
+    lastWeek: 'Letzte Woche',
+    last14Days: 'Letzte 14 Tage',
+    lastMonth: 'Letzter Monat',
+    allTime: 'Gesamter Zeitraum',
+    customRange: 'Benutzerdefinierter Zeitraum',
+    startDate: 'Startdatum',
+    endDate: 'Enddatum',
+    apply: 'Anwenden',
+    insightsSubtitle: 'Die KI analysiert den Zusammenhang zwischen Ihren Emotionen sowie Einnahmen/Ausgaben',
+    emotionRanking: 'Emotionsrangliste',
+    weeklyEmotionRanking: 'Wöchentliche Emotionsrangliste',
+    patternAnalysis: 'Musteranalyse von Einnahmen und Ausgaben',
     smartAdvice: 'Intelligente Vorschläge',
-    recordMoreToSee: 'Erfasse einige Einträge, um Einblicke zu sehen',
+    patternTopShareLine: '{emotion}-Anteil {share}%, Schnitt {avg} (Gesamtschnitt {overallAvg})',
+    patternWeekCompareLine: 'Diese Woche {amount}, ggü. letzter Woche {delta}%',
+    adviceHighAvg: 'Tipp: Erinnerung/Bestätigung für „{emotion}“ über {threshold} setzen',
+    adviceBudgetCap: 'Tipp: Wöchentliches Budgetlimit festlegen, Warnung nahe {cap}',
+    recordMoreToSee: 'Nehmen Sie einige Einträge auf, um Einblicke zu sehen',
     usedDaysPrefix: 'Nutzungstage:',
     daysUnit: 'Tage',
-    keepRecordingTip: 'Weiter protokollieren, um Emotionen und Ausgaben besser zu verstehen.',
+    keepRecordingTip: 'Führen Sie Aufzeichnungen, um Emotionen sowie Einnahmen/Ausgaben besser zu verstehen.',
     
     // Theme
-    theme: 'Design',
+    theme: 'Thema',
     lightTheme: 'Hell',
     darkTheme: 'Dunkel',
     systemTheme: 'System folgen',
@@ -542,26 +1460,127 @@ const translations = {
     
     // App Info
     appName: 'MoodLedger',
-    authSubtitle: 'Ausgaben erfassen, Emotionen verstehen, Leben verbessern',
-    appVersion: 'v1.0.0',
-    appDescription: 'Einfaches und benutzerfreundliches Tool für persönliche Finanzen',
+    authTitle: 'MoodLedger',
+    authSubtitle: 'Ausgaben verfolgen, Emotionen verstehen, Leben verbessern',
+    slogan: 'Deine Brieftasche schreibt, dein Herz spricht',
+    
+    // Initial Balance
+    initialBalance: 'Anfangssaldo',
+    setInitialBalance: 'Anfangssaldo festlegen',
+    initialBalanceQuestion: 'Wie war Ihr Kontostand vor der Nutzung der App?',
+    initialBalanceDescription: 'Dies ist der Betrag vor der Nutzung der App.',
+    enterInitialBalance: 'Anfangssaldo eingeben',
+    initialBalanceIncluded: 'Anfangssaldo enthalten',
+    monthlyBalance: 'Monatssaldo',
+    continue: 'Weiter',
+    skip: 'Überspringen',
+    
+    appVersion: 'v1.0.7',
+    appDescription: 'Einfache und benutzerfreundliche Finanz-App',
+    
+    // Settings extensions
+    loggedInAccount: 'Angemeldetes Konto',
+    logoutFailed: 'Abmelden fehlgeschlagen',
+    pleaseRetry: 'Bitte erneut versuchen',
+    loginOrRegister: 'Anmelden / Registrieren',
+    exportDataJSON: 'Daten exportieren (JSON)',
+    exportFailed: 'Export fehlgeschlagen',
+    importDataPasteJSON: 'Daten importieren (JSON einfügen)',
+    importData: 'Daten importieren',
+    pasteJsonBelow: 'Fügen Sie unten den exportierten JSON-Inhalt ein:',
+    pasteJsonPlaceholder: 'JSON einfügen',
+    startImport: 'Import starten',
+    importSuccess: 'Import erfolgreich',
+    importedPrefix: 'Importiert ',
+    importedSuffix: ' Einträge',
+    importFailed: 'Import fehlgeschlagen',
+    checkJson: 'Bitte JSON-Inhalt prüfen',
+    emotionTagManagement: 'Emotions-Tags verwalten',
+    add: 'Hinzufügen',
+    addEmotionTag: 'Emotions-Tag hinzufügen',
+    emoji: 'Emoji',
+    egEmoji: 'z. B. 😊',
+    name: 'Name',
+    egHappy: 'z. B. Glücklich',
+    pleaseEnterName: 'Bitte einen Namen eingeben',
+    emotionTags: 'Emotions-Tags',
+    resetEmotionTagsToDefault: 'Standard-Emotionen wiederherstellen',
+    resetEmotionTagsRestored: 'Standard-Emotionen wiederhergestellt',
+    usageDays: 'Nutzungstage',
+    
+    // Emotions (default tags)
+    '开心': 'Glücklich',
+    '焦虑': 'Ängstlich',
+    '孤独': 'Einsam',
+    '无聊': 'Gelangweilt',
+    '奖励自己': 'Mich belohnen',
+    '压力大': 'Gestresst',
+    '兴奋': 'Aufgeregt',
+    '难过': 'Traurig',
+    
+    // Insights tip
+    analysisTip: 'Wenn Sie {emotion} sind, ist Ihr durchschnittlicher Transaktionsbetrag höher. Legen Sie eine Budgeterinnerung fest, um rational zu bleiben.',
+    
+    // Auth/AuthGate
+    welcomeBack: 'Willkommen zurück',
+    createAccount: 'Erstellen Sie Ihr Konto',
+    resetPassword: 'Passwort zurücksetzen',
+    login: 'Anmelden',
+    register: 'Registrieren',
+    sendResetEmail: 'Zurücksetzungs-E-Mail senden',
+    backToLogin: 'Zurück zur Anmeldung',
+    goRegister: 'Zur Registrierung',
+    forgotPassword: 'Passwort vergessen',
+    emailLabel: 'E-Mail',
+    emailPlaceholder: 'E-Mail eingeben',
+    passwordLabel: 'Passwort',
+    passwordPlaceholder: 'Passwort eingeben',
+    confirmPasswordLabel: 'Passwort bestätigen',
+    confirmPasswordPlaceholder: 'Passwort erneut eingeben',
+    passwordMismatch: 'Passwörter stimmen nicht überein',
+    quickTryTitle: 'Schnelltest',
+    quickTryDesc: 'Keine Registrierung nötig, testen Sie jetzt alle Funktionen',
+    skipForNow: 'Vorläufig überspringen',
+    featureAnalytics: 'Analysen',
+    featureAnalyticsSub: 'Ausgabenverteilung und Trends',
+    featureInsights: 'Einblicke',
+    featureInsightsSub: 'Emotionale Muster entdecken',
+    featurePrivacy: 'Privatsphäre',
+    featurePrivacySub: 'Lokal- und Cloud-Sync',
+    loginFailed: 'Anmeldung fehlgeschlagen',
+    registerFailed: 'Registrierung fehlgeschlagen',
+    registerSuccessCheckEmail: 'Registrierung erfolgreich. Prüfen Sie Ihr E-Mail-Postfach oder melden Sie sich direkt an',
+    registerSuccessLocal: 'Registrierung erfolgreich. Sie können sich jetzt mit Ihren Anmeldedaten anmelden.',
+    resetEmailFailed: 'Zurücksetzungs-E-Mail senden fehlgeschlagen',
+    resetEmailSent: 'Zurücksetzungs-E-Mail gesendet. Bitte Posteingang prüfen',
+    cloudSyncNotConfigured: 'Cloud-Synchronisierung ist nicht konfiguriert. Bitte Supabase-URL und anon key setzen und erneut versuchen',
+    amountInvalidTitle: 'Fehler',
+    amountInvalidMessage: 'Bitte geben Sie einen gültigen Betrag ein',
+    emotionRequiredTitle: 'Hinweis',
+    emotionRequiredMessage: 'Bitte wählen Sie eine Emotion aus',
+    pleaseSelectEmotion: 'Bitte wählen Sie eine Emotion aus',
   },
+  
+  // Japanese translations
   ja: {
     // Tabs
     home: 'ホーム',
     transactions: '取引',
     stats: '統計',
     settings: '設定',
-    
+
     // Home screen
     balance: '残高',
     totalIncome: '総収入',
     totalExpense: '総支出',
     thisMonth: '今月',
+    homeSubtitle: 'データ概要',
+    statsSubtitle: 'グローバルデータ分析',
+    settingsSubtitle: '体験をカスタマイズ',
     recentTransactions: '最近の取引',
-    noTransactions: 'まだ取引がありません',
-    addFirst: '最初の取引を追加してください！',
-    
+    noTransactions: '取引はまだありません',
+    addFirst: '最初の取引を追加しましょう！',
+
     // Add transaction
     addTransaction: '取引を追加',
     income: '収入',
@@ -572,24 +1591,48 @@ const translations = {
     date: '日付',
     save: '保存',
     cancel: 'キャンセル',
-    
+    transactionType: '取引タイプ',
+    currentEmotion: '現在の感情',
+    notePlaceholder: 'メモ（任意）',
+
     // Categories
     food: '食事',
     transport: '交通',
     shopping: '買い物',
-    entertainment: '娯楽',
+    entertainment: 'エンタメ',
     health: '健康',
     education: '教育',
     salary: '給与',
     freelance: 'フリーランス',
     investment: '投資',
     other: 'その他',
-    
+    // Transfer
+    transfer: '振替',
+    fromAccount: '出金口座',
+    toAccount: '入金口座',
+    fee: '手数料',
+    operationSuccess: '完了しました',
+    operationFailed: '操作に失敗しました',
+    insufficientFunds: '残高不足',
+    cannotTransferSameAccount: '同じ口座には振替できません',
+    account: '口座',
+    creditLimit: 'クレジット上限',
+    creditLimitExceeded: 'クレジット上限を超えました',
+    initialBalanceNonNegative: '初期残高はマイナスにできません',
+    selectAccount: '口座を選択',
+    noAccountAvailableMessage: 'まず口座を選択してください',
+    cannotTransferDifferentCurrency: '異なる通貨間での振替はできません',
+
     // Settings
     language: '言語',
-    english: 'English',
-    chinese: '中文',
-    
+    english: '英語',
+    chinese: '中国語',
+    spanish: 'スペイン語',
+    french: 'フランス語',
+    german: 'ドイツ語',
+    japanese: '日本語',
+    korean: '韓国語',
+
     // Common
     today: '今日',
     yesterday: '昨日',
@@ -598,43 +1641,166 @@ const translations = {
     confirm: '確認',
     editTransaction: '取引を編集',
     update: '更新',
-    deleteConfirm: 'この取引を削除してもよろしいですか？',
+    deleteConfirm: 'この取引を削除しますか？',
     operationLogs: '操作ログ',
     pieChart: 'カテゴリ分布',
     noData: 'データがありません',
+
     // Header
     greetTitle: '毎日を楽しもう',
-    guestSubtitle: 'ログインするとデータは失われません',
+    guestSubtitle: 'サインインしてデータを安全に',
     logout: 'ログアウト',
     insights: 'インサイト',
-    recordsSubtitle: '収入と支出の記録',
-    mainEmotion: '主要な支出の感情',
+    recordsSubtitle: 'あなたの収支記録',
+    mainEmotion: '優勢な感情',
+    todayTopEmotion: '今日の優勢な感情',
     spendTimes: '回',
     topCategories: '人気カテゴリ',
-    insightsSubtitle: 'AI が支出の感情パターンを分析します',
+    incomeTopCategories: '収入の人気カテゴリ',
+    expenseTopCategories: '支出の人気カテゴリ',
+    timeRange: '期間',
+    thisYear: '今年',
+    all: 'すべて',
+    metricByAmount: '金額順',
+    metricByCount: '件数順',
+    last7Days: '直近7日間',
+    last30Days: '直近30日間',
+    thisWeek: '今週',
+    lastWeek: '先週',
+    last14Days: '直近14日間',
+    lastMonth: '先月',
+    allTime: '全期間',
+    customRange: 'カスタム範囲',
+    startDate: '開始日',
+    endDate: '終了日',
+    apply: '適用',
+    insightsSubtitle: 'AIが感情と収支の関係を分析',
     emotionRanking: '感情ランキング',
-    patternAnalysis: '支出パターン分析',
-    smartAdvice: 'スマート提案',
-    recordMoreToSee: 'いくつか記録するとインサイトが表示されます',
+    weeklyEmotionRanking: '今週の感情ランキング',
+    patternAnalysis: '収支パターン分析',
+    smartAdvice: 'スマートアドバイス',
+    patternTopShareLine: '{emotion}の比率 {share}%、平均 {avg}（全体平均 {overallAvg}）',
+    patternWeekCompareLine: '今週 {amount}、先週比 {delta}%',
+    adviceHighAvg: '提案：{emotion}関連の取引が {threshold} を超える場合、リマインド/確認を設定',
+    adviceBudgetCap: '提案：週間予算上限を設定し、{cap} 付近で通知',
+    recordMoreToSee: 'エントリーをいくつか記録すると表示されます',
     usedDaysPrefix: '使用日数：',
     daysUnit: '日',
-    keepRecordingTip: '記録を続けることで感情と支出をよりよく理解できます。',
-    
+    keepRecordingTip: '記録を続けることで感情と収支の関係をより理解できます。',
+
     // Theme
     theme: 'テーマ',
     lightTheme: 'ライト',
     darkTheme: 'ダーク',
     systemTheme: 'システムに従う',
-    
+
     // Currency
     currency: '通貨',
-    
+
     // App Info
     appName: 'MoodLedger',
-    authSubtitle: '支出を記録し、感情を理解して、生活を改善',
-    appVersion: 'v1.0.0',
-    appDescription: 'シンプルで使いやすい個人財務管理ツール',
+    authTitle: 'MoodLedger',
+    authSubtitle: '支出を記録し、感情を理解し、生活を改善',
+    slogan: '財布が書き、心が語る',
+
+    // Initial Balance
+    initialBalance: '初期残高',
+    setInitialBalance: '初期残高を設定',
+    initialBalanceQuestion: 'このアプリを使う前の残高は？',
+    initialBalanceDescription: 'アプリ使用開始前に持っていた金額です。',
+    enterInitialBalance: '初期残高を入力',
+    initialBalanceIncluded: '初期残高を含む',
+    monthlyBalance: '月間残高',
+    continue: '続行',
+    skip: 'スキップ',
+
+    appVersion: 'v1.0.7',
+    appDescription: 'シンプルで使いやすい家計管理ツール',
+
+    // Settings extensions
+    loggedInAccount: 'ログイン中のアカウント',
+    logoutFailed: 'ログアウトに失敗しました',
+    pleaseRetry: 'もう一度お試しください',
+    loginOrRegister: 'ログイン / 登録',
+    exportDataJSON: 'データをエクスポート（JSON）',
+    exportFailed: 'エクスポートに失敗しました',
+    importDataPasteJSON: 'データをインポート（JSON貼り付け）',
+    importData: 'データをインポート',
+    pasteJsonBelow: 'エクスポートしたJSONを下に貼り付けてください：',
+    pasteJsonPlaceholder: 'JSONを貼り付け',
+    startImport: 'インポート開始',
+    importSuccess: 'インポート成功',
+    importedPrefix: 'インポート ',
+    importedSuffix: ' 件',
+    importFailed: 'インポートに失敗しました',
+    checkJson: 'JSON内容を確認してください',
+    emotionTagManagement: '感情タグ管理',
+    add: '追加',
+    addEmotionTag: '感情タグを追加',
+    emoji: '絵文字',
+    egEmoji: '例：😊',
+    name: '名前',
+    egHappy: '例：うれしい',
+    pleaseEnterName: '名前を入力してください',
+    emotionTags: '感情タグ',
+    resetEmotionTagsToDefault: 'デフォルトの感情タグにリセット',
+    resetEmotionTagsRestored: 'デフォルトの感情タグを復元しました',
+    usageDays: '使用日数',
+
+    // Emotions (default tags)
+    '开心': 'うれしい',
+    '焦虑': '不安',
+    '孤独': '孤独',
+    '无聊': '退屈',
+    '奖励自己': '自分へのご褒美',
+    '压力大': 'ストレス',
+    '兴奋': '興奮',
+    '难过': '悲しい',
+
+    // Insights tip
+    analysisTip: '{emotion}の時、取引の平均金額が高くなります。理性的に保つため予算リマインダーの設定を検討してください。',
+
+    // Auth/AuthGate
+    welcomeBack: 'お帰りなさい',
+    createAccount: 'アカウントを作成',
+    resetPassword: 'パスワードをリセット',
+    login: 'ログイン',
+    register: '登録',
+    sendResetEmail: 'リセットメールを送信',
+    backToLogin: 'ログインに戻る',
+    goRegister: '登録へ',
+    forgotPassword: 'パスワードをお忘れですか',
+    emailLabel: 'メール',
+    emailPlaceholder: 'メールアドレスを入力',
+    passwordLabel: 'パスワード',
+    passwordPlaceholder: 'パスワードを入力',
+    confirmPasswordLabel: 'パスワード確認',
+    confirmPasswordPlaceholder: 'もう一度入力',
+    passwordMismatch: 'パスワードが一致しません',
+    quickTryTitle: 'クイック体験',
+    quickTryDesc: '登録不要、すぐに全機能を体験',
+    skipForNow: '後でスキップ',
+    featureAnalytics: '分析',
+    featureAnalyticsSub: '支出の分布とトレンド',
+    featureInsights: 'インサイト',
+    featureInsightsSub: '感情パターンを発見',
+    featurePrivacy: 'プライバシー',
+    featurePrivacySub: 'ローカルとクラウド同期',
+    loginFailed: 'ログインに失敗しました',
+    registerFailed: '登録に失敗しました',
+    registerSuccessCheckEmail: '登録成功。メールを確認するか、直接ログインしてください',
+    registerSuccessLocal: '登録が成功しました。資格情報でログインできます。',
+    resetEmailFailed: 'リセットメールの送信に失敗しました',
+    resetEmailSent: 'リセットメールを送信しました。受信トレイを確認してください',
+    cloudSyncNotConfigured: 'クラウド同期が設定されていません。設定でSupabase URLとanon keyを指定してください',
+    amountInvalidTitle: 'エラー',
+    amountInvalidMessage: '有効な金額を入力してください',
+    emotionRequiredTitle: 'お知らせ',
+    emotionRequiredMessage: '感情を選択してください',
+    pleaseSelectEmotion: '感情を選択してください',
   },
+  
+  // Korean translations
   ko: {
     // Tabs
     home: '홈',
@@ -647,9 +1813,12 @@ const translations = {
     totalIncome: '총 수입',
     totalExpense: '총 지출',
     thisMonth: '이번 달',
+    homeSubtitle: '데이터 개요',
+    statsSubtitle: '글로벌 데이터 분석',
+    settingsSubtitle: '사용자 경험을 맞춤화',
     recentTransactions: '최근 거래',
     noTransactions: '아직 거래가 없습니다',
-    addFirst: '첫 번째 거래를 추가하세요!',
+    addFirst: '첫 거래를 추가해 보세요!',
     
     // Add transaction
     addTransaction: '거래 추가',
@@ -661,23 +1830,49 @@ const translations = {
     date: '날짜',
     save: '저장',
     cancel: '취소',
+    transactionType: '거래 유형',
+    currentEmotion: '현재 감정',
+    notePlaceholder: '메모 (선택)',
     
     // Categories
-    food: '음식',
+    food: '식비',
     transport: '교통',
     shopping: '쇼핑',
-    entertainment: '오락',
+    entertainment: '엔터테인먼트',
     health: '건강',
     education: '교육',
     salary: '급여',
-    freelance: '프리랜스',
+    freelance: '프리랜서',
     investment: '투자',
     other: '기타',
+    // Transfer
+    transfer: '이체',
+    fromAccount: '출금 계좌',
+    toAccount: '입금 계좌',
+    fee: '수수료',
+    operationSuccess: '완료',
+    operationFailed: '작업 실패',
+    insufficientFunds: '잔액 부족',
+    cannotTransferSameAccount: '같은 계좌로는 이체할 수 없습니다',
+    amountInvalidTitle: '오류',
+    amountInvalidMessage: '유효한 금액을 입력하세요',
+    account: '계좌',
+    creditLimit: '신용한도',
+    creditLimitExceeded: '신용한도를 초과했습니다',
+    initialBalanceNonNegative: '초기 잔액은 음수가 될 수 없습니다',
+    selectAccount: '계좌 선택',
+    noAccountAvailableMessage: '먼저 계좌를 선택하세요',
+    cannotTransferDifferentCurrency: '서로 다른 통화 간에는 이체할 수 없습니다',
     
     // Settings
     language: '언어',
-    english: 'English',
-    chinese: '中文',
+    english: '영어',
+    chinese: '중국어',
+    spanish: '스페인어',
+    french: '프랑스어',
+    german: '독일어',
+    japanese: '일본어',
+    korean: '한국어',
     
     // Common
     today: '오늘',
@@ -690,110 +1885,257 @@ const translations = {
     deleteConfirm: '이 거래를 삭제하시겠습니까?',
     operationLogs: '작업 로그',
     pieChart: '카테고리 분포',
-    noData: '데이터가 없습니다',
+    noData: '데이터 없음',
+    
     // Header
     greetTitle: '매일을 즐기세요',
-    guestSubtitle: '로그인하면 데이터가 안전해요',
+    guestSubtitle: '로그인하여 데이터를 안전하게',
     logout: '로그아웃',
     insights: '인사이트',
     recordsSubtitle: '수입과 지출 기록',
-    mainEmotion: '주요 지출 감정',
+    mainEmotion: '우세한 감정',
+    todayTopEmotion: '오늘의 우세한 감정',
     spendTimes: '회',
     topCategories: '인기 카테고리',
-    insightsSubtitle: 'AI가 지출 감정 패턴을 분석합니다',
+    incomeTopCategories: '수입 인기 카테고리',
+    expenseTopCategories: '지출 인기 카테고리',
+    timeRange: '기간',
+    thisYear: '올해',
+    all: '전체',
+    metricByAmount: '금액 기준',
+    metricByCount: '건수 기준',
+    last7Days: '최근 7일',
+    last30Days: '최근 30일',
+    thisWeek: '이번 주',
+    lastWeek: '지난 주',
+    last14Days: '최근 14일',
+    lastMonth: '지난 달',
+    allTime: '전체 기간',
+    customRange: '사용자 지정 범위',
+    startDate: '시작일',
+    endDate: '종료일',
+    apply: '적용',
+    insightsSubtitle: 'AI가 감정과 수입/지출의 관계를 분석합니다',
     emotionRanking: '감정 순위',
-    patternAnalysis: '지출 패턴 분석',
-    smartAdvice: '스마트 제안',
-    recordMoreToSee: '몇 개만 기록하면 인사이트를 볼 수 있어요',
+    weeklyEmotionRanking: '이번 주 감정 순위',
+    patternAnalysis: '수입·지출 패턴 분석',
+    smartAdvice: '스마트 조언',
+    patternTopShareLine: '{emotion} 비중 {share}%, 평균 {avg} (전체 평균 {overallAvg})',
+    patternWeekCompareLine: '이번 주 {amount}, 지난주 대비 {delta}%',
+    adviceHighAvg: '제안: "{emotion}" 관련 거래가 {threshold} 초과 시 알림/재확인 설정',
+    adviceBudgetCap: '제안: 주간 예산 한도를 설정하고 {cap} 근접 시 알림',
+    recordMoreToSee: '몇 개 항목을 기록하면 표시됩니다',
     usedDaysPrefix: '사용 일수:',
     daysUnit: '일',
-    keepRecordingTip: '기록을 계속하면 감정과 지출을 더 잘 이해할 수 있어요.',
+    keepRecordingTip: '기록을 계속하면 감정과 수입/지출의 관계를 더 잘 이해할 수 있습니다.',
     
     // Theme
     theme: '테마',
     lightTheme: '라이트',
     darkTheme: '다크',
-    systemTheme: '시스템 따라가기',
+    systemTheme: '시스템 따르기',
     
     // Currency
     currency: '통화',
     
     // App Info
     appName: 'MoodLedger',
-    authSubtitle: '지출을 기록하고 감정을 이해해 더 나은 생활로',
-    appVersion: 'v1.0.0',
-    appDescription: '간단하고 사용하기 쉬운 개인 재무 관리 도구',
-  },
+    authTitle: 'MoodLedger',
+    authSubtitle: '지출을 기록하고 감정을 이해하며 삶을 개선하세요',
+    slogan: '당신의 지갑이 쓰고, 당신의 마음이 말합니다',
+    
+    // Initial Balance
+    initialBalance: '초기 잔액',
+    setInitialBalance: '초기 잔액 설정',
+    initialBalanceQuestion: '앱 사용 전 잔액은 얼마였나요?',
+    initialBalanceDescription: '앱 사용 시작 전에 가지고 있던 금액입니다.',
+    enterInitialBalance: '초기 잔액을 입력하세요',
+    initialBalanceIncluded: '초기 잔액 포함',
+    monthlyBalance: '월간 잔액',
+    continue: '계속',
+    skip: '건너뛰기',
+    
+    appVersion: 'v1.0.7',
+    appDescription: '간단하고 사용하기 쉬운 개인 재무 도구',
+    
+    // Settings extensions
+    loggedInAccount: '로그인된 계정',
+    logoutFailed: '로그아웃 실패',
+    pleaseRetry: '다시 시도해주세요',
+    loginOrRegister: '로그인 / 등록',
+    exportDataJSON: '데이터 내보내기 (JSON)',
+    exportFailed: '내보내기 실패',
+    importDataPasteJSON: '데이터 가져오기 (JSON 붙여넣기)',
+    importData: '데이터 가져오기',
+    pasteJsonBelow: '내보낸 JSON 내용을 아래에 붙여넣으세요:',
+    pasteJsonPlaceholder: 'JSON 붙여넣기',
+    startImport: '가져오기 시작',
+    importSuccess: '가져오기 성공',
+    importedPrefix: '가져온 항목 ',
+    importedSuffix: ' 개',
+    importFailed: '가져오기 실패',
+    checkJson: 'JSON 내용을 확인하세요',
+    emotionTagManagement: '감정 태그 관리',
+    add: '추가',
+    addEmotionTag: '감정 태그 추가',
+    emoji: '이모지',
+    egEmoji: '예: 😊',
+    name: '이름',
+    egHappy: '예: 행복',
+    pleaseEnterName: '이름을 입력하세요',
+    emotionTags: '감정 태그',
+    resetEmotionTagsToDefault: '기본 감정 태그로 복원',
+    resetEmotionTagsRestored: '기본 감정 태그가 복원되었습니다',
+    usageDays: '사용 일수',
+    
+    // Emotions (default tags)
+    '开心': '행복',
+    '焦虑': '불안',
+    '孤独': '외로움',
+    '无聊': '지루함',
+    '奖励自己': '나에게 보상',
+    '压力大': '스트레스',
+    '兴奋': '흥분',
+    '难过': '슬픔',
+    
+    // Insights tip
+    analysisTip: '{emotion}일 때 거래 평균 금액이 더 높습니다. 합리적으로 관리하기 위해 예산 알림을 설정하세요.',
+    
+    // Auth/AuthGate
+    welcomeBack: '다시 오신 것을 환영합니다',
+    createAccount: '계정 만들기',
+    resetPassword: '비밀번호 재설정',
+    login: '로그인',
+    register: '등록',
+    sendResetEmail: '재설정 이메일 보내기',
+    backToLogin: '로그인으로 돌아가기',
+    goRegister: '등록하러 가기',
+    forgotPassword: '비밀번호를 잊으셨나요',
+    emailLabel: '이메일',
+    emailPlaceholder: '이메일을 입력하세요',
+    passwordLabel: '비밀번호',
+    passwordPlaceholder: '비밀번호를 입력하세요',
+    confirmPasswordLabel: '비밀번호 확인',
+    confirmPasswordPlaceholder: '비밀번호를 다시 입력하세요',
+    passwordMismatch: '비밀번호가 일치하지 않습니다',
+    quickTryTitle: '빠른 체험',
+    quickTryDesc: '등록 없이 지금 모든 기능 체험',
+    skipForNow: '나중에 건너뛰기',
+    featureAnalytics: '분석',
+    featureAnalyticsSub: '지출 분포 및 추세',
+    featureInsights: '인사이트',
+    featureInsightsSub: '감정 패턴 발견',
+    featurePrivacy: '개인정보',
+    featurePrivacySub: '로컬 및 클라우드 동기화',
+    loginFailed: '로그인 실패',
+    registerFailed: '등록 실패',
+    registerSuccessCheckEmail: '등록 성공. 이메일을 확인하거나 바로 로그인하세요',
+    registerSuccessLocal: '등록이 성공했습니다. 자격 증명으로 로그인할 수 있습니다.',
+    resetEmailFailed: '재설정 이메일 전송 실패',
+    resetEmailSent: '재설정 이메일이 전송되었습니다. 받은 편지함을 확인하세요',
+    cloudSyncNotConfigured: '클라우드 동기화가 구성되지 않았습니다. 설정에서 Supabase URL과 anon key를 입력하세요',
+    emotionRequiredTitle: '알림',
+    emotionRequiredMessage: '감정을 선택해 주세요',
+    pleaseSelectEmotion: '감정을 선택해 주세요',
+  }
 };
 
-interface LanguageProviderProps {
-  children: ReactNode;
-}
+export const LanguageProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+  const [language, setLanguageState] = useState<Language>('en');
+  const [currency, setCurrencyState] = useState<string>('USD');
 
-export function LanguageProvider({ children }: LanguageProviderProps) {
-  const detectDeviceLang = (): Language => {
-    try {
-      const locales = (Localization as any)?.getLocales?.() ?? [];
-      const tag = locales[0]?.languageCode ?? locales[0]?.languageTag ?? '';
-      const lc = String(tag || '').toLowerCase();
-      if (lc.startsWith('zh')) return 'zh';
-      if (lc.startsWith('en')) return 'en';
-      if (lc.startsWith('es')) return 'es';
-      if (lc.startsWith('fr')) return 'fr';
-      if (lc.startsWith('de')) return 'de';
-      if (lc.startsWith('ja')) return 'ja';
-      if (lc.startsWith('ko')) return 'ko';
-    } catch {}
-    return 'en';
-  };
-  const [language, setLanguage] = useState<Language>(detectDeviceLang());
-
-  // 从 AsyncStorage 加载语言设置
   useEffect(() => {
-    loadLanguage();
+    (async () => {
+      try {
+        const entries = await AsyncStorage.multiGet(['language', 'currency']);
+        const savedLanguage = entries.find(([k]) => k === 'language')?.[1];
+        const savedCurrency = entries.find(([k]) => k === 'currency')?.[1];
+        const locales = Localization.getLocales();
+
+        // 设置语言
+        if (savedLanguage) {
+          setLanguageState(savedLanguage as Language);
+        } else {
+          const langCode = (Localization.getLocales()[0]?.languageCode ?? 'en') as Language;
+          if (Object.keys(translations).includes(langCode)) {
+            setLanguageState(langCode);
+          } else {
+            setLanguageState('en');
+          }
+        }
+
+        // 设置货币（优先使用保存的值，否则根据地区推断，默认 USD）
+        if (savedCurrency) {
+          setCurrencyState(savedCurrency);
+        } else {
+          const region = inferRegion(locales as any[]);
+          setCurrencyState(REGION_TO_CURRENCY[region] ?? 'USD');
+        }
+      } catch (error) {
+        console.error('Failed to load language:', error);
+      }
+    })();
   }, []);
 
-  // 保存语言设置到 AsyncStorage
-  useEffect(() => {
-    saveLanguage();
-  }, [language]);
-
-  const loadLanguage = async () => {
+  const setLanguage = async (lang: Language) => {
     try {
-      const storedLanguage = await AsyncStorage.getItem('@expense_tracker_language');
-      if (storedLanguage && ['en', 'zh', 'es', 'fr', 'de', 'ja', 'ko'].includes(storedLanguage)) {
-        setLanguage(storedLanguage as Language);
+      // 确保语言是我们支持的语言之一
+      if (lang === 'en' || lang === 'zh' || lang === 'es' || lang === 'fr' || 
+          lang === 'de' || lang === 'ja' || lang === 'ko') {
+        await AsyncStorage.setItem('language', lang);
+        setLanguageState(lang);
+      } else {
+        // 如果不是支持的语言，则默认使用英文
+        await AsyncStorage.setItem('language', 'en');
+        setLanguageState('en');
       }
-    } catch (error) {
-      console.error('Failed to load language:', error);
-    }
-  };
-
-  const saveLanguage = async () => {
-    try {
-      await AsyncStorage.setItem('@expense_tracker_language', language);
     } catch (error) {
       console.error('Failed to save language:', error);
     }
   };
 
-  const t = (key: string): string => {
-    const dict = (translations as Record<Language, Record<string, string>>)[language];
-    const fallback = (translations as Record<Language, Record<string, string>>)['en'];
-    return dict[key] ?? fallback[key] ?? key;
+  /**
+   * @deprecated 请改用 TransactionContext.setCurrency 作为唯一变更入口
+   */
+  const setCurrency = async (code: string) => {
+    try {
+      await AsyncStorage.setItem('currency', code);
+      setCurrencyState(code);
+    } catch (error) {
+      console.error('Failed to save currency:', error);
+    }
   };
 
+  const t = useCallback((key: string, vars?: Record<string, string>) => {
+    const dict = translations as Record<string, Record<string, string>>;
+    let s: string | undefined;
+    if (language && dict[language]) {
+      s = dict[language]?.[key];
+    }
+    if (!s) s = dict.en[key] || dict.zh[key] || key;
+    if (vars && s) {
+      for (const k in vars) {
+        s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
+      }
+    }
+    return s;
+  }, [language]);
+
+  const value = useMemo(() => ({ language, setLanguage, currency, setCurrency, t }), [language, currency, t]);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
-}
+};
 
-export function useLanguage() {
+export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
-}
+};
+
+export default LanguageContext;

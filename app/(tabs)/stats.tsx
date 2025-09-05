@@ -4,9 +4,13 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Pressable,
+  TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
+import DateRangePicker from '@/components/ui/DateRangePicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { TrendingUp, TrendingDown, DollarSign, ChartPie as PieChart } from 'lucide-react-native';
+import { ChartPie as PieChart, Settings } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -16,50 +20,106 @@ import Card from '@/components/ui/Card';
 
 export default function StatsScreen() {
   const { t } = useLanguage();
-  const { transactions, getMonthlyStats, getCurrencySymbol } = useTransactions();
+  const router = useRouter();
+  const { transactions, getCurrencySymbol } = useTransactions();
   const { colors } = useTheme();
-  const { income, expense, balance } = getMonthlyStats();
+
+  const [rangeLabel, setRangeLabel] = React.useState<string>('');
+  // metric removed: fixed to amount
+  const [startDate, setStartDate] = React.useState<Date>(() => { const d = new Date(); d.setDate(d.getDate() - 6); return d; });
+  const [endDate, setEndDate] = React.useState<Date>(new Date());
+  const [showRangePicker, setShowRangePicker] = React.useState(false);
   const currencySymbol = getCurrencySymbol();
+  React.useEffect(() => {
+    setRangeLabel(t('last7Days'));
+  }, []);
 
-  const categoryStats = transactions.reduce((stats, transaction) => {
-    if (!stats[transaction.category]) {
-      stats[transaction.category] = { income: 0, expense: 0, total: 0 };
-    }
-    if (transaction.type === 'income') {
-      stats[transaction.category].income += transaction.amount;
-    } else {
-      stats[transaction.category].expense += transaction.amount;
-    }
-    stats[transaction.category].total += transaction.amount;
-    return stats;
-  }, {} as Record<string, { income: number; expense: number; total: number }>);
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
 
-  const topCategories = Object.entries(categoryStats)
-    .sort(([, a], [, b]) => b.total - a.total)
-    .slice(0, 5);
+  const appStartDate = React.useMemo(() => {
+    if (!transactions || transactions.length === 0) return new Date();
+    const minTs = Math.min(...transactions.map(t => new Date(t.date).getTime()));
+    const d = new Date(minTs);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }, [transactions]);
+  const now = new Date();
+
+  React.useEffect(() => {
+    if (startDate < appStartDate) setStartDate(appStartDate);
+    if (endDate < appStartDate) setEndDate(appStartDate);
+  }, [appStartDate]);
+  const range = React.useMemo(() => {
+    const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    const a = startDate || now;
+    const b = endDate || now;
+    const s = a <= b ? a : b;
+    const e = a <= b ? b : a;
+    return { start: startOfDay(s), end: endOfDay(e) };
+  }, [now, startDate, endDate]);
+
+  const filtered = React.useMemo(() => {
+    return transactions.filter(t => {
+      const d = new Date(t.date);
+      return d >= range.start && d <= range.end;
+    });
+  }, [transactions, range]);
 
   const pieChartColors = [
     '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444',
     '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
   ];
 
-  const incomeChartData = Object.entries(categoryStats)
-    .filter(([, stats]) => stats.income > 0)
-    .map(([category, stats], index) => ({
-      category,
-      amount: stats.income,
-      color: pieChartColors[index % pieChartColors.length],
-    }))
-    .sort((a, b) => b.amount - a.amount);
+  const categoryAgg = React.useMemo(() => {
+    const agg: Record<string, { incomeAmount: number; expenseAmount: number; incomeCount: number; expenseCount: number }> = {};
+    filtered.forEach(t => {
+      const k = t.category || 'Other';
+      if (!agg[k]) agg[k] = { incomeAmount: 0, expenseAmount: 0, incomeCount: 0, expenseCount: 0 };
+      if (t.type === 'income') {
+        agg[k].incomeAmount += t.amount;
+        agg[k].incomeCount += 1;
+      } else {
+        agg[k].expenseAmount += t.amount;
+        agg[k].expenseCount += 1;
+      }
+    });
+    return agg;
+  }, [filtered]);
 
-  const expenseChartData = Object.entries(categoryStats)
-    .filter(([, stats]) => stats.expense > 0)
-    .map(([category, stats], index) => ({
-      category,
-      amount: stats.expense,
-      color: pieChartColors[index % pieChartColors.length],
-    }))
-    .sort((a, b) => b.amount - a.amount);
+  const sorter = (a: { amount: number; count: number }, b: { amount: number; count: number }) => b.amount - a.amount;
+
+  const incomeTop = React.useMemo(() => {
+    return Object.entries(categoryAgg)
+      .map(([category, v]) => ({ category, amount: v.incomeAmount, count: v.incomeCount }))
+      .filter(x => x.amount > 0 || x.count > 0)
+      .sort(sorter)
+      .slice(0, 5);
+  }, [categoryAgg]);
+
+  const expenseTop = React.useMemo(() => {
+    return Object.entries(categoryAgg)
+      .map(([category, v]) => ({ category, amount: v.expenseAmount, count: v.expenseCount }))
+      .filter(x => x.amount > 0 || x.count > 0)
+      .sort(sorter)
+      .slice(0, 5);
+  }, [categoryAgg]);
+
+  const incomeChartData = incomeTop.map((x, index) => ({
+    category: x.category,
+    amount: x.amount,
+    color: pieChartColors[index % pieChartColors.length],
+  }));
+
+  const expenseChartData = expenseTop.map((x, index) => ({
+    category: x.category,
+    amount: x.amount,
+    color: pieChartColors[index % pieChartColors.length],
+  }));
 
   const StatCard = ({
     title,
@@ -74,14 +134,14 @@ export default function StatsScreen() {
     color: string;
     subtitle?: string;
   }) => (
-    <View style={[styles.statCard, { borderColor: color }]}>
+    <View style={[styles.statCard, { borderColor: color }]} >
       <View style={styles.statHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
+        <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]} >
           {icon}
         </View>
         <View style={styles.statInfo}>
           <Text style={styles.statTitle}>{title}</Text>
-          <Text style={[styles.statValue, { color }]}>{value}</Text>
+          <Text style={[styles.statValue, { color }]} > { value } </Text>
           {subtitle && <Text style={styles.statSubtitle}>{subtitle}</Text>}
         </View>
       </View>
@@ -89,79 +149,129 @@ export default function StatsScreen() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <GradientHeader variant="userInfo" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} >
+      <GradientHeader
+        variant="userInfo"
+        right={
+          <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
+            <Settings size={24} color="#fff" />
+          </TouchableOpacity>
+        }
+      />
       <Card padding={16}>
-        <Text style={[styles.pageTitle, { color: colors.text }]}>{t('stats')}</Text>
-        <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }}>{t('statsSubtitle')}</Text>
+        <Text style={[styles.pageTitle, { color: colors.text }]} > { t('stats') } </Text>
+        <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }} > { t('statsSubtitle') } </Text>
       </Card>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 95 }}>
         <Card padding={16}>
-          <View style={styles.statsGrid}>
-            <StatCard
-              title={t('balance')}
-              value={`${currencySymbol}${balance.toFixed(2)}`}
-              icon={<DollarSign size={24} color="#8B5CF6" />}
-              color="#8B5CF6"
-            />
-            <StatCard
-              title={t('income')}
-              value={`${currencySymbol}${income.toFixed(2)}`}
-              icon={<TrendingUp size={24} color={colors.income} />}
-              color={colors.income}
-            />
-            <StatCard
-              title={t('expense')}
-              value={`${currencySymbol}${expense.toFixed(2)}`}
-              icon={<TrendingDown size={24} color={colors.expense} />}
-              color={colors.expense}
-            />
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]} > { t('timeRange') } </Text>
           </View>
+          <View style={[styles.filterRow, { justifyContent: 'space-between' }]} >
+            <Text style={[styles.chipText, { color: colors.textSecondary }]} >
+              {rangeLabel || t('last7Days')}
+            </Text>
+            <Pressable
+              onPress={() => setShowRangePicker(true)}
+              style={[styles.chip, { borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 6 }]}
+            >
+              <Text style={[styles.chipText, { color: colors.text }]} > { `${formatDate(startDate)} ~ ${formatDate(endDate)}` } </Text>
+              <Text style={[styles.chipText, { color: colors.text }]} > {'▾'} </Text>
+            </Pressable>
+          </View>
+          {/* removed metric chips */}
+
+          <>
+            <DateRangePicker
+              visible={showRangePicker}
+              onClose={() => setShowRangePicker(false)}
+              initialStartDate={startDate}
+              initialEndDate={endDate}
+              minDate={appStartDate}
+              onApply={({ start, end, label }: any) => {
+                setStartDate(start);
+                setEndDate(end);
+                setRangeLabel(label || `${formatDate(start)} ~ ${formatDate(end)}`);
+                setShowRangePicker(false);
+              }}
+            />
+          </>
         </Card>
 
         {(incomeChartData.length > 0 || expenseChartData.length > 0) && (
           <Card padding={16}>
             <View style={styles.sectionHeader}>
               <PieChart size={20} color={colors.textSecondary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pieChart')}</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]} > { t('pieChart') } </Text>
             </View>
 
             {incomeChartData.length > 0 && (
               <View style={styles.chartContainer}>
-                <Text style={[styles.chartTitle, { color: colors.income }]}>{t('income')}</Text>
+                <Text style={[styles.chartTitle, { color: colors.income }]} > { t('income') } </Text>
                 <PieChartComponent data={incomeChartData} size={180} />
               </View>
             )}
 
             {expenseChartData.length > 0 && (
               <View style={styles.chartContainer}>
-                <Text style={[styles.chartTitle, { color: colors.expense }]}>{t('expense')}</Text>
+                <Text style={[styles.chartTitle, { color: colors.expense }]} > { t('expense') } </Text>
                 <PieChartComponent data={expenseChartData} size={180} />
               </View>
             )}
           </Card>
         )}
 
-        {topCategories.length > 0 && (
+        {incomeTop.length > 0 && (
           <Card padding={16}>
             <View style={styles.sectionHeader}>
               <PieChart size={20} color={colors.textSecondary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('topCategories')}</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]} > { t('incomeTopCategories') } </Text>
             </View>
-
-            {topCategories.map(([category, stats]) => (
-              <View key={category} style={styles.categoryItem}>
+            {incomeTop.map(item => (
+              <View key={item.category} style={styles.categoryItem}>
                 <View style={styles.categoryInfo}>
-                  <Text style={[styles.categoryName, { color: colors.text }]}>{t(category)}</Text>
-                  <Text style={[styles.categoryAmount, { color: colors.textSecondary }]}>{currencySymbol}{stats.total.toFixed(2)}</Text>
+                  <Text style={[styles.categoryName, { color: colors.text }]} > { t(item.category) } </Text>
+                  <Text style={[styles.categoryAmount, { color: colors.textSecondary }]} >
+                    {`${currencySymbol}${item.amount.toFixed(2)}`}
+                  </Text>
                 </View>
-                <View style={[styles.categoryBar, { backgroundColor: colors.border }]}>
+                <View style={[styles.categoryBar, { backgroundColor: colors.border }]} >
                   <View
                     style={[
                       styles.categoryBarFill,
                       {
-                        width: `${Math.min((stats.total / (income + expense || 1)) * 100, 100)}%`,
-                        backgroundColor: (stats as any).expense > (stats as any).income ? colors.expense : colors.income,
+                        width: `${Math.min(100, (item.amount / (incomeTop.reduce((s, x) => s + x.amount, 0) || 1)) * 100)}%`,
+                        backgroundColor: colors.income,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            ))}
+          </Card>
+        )}
+
+        {expenseTop.length > 0 && (
+          <Card padding={16}>
+            <View style={styles.sectionHeader}>
+              <PieChart size={20} color={colors.textSecondary} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]} > { t('expenseTopCategories') } </Text>
+            </View>
+            {expenseTop.map(item => (
+              <View key={item.category} style={styles.categoryItem}>
+                <View style={styles.categoryInfo}>
+                  <Text style={[styles.categoryName, { color: colors.text }]} > { t(item.category) } </Text>
+                  <Text style={[styles.categoryAmount, { color: colors.textSecondary }]} >
+                    {`${currencySymbol}${item.amount.toFixed(2)}`}
+                  </Text>
+                </View>
+                <View style={[styles.categoryBar, { backgroundColor: colors.border }]} >
+                  <View
+                    style={[
+                      styles.categoryBarFill,
+                      {
+                        width: `${Math.min(100, (item.amount / (expenseTop.reduce((s, x) => s + x.amount, 0) || 1)) * 100)}%`,
+                        backgroundColor: colors.expense,
                       },
                     ]}
                   />
@@ -264,5 +374,21 @@ const styles = StyleSheet.create({
   categoryBarFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
