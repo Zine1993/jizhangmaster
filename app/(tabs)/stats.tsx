@@ -26,6 +26,7 @@ export default function StatsScreen() {
   const { colors } = useTheme();
 
   const [rangeLabel, setRangeLabel] = React.useState<string>('');
+  const [activePreset, setActivePreset] = React.useState<'last7'|'last30'|'thisMonth'|'lastMonth'|'thisYear'|null>('last7');
   // metric removed: fixed to amount
   const [startDate, setStartDate] = React.useState<Date>(() => { const d = new Date(); d.setDate(d.getDate() - 6); return d; });
   const [endDate, setEndDate] = React.useState<Date>(new Date());
@@ -34,6 +35,7 @@ export default function StatsScreen() {
   const currencySymbol = getCurrencySymbol();
   React.useEffect(() => {
     setRangeLabel(t('last7Days'));
+    setActivePreset('last7');
   }, []);
 
   const formatDate = (d: Date) => {
@@ -206,7 +208,7 @@ export default function StatsScreen() {
             </Pressable>
           </View>
           {/* 快速预设区间 */}
-          <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'wrap' }]} >
+          <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'wrap', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 2 }]} >
             <Pressable
               onPress={() => {
                 const now = new Date();
@@ -215,10 +217,11 @@ export default function StatsScreen() {
                 setEndDate(now);
                 const lbl = t('last7Days') || '近7天';
                 setRangeLabel(lbl);
+                setActivePreset('last7');
               }}
-              style={[styles.chip, { borderColor: colors.border, backgroundColor: colors.primary + '15' }]}
+              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'last7' ? colors.primary + '20' : 'transparent' }}
             >
-              <Text style={[styles.chipText, { color: colors.text }]}>{t('last7Days') || '近7天'}</Text>
+              <Text style={{ color: activePreset === 'last7' ? colors.primary : colors.textSecondary }}>{t('last7Days') || '近7天'}</Text>
             </Pressable>
 
             <Pressable
@@ -229,10 +232,11 @@ export default function StatsScreen() {
                 setEndDate(now);
                 const lbl = t('last30Days') || '近30天';
                 setRangeLabel(lbl);
+                setActivePreset('last30');
               }}
-              style={[styles.chip, { borderColor: colors.border }]}
+              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'last30' ? colors.primary + '20' : 'transparent' }}
             >
-              <Text style={[styles.chipText, { color: colors.text }]}>{t('last30Days') || '近30天'}</Text>
+              <Text style={{ color: activePreset === 'last30' ? colors.primary : colors.textSecondary }}>{t('last30Days') || '近30天'}</Text>
             </Pressable>
 
             <Pressable
@@ -244,10 +248,11 @@ export default function StatsScreen() {
                 setEndDate(e);
                 const lbl = t('thisMonth') || '本月';
                 setRangeLabel(lbl);
+                setActivePreset('thisMonth');
               }}
-              style={[styles.chip, { borderColor: colors.border }]}
+              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'thisMonth' ? colors.primary + '20' : 'transparent' }}
             >
-              <Text style={[styles.chipText, { color: colors.text }]}>{t('thisMonth') || '本月'}</Text>
+              <Text style={{ color: activePreset === 'thisMonth' ? colors.primary : colors.textSecondary }}>{t('thisMonth') || '本月'}</Text>
             </Pressable>
 
             <Pressable
@@ -259,10 +264,11 @@ export default function StatsScreen() {
                 setEndDate(e);
                 const lbl = t('lastMonth') || '上月';
                 setRangeLabel(lbl);
+                setActivePreset('lastMonth');
               }}
-              style={[styles.chip, { borderColor: colors.border }]}
+              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'lastMonth' ? colors.primary + '20' : 'transparent' }}
             >
-              <Text style={[styles.chipText, { color: colors.text }]}>{t('lastMonth') || '上月'}</Text>
+              <Text style={{ color: activePreset === 'lastMonth' ? colors.primary : colors.textSecondary }}>{t('lastMonth') || '上月'}</Text>
             </Pressable>
 
             <Pressable
@@ -274,10 +280,11 @@ export default function StatsScreen() {
                 setEndDate(e);
                 const lbl = t('thisYear') || '今年';
                 setRangeLabel(lbl);
+                setActivePreset('thisYear');
               }}
-              style={[styles.chip, { borderColor: colors.border }]}
+              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'thisYear' ? colors.primary + '20' : 'transparent' }}
             >
-              <Text style={[styles.chipText, { color: colors.text }]}>{t('thisYear') || '今年'}</Text>
+              <Text style={{ color: activePreset === 'thisYear' ? colors.primary : colors.textSecondary }}>{t('thisYear') || '今年'}</Text>
             </Pressable>
           </View>
 
@@ -295,6 +302,7 @@ export default function StatsScreen() {
                 setEndDate(end);
                 const lbl = label || `${formatDate(start)} ~ ${formatDate(end)}`;
                 setRangeLabel(lbl);
+                setActivePreset(null);
                 setShowRangePicker(false);
               }}
             />
