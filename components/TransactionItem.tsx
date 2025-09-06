@@ -192,12 +192,12 @@ export default function TransactionItem({ transaction, onDelete, onEdit }: Trans
       <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={[styles.category, { color: colors.text }]} numberOfLines={1}>
+            <Text style={[styles.category, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
               {title}
             </Text>
             {!!transaction.emotion && (
               <View style={[styles.emotionPill, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-                <Text style={[styles.emotionText, { color: colors.textSecondary }]} numberOfLines={1}>
+                <Text style={[styles.emotionText, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
                   {(() => { const s = t(transaction.emotion); return s && s !== '...' ? s : transaction.emotion; })()}
                 </Text>
               </View>
@@ -264,10 +264,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
     flexShrink: 1,
   },
-  category: { fontSize: 16, fontWeight: '600', maxWidth: '70%' },
-  amount: { fontSize: 16, fontWeight: '800' },
+  category: { fontSize: 16, fontWeight: '600', maxWidth: '60%', flexShrink: 1 },
+  amount: { fontSize: 16, fontWeight: '800', minWidth: 88, textAlign: 'right', flexShrink: 0, fontVariant: ['tabular-nums'] },
   details: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -280,6 +281,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
+    maxWidth: '40%',
+    overflow: 'hidden',
   },
   emotionText: { fontSize: 12, fontWeight: '600' },
 
