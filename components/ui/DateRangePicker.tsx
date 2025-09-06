@@ -227,7 +227,7 @@ export default function DateRangePicker({ visible, onClose, initialStartDate, in
         </View>
 
         <View style={styles.body}>
-          <View style={[styles.sidebar, { borderRightColor: colors.border }]}>
+          <View style={[styles.sidebar, { borderRightColor: colors.border, width: 0, display: 'none' }]}>
             <ScrollView contentContainerStyle={{ paddingVertical: 6 }}>
               {presets.map(p => (
                 <Pressable
