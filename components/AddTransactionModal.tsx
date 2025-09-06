@@ -208,7 +208,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     label: string;
     color: string;
   }) => (
-    <TouchableOpacity
+    <TouchableOpacity activeOpacity={0.8}
       style={[
         styles.typeButton,
         { backgroundColor: colors.inputBackground, borderColor: colors.border },
@@ -233,7 +233,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
   );
 
   const CategoryButton = ({ categoryKey }: { categoryKey: string }) => (
-    <TouchableOpacity
+    <TouchableOpacity activeOpacity={0.8}
       style={[
         styles.categoryButton,
         { backgroundColor: colors.inputBackground, borderColor: colors.border },
@@ -254,7 +254,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
   );
 
   const EmotionTag = ({ name, emoji }: { name: string; emoji: string }) => (
-    <TouchableOpacity
+    <TouchableOpacity activeOpacity={0.8}
       style={[
         styles.emotionTag,
         { borderColor: colors.border, backgroundColor: colors.inputBackground },
@@ -274,7 +274,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={[styles.container, { backgroundColor: colors.modalBackground }]}>
         <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity activeOpacity={0.8} onPress={onClose} style={styles.closeButton}>
             <X size={24} color={colors.textSecondary} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>
@@ -303,6 +303,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
             <View style={styles.emotionContainer}>
               {(accounts || []).map((a) => (
                 <TouchableOpacity
+                  activeOpacity={0.8}
                   key={a.id}
                   style={[
                     styles.emotionTag,
@@ -366,7 +367,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
         </ScrollView>
 
         <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-          <TouchableOpacity style={[styles.cancelButton, { borderColor: colors.border }]} onPress={onClose}>
+          <TouchableOpacity activeOpacity={0.8} style={[styles.cancelButton, { borderColor: colors.border }]} onPress={onClose}>
             <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>{t('cancel')}</Text>
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   currencySymbol: { fontSize: 18, fontWeight: '600', marginRight: 8 },
-  amountInput: { flex: 1, fontSize: 18, fontWeight: '600' },
+  amountInput: { flex: 1, fontSize: 18, fontWeight: '600', fontVariant: ['tabular-nums'] },
   categoryContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   categoryButton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1 },
   categoryButtonText: { fontSize: 14, fontWeight: '500' },
