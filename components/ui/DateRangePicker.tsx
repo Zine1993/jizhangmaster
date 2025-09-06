@@ -215,18 +215,7 @@ export default function DateRangePicker({ visible, onClose, initialStartDate, in
     onApply({ start: a <= b ? a : b, end: a <= b ? b : a, label });
   };
 
-  const applyThisYear = () => {
-    const now = new Date();
-    const s0 = new Date(now.getFullYear(), 0, 1);
-    const s = startOfDay(s0 < min ? min : s0);
-    const e = endOfDay(now);
-    setLocalStart(s);
-    setLocalEnd(e);
-    setSelectedPreset('thisYear');
-    setAwaitingCustom(false);
-    setSelectingRange(false);
-    onApply({ start: s, end: e, label: t('thisYear') || '今年' });
-  };
+
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -281,9 +270,7 @@ export default function DateRangePicker({ visible, onClose, initialStartDate, in
           <Pressable style={[styles.btn, styles.btnGhost]} onPress={onClose}>
             <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
           </Pressable>
-          <Pressable style={[styles.btn, styles.btnGhost]} onPress={applyThisYear}>
-            <Text style={{ color: colors.textSecondary }}>{t('thisYear') || '今年'}</Text>
-          </Pressable>
+
           <Pressable style={[styles.btn, { backgroundColor: colors.primary }]} onPress={apply}>
             <Text style={{ color: '#fff', fontWeight: '700' }}>{t('apply') || 'Apply'}</Text>
           </Pressable>

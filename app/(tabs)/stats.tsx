@@ -264,6 +264,21 @@ export default function StatsScreen() {
             >
               <Text style={[styles.chipText, { color: colors.text }]}>{t('lastMonth') || '上月'}</Text>
             </Pressable>
+
+            <Pressable
+              onPress={() => {
+                const now = new Date();
+                const s = new Date(now.getFullYear(), 0, 1);
+                const e = now;
+                setStartDate(s);
+                setEndDate(e);
+                const lbl = t('thisYear') || '今年';
+                setRangeLabel(lbl);
+              }}
+              style={[styles.chip, { borderColor: colors.border }]}
+            >
+              <Text style={[styles.chipText, { color: colors.text }]}>{t('thisYear') || '今年'}</Text>
+            </Pressable>
           </View>
 
 
