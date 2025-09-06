@@ -26,7 +26,7 @@ export default function StatsScreen() {
   const { colors } = useTheme();
 
   const [rangeLabel, setRangeLabel] = React.useState<string>('');
-  const [activePreset, setActivePreset] = React.useState<'last7'|'last30'|'thisMonth'|'lastMonth'|'thisYear'|null>('last7');
+  const [activePreset, setActivePreset] = React.useState<'last7'|'thisMonth'|'lastMonth'|'thisYear'|null>('last7');
   // metric removed: fixed to amount
   const [startDate, setStartDate] = React.useState<Date>(() => { const d = new Date(); d.setDate(d.getDate() - 6); return d; });
   const [endDate, setEndDate] = React.useState<Date>(new Date());
@@ -224,20 +224,7 @@ export default function StatsScreen() {
               <Text style={{ color: activePreset === 'last7' ? colors.primary : colors.textSecondary }}>{t('last7Days') || '近7天'}</Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => {
-                const now = new Date();
-                const s = new Date(now); s.setDate(s.getDate() - 29);
-                setStartDate(s);
-                setEndDate(now);
-                const lbl = t('last30Days') || '近30天';
-                setRangeLabel(lbl);
-                setActivePreset('last30');
-              }}
-              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'last30' ? colors.primary + '20' : 'transparent' }}
-            >
-              <Text style={{ color: activePreset === 'last30' ? colors.primary : colors.textSecondary }}>{t('last30Days') || '近30天'}</Text>
-            </Pressable>
+
 
             <Pressable
               onPress={() => {
