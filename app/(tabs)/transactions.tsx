@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, Search, Settings } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions, Transaction } from '@/contexts/TransactionContext';
-import AddTransactionModal from '@/components/AddTransactionModal';
+
 import TransactionItem from '@/components/TransactionItem';
 import { useTheme } from '@/contexts/ThemeContext';
 import GradientHeader from '@/components/ui/GradientHeader';
@@ -23,8 +23,7 @@ export default function TransactionsScreen() {
   const router = useRouter();
   const { transactions } = useTransactions();
   const { colors } = useTheme();
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
+
 
   const groupedTransactions = transactions.reduce((groups, transaction) => {
     const date = new Date(transaction.date);
@@ -53,15 +52,9 @@ export default function TransactionsScreen() {
     data: txs,
   }));
 
-  const handleEditTransaction = (transaction: Transaction) => {
-    setEditingTransaction(transaction);
-    setShowAddModal(true);
-  };
 
-  const handleCloseModal = () => {
-    setShowAddModal(false);
-    setEditingTransaction(undefined);
-  };
+
+
 
   const renderSectionHeader = (title: string) => (
     <View style={[styles.sectionHeader, { backgroundColor: colors.sectionBackground }]} >
@@ -73,7 +66,7 @@ export default function TransactionsScreen() {
     <View>
       {renderSectionHeader(section.title)}
       {section.data.map(transaction => (
-        <TransactionItem key={transaction.id} transaction={transaction} onEdit={handleEditTransaction} />
+        <TransactionItem key={transaction.id} transaction={transaction} />
       ))}
     </View>
   );
@@ -113,11 +106,7 @@ export default function TransactionsScreen() {
         </Card>
       )}
 
-      <AddTransactionModal
-        visible={showAddModal}
-        onClose={handleCloseModal}
-        editTransaction={editingTransaction}
-      />
+
     </SafeAreaView>
   );
 }

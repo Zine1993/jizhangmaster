@@ -25,7 +25,6 @@ const currencies = [
 interface TransactionItemProps {
   transaction: Transaction;
   onDelete?: () => void;
-  onEdit?: (transaction: Transaction) => void;
 }
 
 function formatDateYYYYMMDD(date: Date) {
@@ -36,7 +35,7 @@ function formatDateYYYYMMDD(date: Date) {
   return `${y}-${m}-${day}`;
 }
 
-export default function TransactionItem({ transaction, onDelete, onEdit }: TransactionItemProps) {
+export default function TransactionItem({ transaction, onDelete }: TransactionItemProps) {
   const { t } = useLanguage();
   const { deleteTransaction, getCurrencySymbol, emotions } = useTransactions();
   const { colors } = useTheme();
@@ -140,7 +139,6 @@ export default function TransactionItem({ transaction, onDelete, onEdit }: Trans
           styles.container,
           { backgroundColor: colors.inputBackground, shadowColor: '#000000' },
         ]}
-        onPress={() => onEdit?.(transaction)}
         onLongPress={startCountdown}
         onPressOut={cancelCountdown}
         delayLongPress={200}
