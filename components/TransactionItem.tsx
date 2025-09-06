@@ -205,7 +205,7 @@ export default function TransactionItem({ transaction, onDelete, onEdit }: Trans
           </View>
 
           <Text style={[styles.amount, { color }]} numberOfLines={1}>
-            {currencySymbol}{Number(transaction.amount).toFixed(0)}
+            {currencySymbol}{Number(transaction.amount).toFixed(2)}
           </Text>
         </View>
 

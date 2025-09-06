@@ -18,6 +18,7 @@ import PieChartComponent from '@/components/PieChart';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 
+
 export default function StatsScreen() {
   const { t } = useLanguage();
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function StatsScreen() {
   const [startDate, setStartDate] = React.useState<Date>(() => { const d = new Date(); d.setDate(d.getDate() - 6); return d; });
   const [endDate, setEndDate] = React.useState<Date>(new Date());
   const [showRangePicker, setShowRangePicker] = React.useState(false);
+
   const currencySymbol = getCurrencySymbol();
   React.useEffect(() => {
     setRangeLabel(t('last7Days'));
@@ -77,14 +79,38 @@ export default function StatsScreen() {
 
   const categoryAgg = React.useMemo(() => {
     const agg: Record<string, { incomeAmount: number; expenseAmount: number; incomeCount: number; expenseCount: number }> = {};
-    filtered.forEach(t => {
-      const k = t.category || 'Other';
-      if (!agg[k]) agg[k] = { incomeAmount: 0, expenseAmount: 0, incomeCount: 0, expenseCount: 0 };
-      if (t.type === 'income') {
-        agg[k].incomeAmount += t.amount;
-        agg[k].incomeCount += 1;
-      } else {
-        agg[k].expenseAmount += t.amount;
+    // 1) 普通交易（排除转账本金/transfer 类别）
+    filtered
+      .filter(t => !(t as any).isTransfer && t.category !== 'transfer')
+      .forEach(t => {
+        const k = t.category || 'Other';
+        if (!agg[k]) agg[k] = { incomeAmount: 0, expenseAmount: 0, incomeCount: 0, expenseCount: 0 };
+        if (t.type === 'income') {
+          agg[k].incomeAmount += t.amount;
+          agg[k].incomeCount += 1;
+        } else {
+          agg[k].expenseAmount += t.amount;
+          agg[k].expenseCount += 1;
+        }
+      });
+    // 2) 转账手续费：同组支出减收入的差额计入“transfer”类别的支出
+    const groups = new Map<string, { in?: number; out?: number }>();
+    filtered
+      .filter(t => (t as any).isTransfer)
+      .forEach(t => {
+        const gid = (t as any).transferGroupId || '';
+        if (!gid) return;
+        const g = groups.get(gid) || {};
+        if (t.type === 'income') g.in = (g.in ?? 0) + t.amount;
+        else g.out = (g.out ?? 0) + t.amount;
+        groups.set(gid, g);
+      });
+    groups.forEach(g => {
+      const fee = Math.max(0, (g.out ?? 0) - (g.in ?? 0));
+      if (fee > 0) {
+        const k = 'transfer';
+        if (!agg[k]) agg[k] = { incomeAmount: 0, expenseAmount: 0, incomeCount: 0, expenseCount: 0 };
+        agg[k].expenseAmount += fee;
         agg[k].expenseCount += 1;
       }
     });
@@ -179,7 +205,68 @@ export default function StatsScreen() {
               <Text style={[styles.chipText, { color: colors.text }]} > {'▾'} </Text>
             </Pressable>
           </View>
-          {/* removed metric chips */}
+          {/* 快速预设区间 */}
+          <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'wrap' }]} >
+            <Pressable
+              onPress={() => {
+                const now = new Date();
+                const s = new Date(now); s.setDate(s.getDate() - 6);
+                setStartDate(s);
+                setEndDate(now);
+                const lbl = t('last7Days') || '近7天';
+                setRangeLabel(lbl);
+              }}
+              style={[styles.chip, { borderColor: colors.border, backgroundColor: colors.primary + '15' }]}
+            >
+              <Text style={[styles.chipText, { color: colors.text }]}>{t('last7Days') || '近7天'}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                const now = new Date();
+                const s = new Date(now); s.setDate(s.getDate() - 29);
+                setStartDate(s);
+                setEndDate(now);
+                const lbl = t('last30Days') || '近30天';
+                setRangeLabel(lbl);
+              }}
+              style={[styles.chip, { borderColor: colors.border }]}
+            >
+              <Text style={[styles.chipText, { color: colors.text }]}>{t('last30Days') || '近30天'}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                const now = new Date();
+                const s = new Date(now.getFullYear(), now.getMonth(), 1);
+                const e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                setStartDate(s);
+                setEndDate(e);
+                const lbl = t('thisMonth') || '本月';
+                setRangeLabel(lbl);
+              }}
+              style={[styles.chip, { borderColor: colors.border }]}
+            >
+              <Text style={[styles.chipText, { color: colors.text }]}>{t('thisMonth') || '本月'}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                const now = new Date();
+                const s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const e = new Date(now.getFullYear(), now.getMonth(), 0);
+                setStartDate(s);
+                setEndDate(e);
+                const lbl = t('lastMonth') || '上月';
+                setRangeLabel(lbl);
+              }}
+              style={[styles.chip, { borderColor: colors.border }]}
+            >
+              <Text style={[styles.chipText, { color: colors.text }]}>{t('lastMonth') || '上月'}</Text>
+            </Pressable>
+          </View>
+
+
 
           <>
             <DateRangePicker
@@ -191,7 +278,8 @@ export default function StatsScreen() {
               onApply={({ start, end, label }: any) => {
                 setStartDate(start);
                 setEndDate(end);
-                setRangeLabel(label || `${formatDate(start)} ~ ${formatDate(end)}`);
+                const lbl = label || `${formatDate(start)} ~ ${formatDate(end)}`;
+                setRangeLabel(lbl);
                 setShowRangePicker(false);
               }}
             />
