@@ -39,7 +39,7 @@ interface AddTransactionModalProps {
   autoFocusAmount?: boolean;
 }
 
-const expenseCategories = [
+const defaultExpenseCategoryNames = [
   'food',
   'transport',
   'shopping',
@@ -49,18 +49,33 @@ const expenseCategories = [
   'other',
 ];
 
-const incomeCategories = [
-  'salary',
-  'freelance',
-  'investment',
-  'other',
-];
+
+
 
 export default function AddTransactionModal({ visible, onClose, editTransaction, autoFocusAmount }: AddTransactionModalProps) {
   const { t } = useLanguage();
-  const { addTransaction, updateTransaction, getCurrencySymbol, emotions, accounts, getAccountBalance } = useTransactions();
+  const { addTransaction, updateTransaction, getCurrencySymbol, emotions, accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
   const { colors } = useTheme();
   const { triggerEmojiRain } = useEmojiRain();
+
+  const expenseCategoryNames = useMemo(
+    () => ((ctxExpenseCategories && ctxExpenseCategories.length)
+      ? ctxExpenseCategories.map((c) => c.name)
+      : defaultExpenseCategoryNames),
+    [ctxExpenseCategories]
+  );
+
+  const incomeCategoryNames = useMemo(
+    () => ((ctxIncomeCategories && ctxIncomeCategories.length)
+      ? ctxIncomeCategories.map((c) => c.name)
+      : ['salary', 'freelance', 'investment', 'other']),
+    [ctxIncomeCategories]
+  );
+
+  const getListForType = useCallback(
+    (t: 'income' | 'expense') => (t === 'expense' ? expenseCategoryNames : incomeCategoryNames),
+    [expenseCategoryNames, incomeCategoryNames]
+  );
 
   const effectiveEmotions = emotions && emotions.length ? emotions : [
     { id: 'happy', name: '开心', emoji: '😊' },
@@ -105,9 +120,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     } else if (!editTransaction && visible) {
       setType('expense');
       setAmount('');
-      setCategory('food');
+      setCategory(getListForType('expense')[0]);
       setDescription('');
-      setEmotion('');
+      setEmotion(effectiveEmotions[0]?.name || '');
       if (!accountId) setAccountId((accounts?.[0]?.id) || '');
     }
   }, [editTransaction, visible]);
@@ -149,7 +164,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       return;
     }
 
-    const list = type === 'expense' ? expenseCategories : incomeCategories;
+    const list = getListForType(type);
     const safeCategory = (category && list.includes(category)) ? category : list[0];
 
     // 余额不能为负校验：现金/借记卡/预存卡，支出不得导致余额为负
@@ -193,9 +208,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     }
     setType('expense');
     setAmount('');
-    setCategory('food');
+    setCategory(getListForType('expense')[0]);
     setDescription('');
-    setEmotion('');
+    setEmotion(effectiveEmotions[0]?.name || '');
     onClose();
   };
 
@@ -216,7 +231,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       ]}
       onPress={() => {
         setType(transactionType);
-        const list = transactionType === 'expense' ? expenseCategories : incomeCategories;
+        const list = getListForType(transactionType);
         setCategory((prev) => (list.includes(prev) ? prev : list[0]));
       }}
     >
@@ -237,7 +252,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       style={[
         styles.categoryButton,
         { backgroundColor: colors.inputBackground, borderColor: colors.border },
-        category === categoryKey && { backgroundColor: colors.primary, borderColor: colors.primary },
+        category === categoryKey && { backgroundColor: colors.primary + '22', borderColor: colors.primary },
       ]}
       onPress={() => setCategory(categoryKey)}
     >
@@ -245,10 +260,31 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
         style={[
           styles.categoryButtonText,
           { color: colors.textSecondary },
-          category === categoryKey && { color: '#FFFFFF', fontWeight: '600' },
+          category === categoryKey && { color: colors.primary, fontWeight: '600' },
         ]}
       >
-        {t(categoryKey)}
+        {(() => { const s = t(categoryKey); return s && s !== '...' ? s : categoryKey; })()}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const ExpenseCategoryButton = ({ item }: { item: { name: string; emoji?: string } }) => (
+    <TouchableOpacity activeOpacity={0.8}
+      style={[
+        styles.categoryButton,
+        { backgroundColor: colors.inputBackground, borderColor: colors.border },
+        category === item.name && { backgroundColor: colors.primary + '22', borderColor: colors.primary },
+      ]}
+      onPress={() => setCategory(item.name)}
+    >
+      <Text
+        style={[
+          styles.categoryButtonText,
+          { color: colors.textSecondary },
+          category === item.name && { color: colors.primary, fontWeight: '600' },
+        ]}
+      >
+        {(item.emoji ? item.emoji + ' ' : '') + ((() => { const s = t(item.name); return s && s !== '...' ? s : item.name; })())}
       </Text>
     </TouchableOpacity>
   );
@@ -265,7 +301,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       <Text style={{ fontSize: 16, marginRight: 6 }}>{emoji}</Text>
       {(() => {
         const translated = t(name);
-        return <Text style={{ color: colors.text }}>{!translated || translated === '...' ? name : translated}</Text>;
+        return <Text style={{ color: emotion === name ? colors.primary : colors.text }}>{!translated || translated === '...' ? name : translated}</Text>;
       })()}
     </TouchableOpacity>
   );
@@ -312,7 +348,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
                   ]}
                   onPress={() => setAccountId(a.id)}
                 >
-                  <Text style={{ color: colors.text }}>{a.name}</Text>
+                  <Text style={{ color: accountId === a.id ? colors.primary : colors.text }}>{a.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -337,9 +373,18 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('category')}</Text>
             <View style={styles.categoryContainer}>
-              {(type === 'expense' ? expenseCategories : incomeCategories).map((cat) => (
-                <CategoryButton key={cat} categoryKey={cat} />
-              ))}
+              {(type === 'expense' && ctxExpenseCategories && ctxExpenseCategories.length)
+                ? ctxExpenseCategories.map((it: { id: string; name: string; emoji?: string }) => (
+                    <ExpenseCategoryButton key={it.id} item={it} />
+                  ))
+                : (type === 'income' && ctxIncomeCategories && ctxIncomeCategories.length)
+                ? ctxIncomeCategories.map((it: { id: string; name: string; emoji?: string }) => (
+                    <ExpenseCategoryButton key={it.id} item={it} />
+                  ))
+                : getListForType(type).map((cat: string) => (
+                    <CategoryButton key={cat} categoryKey={cat} />
+                  ))
+              }
             </View>
           </View>
 

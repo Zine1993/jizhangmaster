@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -7,7 +7,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
 import { ChevronLeft, Trash2, Plus } from 'lucide-react-native';
 import GradientHeader from '@/components/ui/GradientHeader';
-import Card from '@/components/ui/Card';
+import Chip from '@/components/ui/Chip';
+import Button from '@/components/ui/Button';
+import IconButton from '@/components/ui/IconButton';
+
 
 export default function EmotionsScreen() {
   const router = useRouter();
@@ -19,7 +22,7 @@ export default function EmotionsScreen() {
   }, [t]);
   const { emotions, removeEmotionTag, addEmotionTag, resetEmotionTagsToDefault } = useTransactions();
 
-  const [addModalVisible, setAddModalVisible] = React.useState(false);
+
   const [newEmoji, setNewEmoji] = React.useState('');
   const [newName, setNewName] = React.useState('');
 
@@ -57,18 +60,17 @@ export default function EmotionsScreen() {
       return;
     }
     addEmotionTag(name, emoji);
-    setAddModalVisible(false);
     setNewEmoji('');
     setNewName('');
   };
 
   const handleResetDefault = () => {
     Alert.alert(
-      t('resetToDefault') || '恢复默认',
-      t('areYouSureYouWantToResetEmotionTags') || '确定恢复默认情绪标签吗？',
+      t('confirm') || '确认',
+      t('resetToDefault') || '将恢复为默认，确定继续？',
       [
         { text: t('cancel') || '取消', style: 'cancel' },
-        { text: t('reset') || (t('confirm') || '确定'), style: 'destructive', onPress: () => resetEmotionTagsToDefault() },
+        { text: t('resetToDefault') || '恢复默认', style: 'destructive', onPress: () => resetEmotionTagsToDefault() },
       ],
     );
   };
@@ -81,8 +83,8 @@ export default function EmotionsScreen() {
 
   const handleRemove = (id: string, name: string) => {
     Alert.alert(
-      `${t('remove')} "${name}"`,
-      t('areYouSureYouWantToRemoveThisTag'),
+      t('confirm') || '确认',
+      (t('deleteConfirm') as string) || `确定要删除“${name}”吗？`,
       [
         { text: t('cancel'), style: 'cancel' },
         { text: t('remove'), style: 'destructive', onPress: () => removeEmotionTag(id) },
@@ -95,9 +97,9 @@ export default function EmotionsScreen() {
       <GradientHeader
         title={t('emotionTagManagement')}
         left={
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 8 }}>
-            <ChevronLeft size={28} color="#fff" />
-          </TouchableOpacity>
+          <IconButton onPress={() => router.back()} size={32}>
+            <ChevronLeft size={24} color="#fff" />
+          </IconButton>
         }
         shape="flat"
         height={61}
@@ -106,21 +108,45 @@ export default function EmotionsScreen() {
         right={null}
       />
       <ScrollView contentContainerStyle={styles.content}>
-        <Card padding={16}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('emotionTagManagement')}</Text>
-            <TouchableOpacity onPress={handleResetDefault}>
-              <Text style={[styles.link, { color: colors.primary }]}>{tt('resetToDefaultPack', '初始化')}</Text>
-            </TouchableOpacity>
+        
+          {/* 顶部工具条：与类别管理一致 */}
+          <View style={styles.segmentWrapper}>
+            <Text style={[styles.toolbarTitle, { color: colors.text }]} numberOfLines={1}>{t('emotionTagManagement') || '情绪标签管理'}</Text>
+            <Button
+              variant="outline"
+              size="sm"
+              label={(t('resetToDefault') as string) || '恢复默认'}
+              onPress={handleResetDefault}
+            />
           </View>
           <View style={styles.emotionList}>
-            <TouchableOpacity
-              onPress={() => { setNewEmoji(''); setNewName(''); setAddModalVisible(true); }}
-              style={{ paddingVertical: 10, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Plus size={16} color={colors.text} />
-              <Text style={{ color: colors.text, marginLeft: 6 }}>{tt('customEmotionPack', '自定义表情包')}</Text>
-            </TouchableOpacity>
+            {/* 行内新增（与类别页一致） */}
+            <View style={styles.addRow}>
+              <View style={{ width: 72 }}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('emoji') || '表情'}</Text>
+                <TextInput
+                  value={newEmoji}
+                  onChangeText={(txt) => setNewEmoji(firstGrapheme(txt))}
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border, textAlign: 'center' }]}
+                  maxLength={10}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('name') || '名称'}</Text>
+                <TextInput
+                  value={newName}
+                  onChangeText={setNewName}
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
+                  maxLength={20}
+                />
+              </View>
+              <Chip
+                onPress={handleSaveNew}
+                icon={<Plus size={16} color={colors.primary} />}
+                label={(t('add') as string) || '添加'}
+                style={{ marginTop: 18 }}
+              />
+            </View>
 
             {emotions.length === 0 ? (
               <Text style={{ color: colors.textSecondary, marginTop: 8 }}>{t('noData')}</Text>
@@ -132,49 +158,16 @@ export default function EmotionsScreen() {
                   </View>
                   <Text style={{ color: colors.text, flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, overflow: 'hidden' }} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
                 </View>
-                <TouchableOpacity onPress={() => handleRemove(item.id, item.name)}>
+                <IconButton onPress={() => handleRemove(item.id, item.name)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Trash2 size={18} color={colors.textSecondary} />
-                </TouchableOpacity>
+                </IconButton>
               </View>
             ))}
           </View>
-        </Card>
+        
       </ScrollView>
 
-      <Modal transparent animationType="fade" visible={addModalVisible} onRequestClose={() => setAddModalVisible(false)}>
-        <View style={styles.modalMask}>
-          <View style={[styles.modalCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{tt('customEmotionPack', '自定义表情包')}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TextInput
-                value={newEmoji}
-                onChangeText={(txt) => setNewEmoji(firstGrapheme(txt))}
 
-
-                style={[styles.input, { width: 48, textAlign: 'center', fontSize: 18, color: colors.text, borderColor: colors.border, backgroundColor: colors.surface, paddingHorizontal: 0 }]}
-                maxLength={10}
-              />
-              <TextInput
-                value={newName}
-                onChangeText={setNewName}
-
-
-                style={[styles.input, { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
-                maxLength={20}
-                multiline={false}
-              />
-            </View>
-            <View style={styles.modalActions}>
-              <TouchableOpacity onPress={() => setAddModalVisible(false)} style={[styles.actionBtn, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Text style={{ color: colors.text }}>{t('cancel') || '取消'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleSaveNew} style={[styles.actionBtnPrimary, { backgroundColor: colors.primary }]}>
-                <Text style={{ color: '#fff' }}>{t('save') || '保存'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
 
 
@@ -196,54 +189,25 @@ const styles = StyleSheet.create({
   emotionRow: {
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  modalMask: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    width: '100%',
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 16,
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
+
+
+
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 10,
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    fontSize: 16,
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
-  },
-  actionBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  actionBtnPrimary: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
+
+
+
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -253,6 +217,53 @@ const styles = StyleSheet.create({
   link: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  // 顶部工具条样式（对齐 categories.tsx）
+  segmentWrapper: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  segment: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: 999,
+    gap: 6,
+    flex: 1,
+  },
+  resetBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  toolbarTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    flex: 1,
+  },
+  // 与类别页一致的输入标签与新增行
+  inputLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  addRow: {
+    paddingHorizontal: 0,
+    paddingTop: 8,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   inputMultiline: {
     height: 160,

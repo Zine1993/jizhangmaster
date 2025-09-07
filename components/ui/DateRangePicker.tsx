@@ -256,10 +256,16 @@ export default function DateRangePicker({ visible, onClose, initialStartDate, in
               minDate={fmt(min)}
               firstDay={1}
               theme={{
+                calendarBackground: colors.card,
                 todayTextColor: colors.primary,
-                textSectionTitleColor: colors.textSecondary,
                 monthTextColor: colors.text,
                 dayTextColor: colors.text,
+                textSectionTitleColor: colors.textSecondary,
+                textDisabledColor: (colors as any).textTertiary || colors.textSecondary,
+                selectedDayBackgroundColor: colors.primary,
+                selectedDayTextColor: '#fff',
+                todayBackgroundColor: (colors.primary || '#6366F1') + '20',
+                arrowColor: colors.text,
               }}
             />
             
@@ -267,7 +273,7 @@ export default function DateRangePicker({ visible, onClose, initialStartDate, in
         </View>
 
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
-          <Pressable style={[styles.btn, styles.btnGhost]} onPress={onClose}>
+          <Pressable style={[styles.btn, styles.btnGhost, { borderColor: colors.border }]} onPress={onClose}>
             <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
           </Pressable>
 

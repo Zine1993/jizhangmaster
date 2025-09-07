@@ -27,6 +27,18 @@ export interface EmotionTag {
   emoji: string;  // 例如 "😊"
 }
 
+export interface ExpenseCategory {
+  id: string;
+  name: string;   // 例如 "餐饮"
+  emoji: string;  // 例如 "🍚"
+}
+
+export interface IncomeCategory {
+  id: string;
+  name: string;   // 例如 "工资"
+  emoji: string;  // 例如 "💰"
+}
+
 export type AccountType = 'cash' | 'debit_card' | 'credit_card' | 'prepaid_card' | 'virtual_card' | 'e-wallet' | 'investment' | 'other';
 export interface Account {
   id: string;
@@ -64,6 +76,18 @@ interface TransactionContextType {
   getUsageDaysCount: () => number;
   resetEmotionTagsToDefault: () => void;
 
+  // 支出类别扩展
+  expenseCategories: ExpenseCategory[];
+  addExpenseCategory: (name: string, emoji: string) => void;
+  removeExpenseCategory: (id: string) => void;
+  resetExpenseCategoriesToDefault: () => void;
+
+  // 收入类别扩展
+  incomeCategories: IncomeCategory[];
+  addIncomeCategory: (name: string, emoji: string) => void;
+  removeIncomeCategory: (id: string) => void;
+  resetIncomeCategoriesToDefault: () => void;
+
   // Accounts (assets)
   accounts: Account[];
   addAccount: (account: Omit<Account, 'id' | 'createdAt'>) => void;
@@ -83,6 +107,8 @@ const TransactionContext = createContext<TransactionContextType | undefined>(und
 const STORAGE_KEY = '@expense_tracker_transactions';
 const CURRENCY_STORAGE_KEY = '@expense_tracker_currency';
 const EMOTION_STORAGE_KEY = '@expense_tracker_emotions';
+const EXPENSE_CATEGORY_STORAGE_KEY = '@expense_tracker_expense_categories';
+const INCOME_CATEGORY_STORAGE_KEY = '@expense_tracker_income_categories';
 const ACCOUNT_STORAGE_KEY = '@expense_tracker_accounts';
 
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -118,6 +144,24 @@ const defaultEmotions: EmotionTag[] = [
   { id: 'sad', name: '难过', emoji: '😢' },
 ];
 
+const defaultExpenseCategories: ExpenseCategory[] = [
+  { id: 'food', name: '餐饮', emoji: '🍜' },
+  { id: 'transport', name: '交通', emoji: '🚌' },
+  { id: 'shopping', name: '购物', emoji: '🛍️' },
+  { id: 'housing', name: '住房', emoji: '🏠' },
+  { id: 'entertainment', name: '娱乐', emoji: '🎮' },
+  { id: 'medical', name: '医疗', emoji: '💊' },
+  { id: 'education', name: '教育', emoji: '📚' },
+  { id: 'travel', name: '旅行', emoji: '✈️' },
+];
+
+const defaultIncomeCategories: IncomeCategory[] = [
+  { id: 'salary', name: '工资', emoji: '💼' },
+  { id: 'freelance', name: '兼职', emoji: '🧑‍💻' },
+  { id: 'investment', name: '投资', emoji: '📈' },
+  { id: 'other', name: '其他', emoji: '🔖' },
+];
+
 interface TransactionProviderProps {
   children: ReactNode;
 }
@@ -127,8 +171,10 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
   const { getUserSettings, upsertUserSettings, upsertTransactions, fetchTransactions, deleteTransactions, upsertAccounts, fetchAccounts, deleteAccounts } = useSupabaseSync();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [currency, setCurrencyState] = useState<Currency>('CNY');
+  const [currency, setCurrencyState] = useState<Currency>('USD');
   const [emotions, setEmotions] = useState<EmotionTag[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<IncomeCategory[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [syncing, setSyncing] = useState(false);
 
@@ -136,10 +182,23 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
 
   // Load from storage
   useEffect(() => {
-    loadTransactions();
-    loadCurrency();
-    loadEmotions();
-    loadAccounts();
+    (async () => {
+      try {
+        // 先确定币种（若无存储则按设备地区推断，失败回退 USD）
+        await loadCurrency();
+        // 并发加载其余数据
+        await Promise.all([
+          loadEmotions(),
+          loadExpenseCategories(),
+          loadIncomeCategories(),
+          loadTransactions(),
+        ]);
+        // 最后加载账户（可能需要依赖 currency 的默认值）
+        await loadAccounts();
+      } catch (e) {
+        console.warn('initial load failed', e);
+      }
+    })();
   }, []);
 
   // Persist locally
@@ -154,6 +213,14 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
   useEffect(() => {
     saveEmotions();
   }, [emotions]);
+
+  useEffect(() => {
+    saveExpenseCategories();
+  }, [expenseCategories]);
+
+  useEffect(() => {
+    saveIncomeCategories();
+  }, [incomeCategories]);
 
   useEffect(() => {
     saveAccounts();
@@ -273,9 +340,29 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       const stored = await AsyncStorage.getItem(CURRENCY_STORAGE_KEY);
       if (stored && isValidCurrency(stored)) {
         setCurrencyState(stored as Currency);
+        return;
       }
+      // 无存储：按设备 locale 推断地区 -> 币种；失败回退 USD
+      let locale = '';
+      try {
+        const ro = (Intl as any)?.DateTimeFormat?.().resolvedOptions?.();
+        locale = String(ro?.locale ?? '');
+      } catch {}
+      const sep = locale.includes('-') ? '-' : (locale.includes('_') ? '_' : '');
+      const region = sep ? locale.split(sep)[1]?.toUpperCase?.() : '';
+      const eurSet = new Set(['DE','FR','ES','IT','NL','BE','PT','GR','IE','FI','AT','LU','SK','SI','LV','LT','EE','MT','CY']);
+      const map: Record<string, Currency> = {
+        CN:'CNY', US:'USD', GB:'GBP', JP:'JPY', KR:'KRW', HK:'HKD', TW:'TWD', SG:'SGD',
+        AU:'AUD', CA:'CAD', CH:'CHF', SE:'SEK', NO:'NOK', DK:'DKK', RU:'RUB', IN:'INR',
+        BR:'BRL', MX:'MXN', ZA:'ZAR', TH:'THB', VN:'VND', ID:'IDR', MY:'MYR', PH:'PHP'
+      };
+      let cur: Currency = 'USD';
+      if (region && eurSet.has(region)) cur = 'EUR';
+      else if (region && map[region]) cur = map[region];
+      setCurrencyState(cur);
     } catch (error) {
       console.error('Failed to load currency:', error);
+      setCurrencyState('USD');
     }
   };
 
@@ -324,6 +411,54 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     } catch {}
   };
 
+  const loadExpenseCategories = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(EXPENSE_CATEGORY_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setExpenseCategories(parsed);
+        } else {
+          setExpenseCategories(defaultExpenseCategories);
+        }
+      } else {
+        setExpenseCategories(defaultExpenseCategories);
+      }
+    } catch {
+      setExpenseCategories(defaultExpenseCategories);
+    }
+  };
+
+  const saveExpenseCategories = async () => {
+    try {
+      await AsyncStorage.setItem(EXPENSE_CATEGORY_STORAGE_KEY, JSON.stringify(expenseCategories));
+    } catch {}
+  };
+
+  const loadIncomeCategories = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(INCOME_CATEGORY_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setIncomeCategories(parsed);
+        } else {
+          setIncomeCategories(defaultIncomeCategories);
+        }
+      } else {
+        setIncomeCategories(defaultIncomeCategories);
+      }
+    } catch {
+      setIncomeCategories(defaultIncomeCategories);
+    }
+  };
+
+  const saveIncomeCategories = async () => {
+    try {
+      await AsyncStorage.setItem(INCOME_CATEGORY_STORAGE_KEY, JSON.stringify(incomeCategories));
+    } catch {}
+  };
+
   const loadAccounts = async () => {
     try {
       const stored = await AsyncStorage.getItem(ACCOUNT_STORAGE_KEY);
@@ -331,7 +466,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         const parsed = JSON.parse(stored);
         const list: Account[] = (Array.isArray(parsed) ? parsed : []).map((a: any) => ({
           id: String(a.id),
-          name: String(a.name ?? 'Cash Wallet'),
+          name: String(a.name ?? '默认账户'),
           type: a.type as AccountType ?? 'cash',
           currency: isValidCurrency(String(a.currency)) ? String(a.currency) as Currency : currency,
           initialBalance: Number(a.initialBalance ?? 0),
@@ -348,7 +483,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       // 无账户则创建默认现金钱包
       setAccounts([{
         id: genUUIDv4(),
-        name: 'Cash Wallet',
+        name: '默认账户',
         type: 'cash',
         currency,
         initialBalance: 0,
@@ -360,7 +495,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     } catch {
       setAccounts([{
         id: genUUIDv4(),
-        name: 'Cash Wallet',
+        name: '默认账户',
         type: 'cash',
         currency,
         initialBalance: 0,
@@ -698,6 +833,8 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       exportedAt: new Date().toISOString(),
       currency,
       emotions,
+      expenseCategories,
+      incomeCategories,
       transactions: transactions.map(t => ({
         id: t.id,
         type: t.type,
@@ -738,6 +875,24 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
           }))
         );
       }
+      if (Array.isArray(data.expenseCategories) && data.expenseCategories.length) {
+        setExpenseCategories(
+          data.expenseCategories.map((e: any, i: number) => ({
+            id: String(e.id ?? i + '_' + Date.now()),
+            name: String(e.name ?? '自定义'),
+            emoji: String(e.emoji ?? '🧾'),
+          }))
+        );
+      }
+      if (Array.isArray(data.incomeCategories) && data.incomeCategories.length) {
+        setIncomeCategories(
+          data.incomeCategories.map((e: any, i: number) => ({
+            id: String(e.id ?? i + '_' + Date.now()),
+            name: String(e.name ?? '自定义'),
+            emoji: String(e.emoji ?? '💰'),
+          }))
+        );
+      }
       triggerSync(toLocal);
       return { ok: true, imported: toLocal.length };
     } catch (e: any) {
@@ -755,6 +910,30 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
 
   const resetEmotionTagsToDefault = () => {
     setEmotions(defaultEmotions);
+  };
+
+  const addExpenseCategory = (name: string, emoji: string) => {
+    setExpenseCategories(prev => [...prev, { id: (globalThis as any)?.crypto?.randomUUID?.() ?? Date.now().toString(), name, emoji }]);
+  };
+
+  const removeExpenseCategory = (id: string) => {
+    setExpenseCategories(prev => prev.filter(e => e.id !== id));
+  };
+
+  const resetExpenseCategoriesToDefault = () => {
+    setExpenseCategories(defaultExpenseCategories);
+  };
+
+  const addIncomeCategory = (name: string, emoji: string) => {
+    setIncomeCategories(prev => [...prev, { id: (globalThis as any)?.crypto?.randomUUID?.() ?? Date.now().toString(), name, emoji }]);
+  };
+
+  const removeIncomeCategory = (id: string) => {
+    setIncomeCategories(prev => prev.filter(e => e.id !== id));
+  };
+
+  const resetIncomeCategoriesToDefault = () => {
+    setIncomeCategories(defaultIncomeCategories);
   };
 
   const getEmotionStats = () => {
@@ -963,11 +1142,15 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         STORAGE_KEY,
         ACCOUNT_STORAGE_KEY,
         EMOTION_STORAGE_KEY,
+        EXPENSE_CATEGORY_STORAGE_KEY,
+        INCOME_CATEGORY_STORAGE_KEY,
         CURRENCY_STORAGE_KEY,
       ]);
       setTransactions([]);
       setAccounts([]);
       setEmotions(defaultEmotions);
+      setExpenseCategories(defaultExpenseCategories);
+      setIncomeCategories(defaultIncomeCategories);
       setCurrencyState('CNY');
     } catch (e) {
       console.error('Failed to clear all data', e);
@@ -1054,6 +1237,15 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       addEmotionTag,
       removeEmotionTag,
       resetEmotionTagsToDefault,
+      expenseCategories,
+      addExpenseCategory,
+      removeExpenseCategory,
+      resetExpenseCategoriesToDefault,
+
+      incomeCategories,
+      addIncomeCategory,
+      removeIncomeCategory,
+      resetIncomeCategoriesToDefault,
       getEmotionStats,
       getEmotionStatsForRange,
       getTopEmotion,
@@ -1074,7 +1266,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       addTransfer,
       clearAllData,
     }),
-    [transactions, currency, emotions, accounts]
+    [transactions, currency, emotions, expenseCategories, incomeCategories, accounts]
   );
 
   return (

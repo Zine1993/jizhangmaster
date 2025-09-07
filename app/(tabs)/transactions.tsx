@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +16,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import Fab from '@/components/ui/Fab';
+import IconButton from '@/components/ui/IconButton';
 
 export default function TransactionsScreen() {
   const { t } = useLanguage();
@@ -76,9 +76,9 @@ export default function TransactionsScreen() {
       <GradientHeader
         variant="emojiTicker"
         right={
-          <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
+          <IconButton onPress={() => router.push('/settings')}>
             <Settings size={24} color="#fff" />
-          </TouchableOpacity>
+          </IconButton>
         }
       />
       <Card padding={16}>

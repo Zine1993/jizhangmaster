@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trophy, Activity, Settings } from 'lucide-react-native';
@@ -8,6 +8,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
+import IconButton from '@/components/ui/IconButton';
+import Chip from '@/components/ui/Chip';
 
 export default function InsightsScreen() {
   const { transactions, getEmotionStatsForRange, getUsageDaysCount, getCurrencySymbol } = useTransactions();
@@ -133,9 +135,9 @@ export default function InsightsScreen() {
       <GradientHeader
         variant="emojiTicker"
         right={
-          <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
+          <IconButton onPress={() => router.push('/settings')}>
             <Settings size={24} color="#fff" />
-          </TouchableOpacity>
+          </IconButton>
         }
       />
       <Card padding={16}>
@@ -149,15 +151,17 @@ export default function InsightsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('weeklyEmotionRanking')}</Text>
           </View>
           <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-            <View style={{ marginLeft: 'auto', flexDirection: 'row', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border }}>
+            <View style={{ marginLeft: 'auto', flexDirection: 'row', gap: 8 }}>
               {(['count','amount'] as const).map(m => (
-                <TouchableOpacity
+                <Chip
                   key={m}
+                  selected={metric === m}
                   onPress={() => setMetric(m)}
-                  style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: metric === m ? colors.primary + '20' : 'transparent' }}
                 >
-                  <Text style={{ color: metric === m ? colors.primary : colors.textSecondary }}>{m === 'count' ? t('metricByCount') : t('metricByAmount')}</Text>
-                </TouchableOpacity>
+                  <Text style={{ color: metric === m ? colors.primary : colors.textSecondary }}>
+                    {m === 'count' ? t('metricByCount') : t('metricByAmount')}
+                  </Text>
+                </Chip>
               ))}
             </View>
           </View>
@@ -183,7 +187,7 @@ export default function InsightsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('patternAnalysis')}</Text>
           </View>
           {patternLines.length > 0 ? (
-            <View style={[styles.tipBox, { backgroundColor: '#FDEAD7', borderColor: '#F59E0B33' }]} >
+            <View style={[styles.tipBox, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '33' }]} >
               <Text style={{ fontSize: 18 }}>{statsSorted[0]?.emoji || '📈'}</Text>
               <View style={{ flex: 1 }}>
                 {patternLines.map((line, i) => (
@@ -198,13 +202,16 @@ export default function InsightsScreen() {
 
         <Card padding={16}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('smartAdvice')}</Text>
-          <View style={{ marginTop: 8 }}>
-            {adviceLines.map((line, i) => (
-              <Text key={i} style={{ color: colors.text, marginBottom: 4 }}>{line}</Text>
-            ))}
-            <Text style={{ color: colors.textSecondary, marginTop: 4 }}>
-              {t('usedDaysPrefix')}{days} {t('daysUnit')}
-            </Text>
+          <View style={[styles.tipBox, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '33', marginTop: 12 }]}>
+            <Text style={{ fontSize: 18 }}>💡</Text>
+            <View style={{ flex: 1 }}>
+              {adviceLines.map((line, i) => (
+                <Text key={i} style={{ color: colors.text, marginBottom: 4 }}>{line}</Text>
+              ))}
+              <Text style={{ color: colors.textSecondary, marginTop: 4 }}>
+                {t('usedDaysPrefix')}{days} {t('daysUnit')}
+              </Text>
+            </View>
           </View>
         </Card>
       </ScrollView>
@@ -230,6 +237,6 @@ const styles = StyleSheet.create({
   rankEmoji: { width: 24, textAlign: 'center' },
   rankName: { flex: 1, fontWeight: '600' },
   rankAmount: { fontWeight: '700' },
-  tipBox: { borderRadius: 12, padding: 12, flexDirection: 'row', gap: 10, alignItems: 'center' },
+  tipBox: { borderRadius: 12, padding: 12, flexDirection: 'row', gap: 10, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth },
   tipText: { flex: 1, lineHeight: 20 },
 });

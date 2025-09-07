@@ -17,6 +17,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import PieChartComponent from '@/components/PieChart';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
+import Chip from '@/components/ui/Chip';
+import IconButton from '@/components/ui/IconButton';
 
 
 export default function StatsScreen() {
@@ -181,9 +183,9 @@ export default function StatsScreen() {
       <GradientHeader
         variant="emojiTicker"
         right={
-          <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
+          <IconButton onPress={() => router.push('/settings')} size={32}>
             <Settings size={24} color="#fff" />
-          </TouchableOpacity>
+          </IconButton>
         }
       />
       <Card padding={16}>
@@ -209,7 +211,9 @@ export default function StatsScreen() {
           </View>
           {/* 快速预设区间 */}
           <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'wrap', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 2 }]} >
-            <Pressable
+            <Chip
+              label={(t('last7Days') as string) || '近7天'}
+              selected={activePreset === 'last7'}
               onPress={() => {
                 const now = new Date();
                 const s = new Date(now); s.setDate(s.getDate() - 6);
@@ -219,14 +223,13 @@ export default function StatsScreen() {
                 setRangeLabel(lbl);
                 setActivePreset('last7');
               }}
-              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'last7' ? colors.primary + '20' : 'transparent' }}
-            >
-              <Text style={{ color: activePreset === 'last7' ? colors.primary : colors.textSecondary }}>{t('last7Days') || '近7天'}</Text>
-            </Pressable>
+            />
 
 
 
-            <Pressable
+            <Chip
+              label={(t('thisMonth') as string) || '本月'}
+              selected={activePreset === 'thisMonth'}
               onPress={() => {
                 const now = new Date();
                 const s = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -237,12 +240,11 @@ export default function StatsScreen() {
                 setRangeLabel(lbl);
                 setActivePreset('thisMonth');
               }}
-              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'thisMonth' ? colors.primary + '20' : 'transparent' }}
-            >
-              <Text style={{ color: activePreset === 'thisMonth' ? colors.primary : colors.textSecondary }}>{t('thisMonth') || '本月'}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Chip
+              label={(t('lastMonth') as string) || '上月'}
+              selected={activePreset === 'lastMonth'}
               onPress={() => {
                 const now = new Date();
                 const s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -253,12 +255,11 @@ export default function StatsScreen() {
                 setRangeLabel(lbl);
                 setActivePreset('lastMonth');
               }}
-              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'lastMonth' ? colors.primary + '20' : 'transparent' }}
-            >
-              <Text style={{ color: activePreset === 'lastMonth' ? colors.primary : colors.textSecondary }}>{t('lastMonth') || '上月'}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Chip
+              label={(t('thisYear') as string) || '今年'}
+              selected={activePreset === 'thisYear'}
               onPress={() => {
                 const now = new Date();
                 const s = new Date(now.getFullYear(), 0, 1);
@@ -269,10 +270,7 @@ export default function StatsScreen() {
                 setRangeLabel(lbl);
                 setActivePreset('thisYear');
               }}
-              style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: activePreset === 'thisYear' ? colors.primary + '20' : 'transparent' }}
-            >
-              <Text style={{ color: activePreset === 'thisYear' ? colors.primary : colors.textSecondary }}>{t('thisYear') || '今年'}</Text>
-            </Pressable>
+            />
           </View>
 
 

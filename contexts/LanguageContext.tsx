@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 
+const LANGUAGE_STORAGE_KEY = '@expense_tracker_language';
+const SUPPORTED_LANGUAGES = ['en','zh','es','fr','de','ja','ko'] as const;
+type Language = typeof SUPPORTED_LANGUAGES[number];
+
 const REGION_TO_CURRENCY: Record<string, string> = {
   CN: 'CNY',
   US: 'USD',
@@ -56,7 +60,23 @@ const inferRegion = (locs: any[]): string => {
   return r;
 };
 
-type Language = 'en' | 'zh' | 'es' | 'fr' | 'de' | 'ja' | 'ko';
+const inferLanguageCode = (locs: any[]): Language => {
+  const loc = locs?.[0];
+  let code = '';
+  if (loc) {
+    // expo-localization: languageCode OR languageTag like 'zh-CN'
+    code = (loc as any).languageCode || '';
+    if (!code && typeof (loc as any).languageTag === 'string') {
+      code = (loc as any).languageTag.split('-')[0];
+    }
+  }
+  code = (code || '').toLowerCase();
+  const fallback: Language = 'en';
+  const supported = new Set(SUPPORTED_LANGUAGES as readonly string[]);
+  return (supported.has(code) ? (code as Language) : fallback);
+};
+
+/* moved above to derive from SUPPORTED_LANGUAGES */
 
 interface LanguageContextType {
   language: Language;
@@ -271,6 +291,9 @@ const translations = {
     noSharingAvailable: 'Saving is not available on this device',
     checkJson: 'Please check the JSON content',
     emotionTagManagement: 'Emotion tag management',
+    categoryManagement: 'Category management',
+    expenseCategoryManagement: 'Expense category management',
+    incomeCategoryManagement: 'Income category management',
     add: 'Add',
     addEmotionTag: 'Add emotion tag',
     emoji: 'Emoji',
@@ -566,6 +589,9 @@ const translations = {
     exportSuccess: '导出成功',
     noSharingAvailable: '当前环境不支持保存文件',
     emotionTagManagement: '情绪标签管理',
+    categoryManagement: '类别管理',
+    expenseCategoryManagement: '支出类别定义',
+    incomeCategoryManagement: '收入类别定义',
     add: '添加',
     addEmotionTag: '添加情绪标签',
     emoji: '表情符号',
@@ -836,6 +862,9 @@ const translations = {
     importFailed: 'Importación fallida',
     checkJson: 'Por favor revisa el contenido JSON',
     emotionTagManagement: 'Gestión de etiquetas de emoción',
+    categoryManagement: 'Gestión de categorías',
+    expenseCategoryManagement: 'Gestión de categorías de gasto',
+    incomeCategoryManagement: 'Gestión de categorías de ingreso',
     add: 'Añadir',
     addEmotionTag: 'Añadir etiqueta de emoción',
     emoji: 'Emoji',
@@ -1072,6 +1101,9 @@ const translations = {
     importFailed: 'Échec de l\'importation',
     checkJson: 'Veuillez vérifier le contenu JSON',
     emotionTagManagement: 'Gestion des étiquettes d\'émotion',
+    categoryManagement: 'Gestion des catégories',
+    expenseCategoryManagement: 'Gestion des catégories de dépenses',
+    incomeCategoryManagement: 'Gestion des catégories de revenus',
     add: 'Ajouter',
     addEmotionTag: 'Ajouter une étiquette d\'émotion',
     emoji: 'Emoji',
@@ -1281,6 +1313,9 @@ const translations = {
     importFailed: 'Importación fallida',
     checkJson: 'Verifica el contenido JSON',
     emotionTagManagement: 'Gestión de etiquetas de emoción',
+    categoryManagement: 'Gestión de categorías',
+    expenseCategoryManagement: 'Gestión de categorías de gasto',
+    incomeCategoryManagement: 'Gestión de categorías de ingreso',
     add: 'Añadir',
     addEmotionTag: 'Añadir etiqueta de emoción',
     emoji: 'Emoji',
@@ -1518,6 +1553,9 @@ const translations = {
     importFailed: 'Import fehlgeschlagen',
     checkJson: 'Bitte JSON-Inhalt prüfen',
     emotionTagManagement: 'Emotions-Tags verwalten',
+    categoryManagement: 'Kategorieverwaltung',
+    expenseCategoryManagement: 'Ausgabenkategorien verwalten',
+    incomeCategoryManagement: 'Einnahmenkategorien verwalten',
     add: 'Hinzufügen',
     addEmotionTag: 'Emotions-Tag hinzufügen',
     emoji: 'Emoji',
@@ -1757,6 +1795,9 @@ const translations = {
     importFailed: 'インポートに失敗しました',
     checkJson: 'JSON内容を確認してください',
     emotionTagManagement: '感情タグ管理',
+    categoryManagement: 'カテゴリ管理',
+    expenseCategoryManagement: '支出カテゴリ管理',
+    incomeCategoryManagement: '収入カテゴリ管理',
     add: '追加',
     addEmotionTag: '感情タグを追加',
     emoji: '絵文字',
@@ -1998,6 +2039,9 @@ const translations = {
     importFailed: '가져오기 실패',
     checkJson: 'JSON 내용을 확인하세요',
     emotionTagManagement: '감정 태그 관리',
+    categoryManagement: '카테고리 관리',
+    expenseCategoryManagement: '지출 카테고리 관리',
+    incomeCategoryManagement: '수입 카테고리 관리',
     add: '추가',
     addEmotionTag: '감정 태그 추가',
     emoji: '이모지',

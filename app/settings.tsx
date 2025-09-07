@@ -26,9 +26,11 @@ import {
   Check,
   Lock,
   Unlock,
+  Tag,
 } from 'lucide-react-native';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import * as DocumentPicker from 'expo-document-picker';
@@ -108,6 +110,7 @@ export default function SettingsScreen() {
   const [showThemeModal, setShowThemeModal] = React.useState(false);
   const [showLanguageModal, setShowLanguageModal] = React.useState(false);
   const [showDataModal, setShowDataModal] = React.useState(false);
+
   const [busyExport, setBusyExport] = React.useState(false);
   const [busyImport, setBusyImport] = React.useState(false);
   // Edit nickname modal states
@@ -372,6 +375,12 @@ export default function SettingsScreen() {
           />
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
+            icon={<Tag size={20} color={colors.primary} />}
+            title={t('categoryManagement') || '类别管理'}
+            onPress={() => router.push('/categories')}
+          />
+          <View style={[styles.separator, { backgroundColor: colors.border }]} />
+          <SettingRow
             icon={<ArrowUpFromLine size={20} color={colors.primary} />}
             title={t('importExport') || '导入 / 导出'}
             onPress={() => setShowDataModal(true)}
@@ -469,6 +478,8 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
+
 
 
 
@@ -584,7 +595,8 @@ export default function SettingsScreen() {
               <TouchableOpacity onPress={() => setShowPwdSetup(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
                 <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <Button
+                label={(t('save') as string) || '保存'}
                 onPress={async () => {
                   try {
                     if (!setupPwd || !setupPwd2) {
@@ -602,17 +614,13 @@ export default function SettingsScreen() {
                     setPwdSet(true);
                     setShowPwdSetup(false);
                     setSetupPwd(''); setSetupPwd2('');
-                    // 可选：设置完成后要求再次输入以进入账户管理
                     setPwdInput('');
                     setShowPwdPrompt(true);
                   } catch {
                     Alert.alert(t('operationFailed') || '操作失败', '');
                   }
                 }}
-                style={{ paddingVertical: 8, paddingHorizontal: 12, backgroundColor: colors.primary, borderRadius: 8 }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '600' }}>{t('save') || '保存'}</Text>
-              </TouchableOpacity>
+              />
             </View>
           </View>
         </View>
@@ -638,7 +646,8 @@ export default function SettingsScreen() {
               <TouchableOpacity onPress={() => setShowPwdPrompt(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
                 <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <Button
+                label={(t('verify') as string) || '验证'}
                 onPress={async () => {
                   try {
                     const ph = await AsyncStorage.getItem(PWD_KEY);
@@ -655,10 +664,7 @@ export default function SettingsScreen() {
                     Alert.alert(t('operationFailed') || '操作失败', '');
                   }
                 }}
-                style={{ paddingVertical: 8, paddingHorizontal: 12, backgroundColor: colors.primary, borderRadius: 8 }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '600' }}>{t('verify') || '验证'}</Text>
-              </TouchableOpacity>
+              />
             </View>
           </View>
         </View>
@@ -795,7 +801,8 @@ export default function SettingsScreen() {
               <TouchableOpacity onPress={() => setShowEditName(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
                 <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <Button
+                label={(t('save') as string) || '保存'}
                 onPress={async () => {
                   const name = (editName || '').trim();
                   if (!name) { Alert.alert(t('tip') || '提示', t('fillAllFields') || '请填写完整'); return; }
@@ -812,10 +819,7 @@ export default function SettingsScreen() {
                     Alert.alert(t('operationFailed') || '操作失败', e?.message || '');
                   }
                 }}
-                style={{ paddingVertical: 8, paddingHorizontal: 12, backgroundColor: colors.primary, borderRadius: 8 }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '600' }}>{t('save') || '保存'}</Text>
-              </TouchableOpacity>
+              />
             </View>
           </View>
         </View>
