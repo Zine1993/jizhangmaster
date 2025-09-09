@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, AppState } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trophy, Activity, Settings } from 'lucide-react-native';
@@ -8,6 +8,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
+import { useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import IconButton from '@/components/ui/IconButton';
 import Chip from '@/components/ui/Chip';
 import { formatCurrency } from '@/lib/i18n';
@@ -37,10 +39,94 @@ export default function InsightsScreen() {
     return { monday: m, sunday: s };
   }, []);
 
-  const statsRange = React.useMemo(() => getEmotionStatsForRange(monday, sunday), [getEmotionStatsForRange, monday, sunday]);
+  // 使用实际交易币种进行聚合（emotion + currency）
   const statsSorted = React.useMemo(() => {
-    return [...statsRange].sort((a, b) => (metric === 'count' ? b.count - a.count : b.amount - a.amount));
-  }, [statsRange, metric]);
+    type Row = { name: string; emoji: string; currency?: string; amount: number; count: number };
+    const map = new Map<string, Row>();
+    for (const t of transactions) {
+      if (t.type !== 'expense') continue;
+      const d = new Date(t.date);
+      if (d.getTime() < monday.getTime() || d.getTime() > sunday.getTime()) continue;
+      const key = `${String(t.emotion || '')}__${String((t as any).currency || '')}`;
+      const cur = map.get(key) || { name: String(t.emotion || ''), emoji: (t as any).emoji || '📝', currency: (t as any).currency, amount: 0, count: 0 };
+      cur.amount += t.amount;
+      cur.count += 1;
+      map.set(key, cur);
+    }
+    const arr = Array.from(map.values());
+    return arr.sort((a, b) => (metric === 'count' ? b.count - a.count : b.amount - a.amount));
+  }, [transactions, monday, sunday, metric]);
+
+  // 预算进度分析：读取预算并计算进行中预算的使用率
+  type Budget = { id: string; name: string; currency?: string; amount: number; startDate: string; endDate: string; enabled?: boolean };
+  const [budgetsForInsights, setBudgetsForInsights] = React.useState<Budget[]>([]);
+  const loadBudgets = React.useCallback(async () => {
+    try {
+      const raw = await AsyncStorage.getItem('@budgets_v1');
+      const arr = raw ? (JSON.parse(raw) as Budget[]) : [];
+      setBudgetsForInsights(Array.isArray(arr) ? arr : []);
+    } catch {
+      setBudgetsForInsights([]);
+    }
+  }, []);
+
+  // 首次加载
+  React.useEffect(() => {
+    loadBudgets();
+  }, [loadBudgets]);
+
+  // 页面聚焦时刷新（从预算设置返回时自动同步）
+  useFocusEffect(
+    React.useCallback(() => {
+      loadBudgets();
+      return undefined;
+    }, [loadBudgets])
+  );
+
+  // 从后台回到前台时刷新，确保跨场景同步
+  React.useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') loadBudgets();
+    });
+    return () => sub.remove();
+  }, [loadBudgets]);
+
+  const budgetSummary = React.useMemo(() => {
+    const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    const endOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    const today = startOf(new Date());
+
+    type Item = { id: string; name: string; percent: number; over: boolean };
+    const ongoing: Item[] = [];
+    let overs = 0;
+
+    for (const b of budgetsForInsights) {
+      if (b.enabled === false) continue;
+      const bs = startOf(new Date(b.startDate));
+      const be = endOf(new Date(b.endDate));
+      if (be < today || bs > today) continue; // 仅统计“进行中”
+
+      // 计算在预算周期内的支出（按币种匹配）
+      let spent = 0;
+      const total = Number(b.amount) || 0;
+      for (const tx of transactions) {
+        if (tx.type !== 'expense') continue;
+        const td = new Date(tx.date);
+        if (td < bs || td > be) continue;
+        if (b.currency && (tx as any).currency && (tx as any).currency !== b.currency) continue;
+        spent += tx.amount;
+      }
+      const percent = total > 0 ? Math.round(Math.min(100, Math.max(0, (spent / total) * 100))) : 0;
+      const over = total > 0 && spent > total;
+      if (over) overs += 1;
+      ongoing.push({ id: b.id, name: b.name, percent, over });
+    }
+
+    const count = ongoing.length;
+    const avgPercent = count ? Math.round(ongoing.reduce((s, i) => s + i.percent, 0) / count) : 0;
+    const top = ongoing.slice().sort((a, b) => b.percent - a.percent)[0] || null;
+    return { count, avgPercent, overs, top, total: budgetsForInsights.length };
+  }, [budgetsForInsights, transactions]);
 
   // Derived analytics for pattern analysis and smart advice
   const lastWeekRange = React.useMemo(() => {
@@ -63,9 +149,18 @@ export default function InsightsScreen() {
     [transactions, inRange, monday, sunday]
   );
 
+  // 仅比较与 Top 情绪同币种的上周交易
   const lastWeekTx = React.useMemo(
-    () => transactions.filter(t => t.type === 'expense' && inRange(new Date(t.date), lastWeekRange.start, lastWeekRange.end)),
-    [transactions, inRange, lastWeekRange]
+    () => transactions.filter(t => {
+      if (t.type !== 'expense') return false;
+      const d = new Date(t.date);
+      const inLast = inRange(d, lastWeekRange.start, lastWeekRange.end);
+      if (!statsSorted[0]) return inLast;
+      const sameEmotion = t.emotion === statsSorted[0].name;
+      const sameCurrency = !(statsSorted[0] as any).currency || (t as any).currency === (statsSorted[0] as any).currency;
+      return inLast && sameEmotion && sameCurrency;
+    }),
+    [transactions, inRange, lastWeekRange, statsSorted]
   );
 
   const totalAmt = React.useMemo(() => weekTx.reduce((s, t) => s + t.amount, 0), [weekTx]);
@@ -94,15 +189,15 @@ export default function InsightsScreen() {
         t('patternTopShareLine', {
           emotion: displayNameFor({ id: String(top?.name || ''), name: String(top?.name || '') }, 'emotions', t as any, language as any),
           share: (topShare * 100).toFixed(0),
-          avg: formatCurrency(topAvg, currency as any),
-          overallAvg: formatCurrency(avgAll, currency as any)
+          avg: formatCurrency(topAvg, ((top as any)?.currency as any) || (currency as any)),
+          overallAvg: formatCurrency(avgAll, (currency as any))
         })
       );
     }
     const deltaStr = `${riseAmtPct >= 0 ? '+' : ''}${(riseAmtPct * 100).toFixed(0)}`;
     lines.push(
       t('patternWeekCompareLine', {
-        amount: formatCurrency(totalAmt, currency as any),
+        amount: formatCurrency(totalAmt, (((top as any)?.currency) as any) || (currency as any)),
         delta: deltaStr
       })
     );
@@ -111,18 +206,19 @@ export default function InsightsScreen() {
 
   const adviceLines = React.useMemo(() => {
     const lines: string[] = [];
+    const topCurrency = ((top as any)?.currency as any) || (currency as any);
     if (top && topAvg > avgAll * 1.3) {
       lines.push(
         t('adviceHighAvg', {
           emotion: displayNameFor({ id: String(top?.name || ''), name: String(top?.name || '') }, 'emotions', t as any, language as any),
-          threshold: formatCurrency(topAvg * 1.2, currency as any)
+          threshold: formatCurrency(topAvg * 1.2, topCurrency)
         })
       );
     }
     if (riseAmtPct > 0.2) {
       lines.push(
         t('adviceBudgetCap', {
-          cap: formatCurrency(totalAmt * 1.1, currency as any)
+          cap: formatCurrency(totalAmt * 1.1, topCurrency)
         })
       );
     }
@@ -130,7 +226,7 @@ export default function InsightsScreen() {
       lines.push(t('keepRecordingTip'));
     }
     return lines;
-  }, [top, topAvg, avgAll, riseAmtPct, totalAmt, t]);
+  }, [top, topAvg, avgAll, riseAmtPct, totalAmt, t, currency]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -171,17 +267,83 @@ export default function InsightsScreen() {
             <Text style={{ color: colors.textSecondary }}>{t('noData')}</Text>
           ) : (
             statsSorted.slice(0, 3).map((s, idx) => (
-              <View key={s.name} style={[styles.rankItem, { borderColor: colors.border }]}>
+              <View key={`${s.name}_${s.currency || 'ALL'}_${idx}`} style={[styles.rankItem, { borderColor: colors.border }]}>
                 <Text style={styles.rankIndex}>{idx + 1}</Text>
                 <Text style={styles.rankEmoji}>{s.emoji}</Text>
-                <Text style={[styles.rankName, { color: colors.text }]}>
+                <Text style={[styles.rankName, { color: colors.text }]} numberOfLines={1}>
                   {displayNameFor({ id: String(s.name), name: String(s.name) }, 'emotions', t as any, language as any)}
+                  {!!s.currency ? ` · ${s.currency}` : ''}
                 </Text>
                 <Text style={[styles.rankAmount, { color: colors.text }]}>
-                  {metric === 'count' ? `${s.count} ${t('spendTimes')}` : formatCurrency(s.amount, currency as any)}
+                  {metric === 'count'
+                    ? `${s.count} ${t('spendTimes')}`
+                    : formatCurrency(s.amount, (s.currency as any) || (currency as any))}
                 </Text>
               </View>
             ))
+          )}
+        </Card>
+
+        {/* 预算进度分析：横向轮播单个预算进度，不展示汇总 */}
+        <Card padding={16}>
+          <View style={styles.sectionHeader}>
+            <Activity size={18} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('budgetProgressAnalysis')}</Text>
+          </View>
+          {budgetsForInsights.length === 0 ? (
+            <Text style={{ color: colors.textSecondary }}>{t('noData')}</Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 4, gap: 12 }}>
+              {budgetsForInsights.map((b) => {
+                // 仅计算每个预算自身周期内的支出进度
+                const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+                const endOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+                const bs = startOf(new Date(b.startDate));
+                const be = endOf(new Date(b.endDate));
+                let spent = 0;
+                const total = Number(b.amount) || 0;
+                for (const tx of transactions) {
+                  if (tx.type !== 'expense') continue;
+                  const td = new Date(tx.date);
+                  if (td < bs || td > be) continue;
+                  if (b.currency && (tx as any).currency && (tx as any).currency !== b.currency) continue;
+                  spent += tx.amount;
+                }
+                const percentNum = total > 0 ? (spent / total) * 100 : 0;
+                const percent = Math.round(Math.min(100, Math.max(0, percentNum)));
+                const over = total > 0 && spent > total;
+                const barColor = over ? colors.expense : percent >= 80 ? '#F59E0B' : colors.primary;
+
+                return (
+                  <View key={b.id} style={{ width: 260 }}>
+                    <View style={[styles.tipBox, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '33' }]}>
+                      <Text style={{ fontSize: 18 }}>🎯</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.tipText, { color: colors.text, fontWeight: '600' }]} numberOfLines={1}>
+                          {b.name}
+                        </Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                          {b.startDate} ~ {b.endDate}{b.currency ? ` · ${b.currency}` : ''}
+                        </Text>
+                        <View style={{ height: 8, borderRadius: 999, backgroundColor: colors.border, overflow: 'hidden', marginTop: 6 }}>
+                          <View style={{ width: `${percent}%`, height: '100%', backgroundColor: barColor }} />
+                        </View>
+                        <View style={{ marginTop: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                            {formatCurrency(spent, (b.currency as any) || (currency as any))} / {formatCurrency(total, (b.currency as any) || (currency as any))}
+                          </Text>
+                          {over ? (
+                            <Text style={{ color: colors.expense, fontSize: 12, fontWeight: '600' }}>{t('overspent')}</Text>
+                          ) : (
+                            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{percent}%</Text>
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
           )}
         </Card>
 

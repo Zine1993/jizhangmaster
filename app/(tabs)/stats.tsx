@@ -8,6 +8,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+
+
+
 import DateRangePicker from '@/components/ui/DateRangePicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChartPie as PieChart, Settings } from 'lucide-react-native';
@@ -23,7 +26,9 @@ import { formatCurrency } from '@/lib/i18n';
 import { displayNameFor } from '@/lib/i18n';
 
 
+
 export default function StatsScreen() {
+  // 所有 hooks 顶部按固定顺序执行，避免条件或早退
   const { t, language } = useLanguage();
   const router = useRouter();
   const { transactions, currency } = useTransactions();
@@ -31,10 +36,14 @@ export default function StatsScreen() {
 
   const [rangeLabel, setRangeLabel] = React.useState<string>('');
   const [activePreset, setActivePreset] = React.useState<'last7'|'thisMonth'|'lastMonth'|'thisYear'|null>('last7');
-  // metric removed: fixed to amount
   const [startDate, setStartDate] = React.useState<Date>(() => { const d = new Date(); d.setDate(d.getDate() - 6); return d; });
   const [endDate, setEndDate] = React.useState<Date>(new Date());
   const [showRangePicker, setShowRangePicker] = React.useState(false);
+
+
+
+
+
 
   // currencySymbol removed; using formatCurrency
   React.useEffect(() => {
@@ -77,6 +86,16 @@ export default function StatsScreen() {
       return d >= range.start && d <= range.end;
     });
   }, [transactions, range]);
+
+
+
+
+
+
+
+
+
+
 
   const pieChartColors = [
     '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444',
@@ -194,6 +213,11 @@ export default function StatsScreen() {
         <Text style={[styles.pageTitle, { color: colors.text }]} > { t('stats') } </Text>
         <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }} > { t('statsSubtitle') } </Text>
       </Card>
+
+
+
+
+
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 95 }}>
         <Card padding={16}>
           <View style={styles.sectionHeader}>
@@ -295,6 +319,10 @@ export default function StatsScreen() {
             />
           </>
         </Card>
+
+
+
+
 
         {(incomeChartData.length > 0 || expenseChartData.length > 0) && (
           <Card padding={16}>

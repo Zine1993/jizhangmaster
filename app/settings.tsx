@@ -27,6 +27,7 @@ import {
   Lock,
   Unlock,
   Tag,
+  PiggyBank,
 } from 'lucide-react-native';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
@@ -346,6 +347,12 @@ export default function SettingsScreen() {
 
         {/* 外观设置 */}
         <Card padding={0} style={{ marginBottom: 8 }}>
+          <SettingRow
+            icon={<PiggyBank size={20} color={colors.primary} />}
+            title={t('budgetSettings')}
+            onPress={() => router.push('/budgets')}
+          />
+          <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
             icon={<Sun size={20} color={colors.primary} />}
             title={t('theme')}
