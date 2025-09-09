@@ -19,6 +19,7 @@ export interface Transaction {
   date: Date;
   emotion?: string; // 新增：情绪标签名称
   accountId?: string; // 账户ID
+  currency?: string; // 交易币种（显示优先）
   transferGroupId?: string; // 转账分组ID
   isTransfer?: boolean; // 是否为转账生成的记录
 }
@@ -63,6 +64,7 @@ interface TransactionContextType {
   getMonthlyStatsByCurrency: () => { currency: Currency; income: number; expense: number; balance: number; firstAccountDate: Date }[];
   getTotalBalance: () => number;
   getCurrencySymbol: () => string;
+  getCurrencySymbolFor: (tx?: Partial<Transaction> | null) => string;
   exportData: () => string;
   importData: (json: string) => { ok: boolean; imported: number; error?: string };
   // 情绪扩展
@@ -627,10 +629,13 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     } catch (e) {
       throw e;
     }
+    const accId2 = transaction.accountId || activeAccount?.id;
+    const acc2 = accounts.find(a => a.id === accId2);
     const newTransaction: Transaction = {
       ...transaction,
       id: genUUIDv4(),
-      accountId: transaction.accountId || activeAccount?.id,
+      accountId: accId2,
+      currency: (transaction as any).currency || acc2?.currency,
     };
     setTransactions(prev => {
       const next = [newTransaction, ...prev];
@@ -726,6 +731,22 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     };
 
     return currencySymbols[currency];
+  };
+
+  // 统一对任意交易/账户获取标准符号（避免 US$）
+  const getCurrencySymbolFor = (tx?: Partial<Transaction> | null) => {
+    const map: Record<string, string> = {
+      CNY: '¥', USD: '$', EUR: '€', GBP: '£', JPY: '¥', KRW: '₩',
+      HKD: 'HK$', TWD: 'NT$', SGD: 'S$', AUD: 'A$', CAD: 'C$',
+      CHF: 'CHF', SEK: 'kr', NOK: 'kr', DKK: 'kr', RUB: '₽',
+      INR: '₹', BRL: 'R$', MXN: '$', ZAR: 'R', THB: '฿', VND: '₫',
+      IDR: 'Rp', MYR: 'RM', PHP: '₱',
+    };
+    const cur =
+      (tx as any)?.currency ||
+      accounts.find(a => a.id === (tx as any)?.accountId)?.currency ||
+      currency;
+    return map[String(cur) as keyof typeof map] || '$';
   };
 
   const getMonthlyStats = () => {
@@ -879,6 +900,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         description: t.description,
         date: t.date.toISOString(),
         emotion: t.emotion ?? '',
+        currency: (t as any).currency || '',
       })),
     };
     return JSON.stringify(payload, null, 2);
@@ -897,6 +919,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         description: String(r.description ?? ''),
         date: new Date(r.date ?? Date.now()),
         emotion: r.emotion ? String(r.emotion) : '',
+        currency: r.currency ? String(r.currency) : undefined,
       }));
       setTransactions(toLocal);
       if (data.currency && isValidCurrency(String(data.currency))) {
@@ -1267,6 +1290,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       getMonthlyStatsByCurrency,
       getTotalBalance,
       getCurrencySymbol,
+      getCurrencySymbolFor,
       exportData,
       importData,
       emotions,

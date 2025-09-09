@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
+import { normalizeCurrency } from '@/lib/i18n';
 import { X, ChevronDown } from 'lucide-react-native';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 
@@ -25,6 +26,9 @@ export default function AddTransactionScreen() {
       // Basic validation
       return;
     }
+    // 推断币种：优先账户币种，其次全局默认（由 context 内部处理）；并做规范化
+    const accountCurrency = accounts.find(a => a.id === selectedAccountId)?.currency;
+    const cur = accountCurrency ? (normalizeCurrency(String(accountCurrency)) || accountCurrency) : undefined;
     addTransaction({
       type,
       amount: parseFloat(amount),
@@ -32,6 +36,7 @@ export default function AddTransactionScreen() {
       description,
       date: new Date(),
       accountId: selectedAccountId,
+      ...(cur ? { currency: cur as any } : {}),
     });
     router.back();
   };

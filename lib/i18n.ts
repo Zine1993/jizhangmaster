@@ -113,7 +113,34 @@ const SYMBOLS: Record<string, string> = {
   MYR: 'RM', PHP: '₱',
 };
 
+// 常见错误与大小写纠正（如 'uss' -> 'USD'）
+const CURRENCY_FIX_MAP: Record<string, string> = {
+  uss: 'USD',
+  usd: 'USD',
+  rmb: 'CNY',
+  cny: 'CNY',
+  jpy: 'JPY',
+  eur: 'EUR',
+  hkd: 'HKD',
+  gbp: 'GBP',
+  krw: 'KRW',
+  twd: 'TWD',
+  aud: 'AUD',
+  cad: 'CAD',
+  sgd: 'SGD',
+  thb: 'THB',
+  vnd: 'VND',
+};
+
+export function normalizeCurrency(code?: string): string | undefined {
+  if (!code) return undefined;
+  const norm = String(code).trim().toLowerCase();
+  const fixed = CURRENCY_FIX_MAP[norm] || norm.toUpperCase();
+  return fixed;
+}
+
 export function getCurrencySymbol(code: string, locale?: string): string {
+  const norm = normalizeCurrency(code) || 'USD';
   try {
     const loc =
       locale ||
@@ -121,28 +148,45 @@ export function getCurrencySymbol(code: string, locale?: string): string {
       'en';
     const parts = new Intl.NumberFormat(loc, {
       style: 'currency',
-      currency: code,
+      currency: norm,
       currencyDisplay: 'narrowSymbol',
     }).formatToParts(1);
     const sym = parts.find((p) => p.type === 'currency')?.value;
-    return sym || SYMBOLS[code] || code;
+    return sym || SYMBOLS[norm] || norm;
   } catch {
-    return SYMBOLS[code] || code;
+    return SYMBOLS[norm] || norm;
   }
 }
 
 export function formatCurrency(amount: number, currency: string, locale?: string): string {
+  const norm = normalizeCurrency(currency) || 'USD';
+  const n = Number.isFinite(amount) ? amount : 0;
+
+  // 对 USD 强制使用 $，避免部分 locale 输出“US$”
+  if (norm === 'USD') {
+    try {
+      const loc =
+        locale ||
+        ((Intl as any)?.DateTimeFormat?.().resolvedOptions?.().locale as string) ||
+        'en';
+      // 先用本地数字格式化，再用自定义符号拼接，避免 Intl 的“US$”
+      const num = new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+      const sym = SYMBOLS['USD'] || '$';
+      return `${sym}${num}`;
+    } catch {
+      const sym = SYMBOLS['USD'] || '$';
+      return `${sym}${n.toFixed(2)}`;
+    }
+  }
+
   try {
     const loc =
       locale ||
       ((Intl as any)?.DateTimeFormat?.().resolvedOptions?.().locale as string) ||
       'en';
-    return new Intl.NumberFormat(loc, { style: 'currency', currency }).format(
-      amount ?? 0
-    );
+    return new Intl.NumberFormat(loc, { style: 'currency', currency: norm }).format(n);
   } catch {
-    const sym = SYMBOLS[currency] || '';
-    const n = Number.isFinite(amount) ? amount : 0;
+    const sym = SYMBOLS[norm] || norm;
     return `${sym}${n.toFixed(2)}`;
   }
 }

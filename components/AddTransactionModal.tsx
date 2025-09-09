@@ -41,7 +41,7 @@ const defaultExpenseCategoryNames = [
 
 export default function AddTransactionModal({ visible, onClose, editTransaction, autoFocusAmount }: AddTransactionModalProps) {
   const { t, language } = useLanguage();
-  const { addTransaction, updateTransaction, getCurrencySymbol: getDefaultCurrencySymbol, emotions, accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
+  const { addTransaction, updateTransaction, getCurrencySymbolFor, emotions, accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
   const { colors } = useTheme();
   const { triggerEmojiRain } = useEmojiRain();
 
@@ -89,12 +89,10 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     return accounts?.find(a => a.id === accountId);
   }, [accountId, accounts]);
 
-  const symbolOf = useCallback((code: string | undefined) => {
-    if (!code) return getDefaultCurrencySymbol();
-    return getCurrencySymbol(code);
-  }, [getDefaultCurrencySymbol]);
-
-  const currencySymbol = symbolOf(selectedAccount?.currency);
+  const currencySymbol = useMemo(() => {
+    // 优先用所选账户币种，统一用标准符号（USD -> $）
+    return getCurrencySymbolFor({ accountId, currency: selectedAccount?.currency });
+  }, [accountId, selectedAccount?.currency, getCurrencySymbolFor]);
 
   useEffect(() => {
     if (editTransaction && visible) {
