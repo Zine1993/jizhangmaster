@@ -154,14 +154,14 @@ export default function SettingsScreen() {
   const initial = React.useMemo(() => pickInitial(user?.email || user?.id || 'U'), [user?.email, user?.id]);
   // display name: prefer nickname/full name from user_metadata, fallback to email local-part, else neutral
   const displayName = React.useMemo(() => {
-    if (!user) return (t('login') as string) || '登录';
+    if (!user) return t('login') as string;
     const md: any = (user as any)?.user_metadata || {};
     const candidate = (md.full_name || md.name || md.nickname || '').trim?.();
     if (candidate) return candidate;
     const local = (user.email || '').split('@')[0] || '';
     const alias = local.replace(/[._]+/g, ' ').trim();
     if (alias) return alias;
-    return t('myAccount') || '我的账户';
+    return t('myAccount');
   }, [user, t]);
 
   const appName = (Constants?.expoConfig?.name as string) || ((Constants as any)?.manifest?.name) || '记账大师';
@@ -277,7 +277,7 @@ export default function SettingsScreen() {
               onPress={async () => {
                 if (user) {
                   const r = await signOut();
-                  if (!r.ok) Alert.alert(t('operationFailed') || '操作失败', r.error || '');
+                  if (!r.ok) Alert.alert(t('operationFailed'), r.error || '');
                 } else {
                   requireLogin();
                 }
@@ -319,7 +319,7 @@ export default function SettingsScreen() {
                   });
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                accessibilityLabel={t('setPassword') || '设置密码'}
+                accessibilityLabel={t('setPassword')}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, paddingHorizontal: 6, marginRight: -12 }}
                 activeOpacity={0.8}
               >
@@ -349,7 +349,13 @@ export default function SettingsScreen() {
           <SettingRow
             icon={<Sun size={20} color={colors.primary} />}
             title={t('theme')}
-            value={t('systemTheme')}
+            value={
+              themeMode === 'system'
+                ? (t('systemTheme') as string)
+                : themeMode === 'light'
+                ? (t('lightTheme') as string)
+                : (t('darkTheme') as string)
+            }
             onPress={() => setShowThemeModal(true)}
           />
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
@@ -357,13 +363,13 @@ export default function SettingsScreen() {
             icon={<Languages size={20} color={colors.primary} />}
             title={t('language')}
             value={
-              language === 'zh' ? t('chinese')
-              : language === 'en' ? t('english')
-              : language === 'es' ? t('spanish')
-              : language === 'fr' ? t('french')
-              : language === 'de' ? t('german')
-              : language === 'ja' ? t('japanese')
-              : t('korean')
+              language === 'zh' ? t('lang.zh')
+              : language === 'en' ? t('lang.en')
+              : language === 'es' ? t('lang.es')
+              : language === 'fr' ? t('lang.fr')
+              : language === 'de' ? t('lang.de')
+              : language === 'ja' ? t('lang.ja')
+              : t('lang.ko')
             }
             onPress={() => setShowLanguageModal(true)}
           />
@@ -376,13 +382,13 @@ export default function SettingsScreen() {
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
             icon={<Tag size={20} color={colors.primary} />}
-            title={t('categoryManagement') || '类别管理'}
+            title={t('categoryManagement')}
             onPress={() => router.push('/categories')}
           />
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
             icon={<ArrowUpFromLine size={20} color={colors.primary} />}
-            title={t('importExport') || '导入 / 导出'}
+            title={t('importExport')}
             onPress={() => setShowDataModal(true)}
           />
         </Card>
@@ -438,7 +444,7 @@ export default function SettingsScreen() {
               );
             })}
             <TouchableOpacity style={styles.modalCancel} onPress={() => setShowThemeModal(false)}>
-              <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -449,7 +455,7 @@ export default function SettingsScreen() {
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('language')}</Text>
-            {[{code:'zh',label:(t('chinese')||'中文')},{code:'en',label:(t('english')||'English')},{code:'es',label:(t('spanish')||'Español')},{code:'fr',label:(t('french')||'Français')},{code:'de',label:(t('german')||'Deutsch')},{code:'ja',label:(t('japanese')||'日本語')},{code:'ko',label:(t('korean')||'한국어')}].map(opt => {
+            {[{code:'zh',label:(t('lang.zh'))},{code:'en',label:(t('lang.en'))},{code:'es',label:(t('lang.es'))},{code:'fr',label:(t('lang.fr'))},{code:'de',label:(t('lang.de'))},{code:'ja',label:(t('lang.ja'))},{code:'ko',label:(t('lang.ko'))}].map(opt => {
               const selected = language === opt.code;
               return (
                 <TouchableOpacity
@@ -473,7 +479,7 @@ export default function SettingsScreen() {
               );
             })}
             <TouchableOpacity style={styles.modalCancel} onPress={() => setShowLanguageModal(false)}>
-              <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -487,7 +493,7 @@ export default function SettingsScreen() {
       <Modal transparent visible={showDataModal} animationType="fade" onRequestClose={() => setShowDataModal(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('importExport') || '导入 / 导出'}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('importExport')}</Text>
 
             <TouchableOpacity
               disabled={busyImport}
@@ -499,23 +505,23 @@ export default function SettingsScreen() {
                   if (res.canceled) { return; }
                   const asset = (res.assets && res.assets[0]) || res;
                   const uri = asset?.uri;
-                  if (!uri) { Alert.alert(t('importFailed') || '导入失败'); return; }
+                  if (!uri) { Alert.alert(t('importFailed')); return; }
                   const content = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
                   const r = importData(content);
                   if ((r as any)?.ok) {
-                    Alert.alert(t('success') || '成功', t('importSuccess') || '导入成功');
+                    Alert.alert(t('success'), t('importSuccess'));
                   } else {
-                    Alert.alert(t('importFailed') || '导入失败', (r as any)?.error || (t('invalidJSON') || 'JSON 内容不合法'));
+                    Alert.alert(t('importFailed'), (r as any)?.error || (t('invalidJSON') as string));
                   }
                 } catch (e: any) {
-                  Alert.alert(t('importFailed') || '导入失败', e?.message || '');
+                  Alert.alert(t('importFailed'), e?.message || '');
                 } finally {
                   setBusyImport(false);
                   setShowDataModal(false);
                 }
               }}
             >
-              <Text style={{ color: colors.text }}>{t('importJSONFile') || '从 JSON 文件导入'}</Text>
+              <Text style={{ color: colors.text }}>{t('importJSONFile')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -537,34 +543,34 @@ export default function SettingsScreen() {
                       const targetUri = await SAF.createFileAsync(permissions.directoryUri, fileName, 'application/json');
                       const content = await FileSystem.readAsStringAsync(tmpUri, { encoding: FileSystem.EncodingType.UTF8 });
                       await SAF.writeAsStringAsync(targetUri, content);
-                      Alert.alert(t('success') || '成功', t('exportSuccess') || '已导出 JSON 文件');
+                      Alert.alert(t('success'), t('exportSuccess'));
                     } else {
                       if (await Sharing.isAvailableAsync()) {
-                        await Sharing.shareAsync(tmpUri, { mimeType: 'application/json', dialogTitle: t('exportDataJSON') || '导出 JSON' });
+                        await Sharing.shareAsync(tmpUri, { mimeType: 'application/json', dialogTitle: t('exportDataJSON') as string });
                       } else {
-                        Alert.alert(t('exportFailed') || '导出失败', t('noSharingAvailable') || '当前环境不支持保存文件');
+                        Alert.alert(t('exportFailed'), t('noSharingAvailable'));
                       }
                     }
                   } else {
                     if (await Sharing.isAvailableAsync()) {
-                      await Sharing.shareAsync(tmpUri, { mimeType: 'application/json', dialogTitle: t('exportDataJSON') || '导出 JSON' });
+                      await Sharing.shareAsync(tmpUri, { mimeType: 'application/json', dialogTitle: t('exportDataJSON') as string });
                     } else {
-                      Alert.alert(t('exportFailed') || '导出失败', t('noSharingAvailable') || '当前环境不支持保存文件');
+                      Alert.alert(t('exportFailed'), t('noSharingAvailable'));
                     }
                   }
                 } catch (e: any) {
-                  Alert.alert(t('exportFailed') || '导出失败', e?.message || '');
+                  Alert.alert(t('exportFailed'), e?.message || '');
                 } finally {
                   setBusyExport(false);
                   setShowDataModal(false);
                 }
               }}
             >
-              <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('exportJSONFile') || '导出为 JSON 文件'}</Text>
+              <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('exportJSONFile')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.modalCancel} onPress={() => setShowDataModal(false)}>
-              <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -574,9 +580,9 @@ export default function SettingsScreen() {
       <Modal transparent visible={showPwdSetup} animationType="fade" onRequestClose={() => setShowPwdSetup(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('setPassword') || '设置密码'}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('setPassword')}</Text>
             <TextInput
-              placeholder={t('enterPassword') || '请输入密码'}
+              placeholder={t('enterPassword')}
               placeholderTextColor={colors.textSecondary}
               secureTextEntry
               value={setupPwd}
@@ -584,7 +590,7 @@ export default function SettingsScreen() {
               style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
             />
             <TextInput
-              placeholder={t('confirmPassword') || '确认密码'}
+              placeholder={t('confirmPassword')}
               placeholderTextColor={colors.textSecondary}
               secureTextEntry
               value={setupPwd2}
@@ -593,20 +599,20 @@ export default function SettingsScreen() {
             />
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
               <TouchableOpacity onPress={() => setShowPwdSetup(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
-                <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
+                <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
               </TouchableOpacity>
               <Button
-                label={(t('save') as string) || '保存'}
+                label={t('save') as string}
                 onPress={async () => {
                   try {
                     if (!setupPwd || !setupPwd2) {
-                      Alert.alert(t('tip') || '提示', t('fillAllFields') || '请填写完整'); return;
+                      Alert.alert(t('tip'), t('fillAllFields')); return;
                     }
                     if (setupPwd !== setupPwd2) {
-                      Alert.alert(t('tip') || '提示', t('passwordNotMatch') || '两次密码不一致'); return;
+                      Alert.alert(t('tip'), t('passwordNotMatch')); return;
                     }
                     if (setupPwd.length < 4) {
-                      Alert.alert(t('tip') || '提示', t('passwordTooShort') || '密码至少 4 位'); return;
+                      Alert.alert(t('tip'), t('passwordTooShort')); return;
                     }
                     const ph = await sha256(setupPwd);
                     await AsyncStorage.setItem(PWD_KEY, ph);
@@ -617,7 +623,7 @@ export default function SettingsScreen() {
                     setPwdInput('');
                     setShowPwdPrompt(true);
                   } catch {
-                    Alert.alert(t('operationFailed') || '操作失败', '');
+                    Alert.alert(t('operationFailed'), '');
                   }
                 }}
               />
@@ -630,9 +636,9 @@ export default function SettingsScreen() {
       <Modal transparent visible={showPwdPrompt} animationType="fade" onRequestClose={() => setShowPwdPrompt(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('enterPassword') || '输入密码'}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('enterPassword')}</Text>
             <TextInput
-              placeholder={t('enterPassword') || '输入密码'}
+              placeholder={t('enterPassword')}
               placeholderTextColor={colors.textSecondary}
               secureTextEntry
               value={pwdInput}
@@ -640,14 +646,14 @@ export default function SettingsScreen() {
               style={[styles.input, { color: pwdError ? colors.expense : colors.text, backgroundColor: colors.background, borderColor: pwdError ? colors.expense : colors.border }]}
             />
             <TouchableOpacity onPress={() => { setShowPwdPrompt(false); setShowPwdManage(true); }} style={{ alignSelf: 'flex-start', marginTop: 8 }}>
-              <Text style={{ color: colors.primary, fontSize: 13 }}>{t('forgotPassword') || '忘记密码？'}</Text>
+              <Text style={{ color: colors.primary, fontSize: 13 }}>{t('forgotPassword')}</Text>
             </TouchableOpacity>
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
               <TouchableOpacity onPress={() => setShowPwdPrompt(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
-                <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
+                <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
               </TouchableOpacity>
               <Button
-                label={(t('verify') as string) || '验证'}
+                label={t('verify') as string}
                 onPress={async () => {
                   try {
                     const ph = await AsyncStorage.getItem(PWD_KEY);
@@ -661,7 +667,7 @@ export default function SettingsScreen() {
                       try { Vibration.vibrate(50); } catch {}
                     }
                   } catch {
-                    Alert.alert(t('operationFailed') || '操作失败', '');
+                    Alert.alert(t('operationFailed'), '');
                   }
                 }}
               />
@@ -674,14 +680,14 @@ export default function SettingsScreen() {
       <Modal transparent visible={showPwdManage} animationType="fade" onRequestClose={() => setShowPwdManage(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('passwordRecovery') || '密码恢复'}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('passwordRecovery')}</Text>
             {recoveryPending ? (
               <>
                 <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>
-                  {t('enterNewPassword') || '请输入新的登录密码'}
+                  {t('enterNewPassword')}
                 </Text>
                 <TextInput
-                  placeholder={t('enterPassword') || '请输入密码'}
+                  placeholder={t('enterPassword')}
                   placeholderTextColor={colors.textSecondary}
                   secureTextEntry
                   value={newPwd}
@@ -689,7 +695,7 @@ export default function SettingsScreen() {
                   style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
                 />
                 <TextInput
-                  placeholder={t('confirmPassword') || '确认密码'}
+                  placeholder={t('confirmPassword')}
                   placeholderTextColor={colors.textSecondary}
                   secureTextEntry
                   value={newPwd2}
@@ -699,33 +705,33 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   onPress={async () => {
                     try {
-                      if (!newPwd || !newPwd2) { Alert.alert(t('tip') || '提示', t('fillAllFields') || '请填写完整'); return; }
-                      if (newPwd !== newPwd2) { Alert.alert(t('tip') || '提示', t('passwordNotMatch') || '两次密码不一致'); return; }
-                      if (newPwd.length < 6) { Alert.alert(t('tip') || '提示', t('passwordTooShort') || '密码至少 6 位'); return; }
+                      if (!newPwd || !newPwd2) { Alert.alert(t('tip'), t('fillAllFields')); return; }
+                      if (newPwd !== newPwd2) { Alert.alert(t('tip'), t('passwordNotMatch')); return; }
+                      if (newPwd.length < 6) { Alert.alert(t('tip'), t('passwordTooShort')); return; }
                       const r = await completePasswordReset(newPwd);
                       if (r.ok) {
-                        Alert.alert(t('success') || '成功', t('passwordUpdated') || '密码已更新');
+                        Alert.alert(t('success'), t('passwordUpdated'));
                         setShowPwdManage(false);
                         setNewPwd('');
                         setNewPwd2('');
                       } else {
-                        Alert.alert(t('operationFailed') || '操作失败', r.error || '');
+                        Alert.alert(t('operationFailed'), r.error || '');
                       }
                     } catch {}
                   }}
                   style={[styles.modalOption, { borderColor: colors.primary, backgroundColor: colors.primary + '20' }]}
                 >
-                  <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('save') || '保存'}</Text>
+                  <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('save')}</Text>
                 </TouchableOpacity>
               </>
             ) : null}
             {user?.email ? (
               <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>
-                {(t('willSendResetTo') || '将发送重置邮件到：') + user.email}
+                {t('willSendResetTo') + user.email}
               </Text>
             ) : (
               <Text style={{ color: colors.textSecondary, marginBottom: 12 }}>
-                {t('pleaseLoginToReset') || '请先登录以使用邮箱验证或重置账户'}
+                {t('pleaseLoginToReset')}
               </Text>
             )}
             {user?.email ? (
@@ -733,23 +739,23 @@ export default function SettingsScreen() {
                 onPress={async () => {
                   const res = await resetPassword(user.email!);
                   if (res.ok) {
-                    Alert.alert(t('success') || '成功', t('resetEmailSent') || '已发送重置邮件');
+                    Alert.alert(t('success'), t('resetEmailSent'));
                     setShowPwdManage(false);
                   } else {
-                    Alert.alert(t('operationFailed') || '操作失败', res.error || '');
+                    Alert.alert(t('operationFailed'), res.error || '');
                   }
                 }}
                 style={[styles.modalOption, { borderColor: colors.primary, backgroundColor: colors.primary + '20' }]}
               >
-                <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('sendEmail') || '发送邮件'}</Text>
+                <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('sendEmail')}</Text>
               </TouchableOpacity>
             ) : null}
 
             <TouchableOpacity
               onPress={() => {
                 Alert.alert(
-                  t('resetAccount') || '重置账户',
-                  t('resetAccountWarning') || '这将删除您所有的账户和交易数据，并移除密码。此操作无法撤销。',
+                  t('resetAccount'),
+                  t('resetAccountWarning'),
                   [
                     { text: t('cancel'), style: 'cancel' },
                     { text: t('reset'), style: 'destructive', onPress: async () => {
@@ -758,7 +764,7 @@ export default function SettingsScreen() {
                           await wipeAllUserData(user.id);
                         }
                       } catch (e: any) {
-                        Alert.alert(t('operationFailed') || '操作失败', '云端数据清理失败，请检查网络后重试');
+                        Alert.alert(t('operationFailed'), t('cloudDataCleanupFailed'));
                         return;
                       }
                       await clearAllData();
@@ -766,18 +772,18 @@ export default function SettingsScreen() {
                       try { if (user?.id) { await upsertUserSettings(user.id, { gate_pwd_hash: null }); } } catch {}
                       setPwdSet(false);
                       setShowPwdManage(false);
-                      Alert.alert(t('success') || '成功', t('accountReset') || '账户已重置');
+                      Alert.alert(t('success'), t('accountReset'));
                     }},
                   ]
                 );
               }}
               style={[styles.modalOption, { borderColor: colors.expense, marginTop: 12 }]}
             >
-              <Text style={{ color: colors.expense, fontWeight: '600' }}>{t('resetAccount') || '重置账户'}</Text>
+              <Text style={{ color: colors.expense, fontWeight: '600' }}>{t('resetAccount')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.modalCancel} onPress={() => setShowPwdManage(false)}>
-              <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
+              <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -789,9 +795,9 @@ export default function SettingsScreen() {
       <Modal transparent visible={showEditName} animationType="fade" onRequestClose={() => setShowEditName(false)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('editNickname') || '编辑昵称'}</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('editNickname')}</Text>
             <TextInput
-              placeholder={t('enterNickname') || '请输入昵称'}
+              placeholder={t('enterNickname')}
               placeholderTextColor={colors.textSecondary}
               value={editName}
               onChangeText={setEditName}
@@ -799,24 +805,24 @@ export default function SettingsScreen() {
             />
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
               <TouchableOpacity onPress={() => setShowEditName(false)} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
-                <Text style={{ color: colors.textSecondary }}>{t('cancel') || '取消'}</Text>
+                <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
               </TouchableOpacity>
               <Button
-                label={(t('save') as string) || '保存'}
+                label={t('save') as string}
                 onPress={async () => {
                   const name = (editName || '').trim();
-                  if (!name) { Alert.alert(t('tip') || '提示', t('fillAllFields') || '请填写完整'); return; }
+                  if (!name) { Alert.alert(t('tip'), t('fillAllFields')); return; }
                   try {
                     const supa = getSupabase();
                     const { error } = await supa.auth.updateUser({ data: { full_name: name } });
                     if (error) {
-                      Alert.alert(t('operationFailed') || '操作失败', error.message || '');
+                      Alert.alert(t('operationFailed'), error.message || '');
                     } else {
                       setDisplayNameLocal(name);
                       setShowEditName(false);
                     }
                   } catch (e: any) {
-                    Alert.alert(t('operationFailed') || '操作失败', e?.message || '');
+                    Alert.alert(t('operationFailed'), e?.message || '');
                   }
                 }}
               />

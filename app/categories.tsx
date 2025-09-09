@@ -6,6 +6,7 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Chip from '@/components/ui/Chip';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
+import { displayNameFor } from '@/lib/i18n';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
@@ -17,7 +18,7 @@ type Tab = 'expense' | 'income';
 export default function CategoriesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const {
     expenseCategories,
     incomeCategories,
@@ -55,16 +56,16 @@ export default function CategoriesScreen() {
     const e = firstGrapheme((emoji || '').trim());
 
     if (!n) {
-      Alert.alert(t('nameRequired') || '请填写名称');
+      Alert.alert(t('nameRequired') as string);
       return;
     }
     if (!e) {
-      Alert.alert(t('emojiRequired') || '请填写表情');
+      Alert.alert(t('emojiRequired') as string);
       return;
     }
     const list = cats;
     if (list.some(c => c.name === n)) {
-      Alert.alert(t('duplicateName') || '名称已存在');
+      Alert.alert(t('duplicateName') as string);
       return;
     }
 
@@ -76,12 +77,12 @@ export default function CategoriesScreen() {
 
   const handleRemove = (id: string, n: string) => {
     Alert.alert(
-      t('confirm') || '确认',
-      (t('deleteConfirm') as string) || `确定要删除“${n}”吗？`,
+      t('confirm') as string,
+      t('deleteConfirm') as string,
       [
-        { text: t('cancel') || '取消', style: 'cancel' },
+        { text: t('cancel') as string, style: 'cancel' },
         {
-          text: t('delete') || '删除',
+          text: t('delete') as string,
           style: 'destructive',
           onPress: () => {
             if (tab === 'expense') removeExpenseCategory(id);
@@ -94,12 +95,12 @@ export default function CategoriesScreen() {
 
   const handleReset = () => {
     Alert.alert(
-      t('confirm') || '确认',
-      t('resetToDefault') || '将恢复为默认类别，确定继续？',
+      t('confirm') as string,
+      t('resetToDefault') as string,
       [
-        { text: t('cancel') || '取消', style: 'cancel' },
+        { text: t('cancel') as string, style: 'cancel' },
         {
-          text: t('resetToDefault') || '恢复默认',
+          text: t('resetToDefault') as string,
           style: 'destructive',
           onPress: () => {
             if (tab === 'expense') resetExpenseCategoriesToDefault();
@@ -113,7 +114,7 @@ export default function CategoriesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
       <GradientHeader
-        title={t('categoryManagement') || '类别管理'}
+        title={t('categoryManagement') as string}
         left={
           <IconButton onPress={() => router.back()} size={32}>
             <ChevronLeft size={24} color="#fff" />
@@ -137,7 +138,7 @@ export default function CategoriesScreen() {
             ]}
             activeOpacity={0.8}
           >
-            <Text style={{ color: tab === 'expense' ? '#fff' : colors.text }}>{t('expense') || '支出'}</Text>
+            <Text style={{ color: tab === 'expense' ? '#fff' : colors.text }}>{t('expense') as string}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
@@ -148,14 +149,14 @@ export default function CategoriesScreen() {
             ]}
             activeOpacity={0.8}
           >
-            <Text style={{ color: tab === 'income' ? '#fff' : colors.text }}>{t('income') || '收入'}</Text>
+            <Text style={{ color: tab === 'income' ? '#fff' : colors.text }}>{t('income') as string}</Text>
           </TouchableOpacity>
         </View>
 
         <Button
           variant="outline"
           size="sm"
-          label={(t('resetToDefault') as string) || '恢复默认'}
+          label={t('resetToDefault') as string}
           onPress={handleReset}
         />
       </View>
@@ -163,7 +164,7 @@ export default function CategoriesScreen() {
       {/* Add Row */}
       <View style={styles.addRow}>
         <View style={{ width: 72 }}>
-          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('emoji') || '表情'}</Text>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('emoji') as string}</Text>
           <TextInput
             value={emoji}
             onChangeText={(txt) => setEmoji(firstGrapheme(txt))}
@@ -172,7 +173,7 @@ export default function CategoriesScreen() {
           />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('name') || '名称'}</Text>
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('name') as string}</Text>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -183,7 +184,7 @@ export default function CategoriesScreen() {
         <Chip
           onPress={handleAdd}
           icon={<Plus size={16} color={colors.primary} />}
-          label={(t('add') as string) || '添加'}
+          label={t('add') as string}
           style={{ marginTop: 18 }}
         />
       </View>
@@ -191,12 +192,12 @@ export default function CategoriesScreen() {
       {/* List */}
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}>
         {cats.length === 0 ? (
-          <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 24 }}>{t('noData') || '暂无数据'}</Text>
+          <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 24 }}>{t('noData') as string}</Text>
         ) : (
           cats.map((item: Cat) => (
             <View key={item.id} style={[styles.itemRow, { borderColor: colors.border, backgroundColor: colors.background }]}>
               <Text style={{ fontSize: 20, marginRight: 8 }}>{item.emoji}</Text>
-              <Text style={{ color: colors.text, flex: 1 }}>{item.name}</Text>
+              <Text style={{ color: colors.text, flex: 1 }}>{displayNameFor(item, tab === 'expense' ? 'expenseCategories' : 'incomeCategories', t as any, language as any)}</Text>
               <IconButton onPress={() => handleRemove(item.id, item.name)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Trash2 size={18} color={colors.textSecondary} />
               </IconButton>

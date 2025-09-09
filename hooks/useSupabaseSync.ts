@@ -146,21 +146,10 @@ export function useSupabaseSync() {
     const withId: any[] = [];
     const withoutId: any[] = [];
 
-    const normalizeAccountType = (t: ServerAccount['type']): 'cash' | 'bank' | 'card' | 'investment' => {
-      switch (t) {
-        case 'cash':
-          return 'cash';
-        case 'investment':
-          return 'investment';
-
-        default:
-          return 'card'; // 包含 debit_card/credit_card/prepaid_card/virtual_card/e-wallet/other 等
-      }
-    };
 
     for (const a of acs) {
       const row: any = { ...a, user_id: userId };
-      row.type = normalizeAccountType((a as any).type);
+      row.type = (a as any).type;
       const idStr = a.id ? String(a.id) : '';
       if (idStr && uuidRegex.test(idStr)) {
         withId.push(row);

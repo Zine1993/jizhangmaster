@@ -1,10 +1,46 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
+import enPack from '@/assets/i18n/en/common.json';
+import zhPack from '@/assets/i18n/zh/common.json';
+import esPack from '@/assets/i18n/es/common.json';
+import frPack from '@/assets/i18n/fr/common.json';
+import dePack from '@/assets/i18n/de/common.json';
+import jaPack from '@/assets/i18n/ja/common.json';
+import koPack from '@/assets/i18n/ko/common.json';
 
 const LANGUAGE_STORAGE_KEY = '@expense_tracker_language';
 const SUPPORTED_LANGUAGES = ['en','zh','es','fr','de','ja','ko'] as const;
 type Language = typeof SUPPORTED_LANGUAGES[number];
+
+const RES_PACKS: Record<Language, any> = {
+  en: enPack,
+  zh: zhPack,
+  es: esPack,
+  fr: frPack,
+  de: dePack,
+  ja: jaPack,
+  ko: koPack,
+};
+
+function resolveFromPack(pack: any, key: string): string | undefined {
+  try {
+    // 1) 支持点路径（如 "emotions.happy"、"warm.warm_1"）
+    const byPath = key.split('.').reduce<any>((obj, seg) => (obj && typeof obj === 'object' ? obj[seg] : undefined), pack);
+    if (typeof byPath === 'string') return byPath;
+    // 2) 常见分区优先（common 内直取）
+    if (pack?.common && typeof pack.common[key] === 'string') return pack.common[key];
+    // 3) 根级平铺键
+    if (typeof (pack as any)[key] === 'string') return (pack as any)[key];
+    // 4) 其他常见分区遍历查找一次
+    const sections = ['auth','transactionsPage','accounts','categories','emotionsPage','emotions','expenseCategories','incomeCategories','warm'];
+    for (const sec of sections) {
+      const secObj = (pack as any)[sec];
+      if (secObj && typeof secObj[key] === 'string') return secObj[key];
+    }
+  } catch {}
+  return undefined;
+}
 
 const REGION_TO_CURRENCY: Record<string, string> = {
   CN: 'CNY',
@@ -140,25 +176,9 @@ const translations = {
     investment: 'Investment',
     other: 'Other',
     // Transfer
-    transfer: 'Transfer',
-    cannotTransferDifferentCurrency: 'Cannot transfer between different currencies',
-    fromAccount: 'From Account',
-    toAccount: 'To Account',
-    fee: 'Fee',
-    operationSuccess: 'Completed',
-    operationFailed: 'Operation failed',
-    insufficientFunds: 'Insufficient funds',
-    cannotTransferSameAccount: 'Cannot transfer to the same account',
     
     // Settings
     language: 'Language',
-    english: 'English',
-    chinese: '中文',
-    spanish: 'Spanish',
-    french: 'French',
-    german: 'German',
-    japanese: 'Japanese',
-    korean: 'Korean',
     
     // Common
     today: 'Today',
@@ -250,50 +270,6 @@ const translations = {
     appDescription: 'Simple and easy-to-use personal finance tool',
     
     // Settings extensions
-    loggedInAccount: 'Logged-in account',
-    logoutFailed: 'Sign out failed',
-    pleaseRetry: 'Please try again',
-    loginOrRegister: 'Log in / Register',
-    exportDataJSON: 'Export data (JSON)',
-    exportFailed: 'Export failed',
-    setPassword: 'Set password',
-    enterPassword: 'Enter password',
-    confirmPassword: 'Confirm password',
-    passwordRecovery: 'Password recovery',
-    resetAccount: 'Reset account',
-    resetAccountWarning: 'This will delete all your accounts and transactions and remove the password. This action cannot be undone.',
-    passwordIncorrect: 'Incorrect password',
-    passwordTooShort: 'Password must be at least 4 characters',
-    passwordNotMatch: 'Passwords do not match',
-    fillAllFields: 'Please fill in all fields',
-    sendEmail: 'Send email',
-    tip: 'Tip',
-    success: 'Success',
-    passwordSet: 'Password set',
-    accountReset: 'Account reset',
-    pleaseLoginToReset: 'Not logged in. Email recovery unavailable. Please reset your account.',
-    verify: 'Verify',
-    willSendResetTo: 'Will send reset email to: ',
-    importDataPasteJSON: 'Import data (paste JSON)',
-    importData: 'Import data',
-    pasteJsonBelow: 'Paste the exported JSON content below:',
-    pasteJsonPlaceholder: 'Paste JSON',
-    startImport: 'Start import',
-    importSuccess: 'Import succeeded',
-    importedPrefix: 'Imported ',
-    importedSuffix: ' records',
-    importFailed: 'Import failed',
-    invalidJSON: 'Invalid JSON content',
-    importExport: 'Import / Export',
-    importJSONFile: 'Import from JSON file',
-    exportJSONFile: 'Export to JSON file',
-    exportSuccess: 'Export succeeded',
-    noSharingAvailable: 'Saving is not available on this device',
-    checkJson: 'Please check the JSON content',
-    emotionTagManagement: 'Emotion tag management',
-    categoryManagement: 'Category management',
-    expenseCategoryManagement: 'Expense category management',
-    incomeCategoryManagement: 'Income category management',
     add: 'Add',
     addEmotionTag: 'Add emotion tag',
     emoji: 'Emoji',
@@ -364,30 +340,6 @@ const translations = {
     pleaseSelectEmotion: 'Please select an emotion',
     
     // Account Management
-    accountManagement: 'Account Management',
-    addAccount: 'Add Account',
-    editAccount: 'Edit Account',
-    unarchiveAccount: 'Unarchive Account',
-    noAccountsFound: 'No accounts found',
-    createFirstAccount: 'Create your first account',
-    accountCreated: 'Account created successfully',
-    accountUpdated: 'Account updated successfully',
-
-    deleteAccountConfirm: 'Are you sure you want to delete this account?',
-    cannotDeleteLastAccount: 'Cannot delete the last account',
-    accountName: 'Account Name',
-    accountType: 'Account Type',
-    selectAccount: 'Select account',
-    noAccountAvailableTitle: 'No available account',
-    noAccountAvailableMessage: 'Please add an account in Settings first',
-    egSavingsAccount: 'e.g., Savings Account',
-    // Account types (for Add Account / Accounts list)
-    cash: 'Cash',
-    debit_card: 'Debit card',
-    credit_card: 'Credit card',
-    prepaid_card: 'Prepaid Card',
-    virtual_card: 'Virtual Card',
-    'e-wallet': 'E-wallet',
   },
   zh: {
     // Tabs
@@ -2107,6 +2059,7 @@ const translations = {
 };
 
 export const LanguageProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+  // 默认语言：优先从存储读取；无存储时按设备语言推断，兜底 en
   const [language, setLanguageState] = useState<Language>('en');
   const [currency, setCurrencyState] = useState<string>('USD');
 
@@ -2174,11 +2127,24 @@ export const LanguageProvider: React.FC<{children: ReactNode}> = ({ children }) 
 
   const t = useCallback((key: string, vars?: Record<string, string>) => {
     const dict = translations as Record<string, Record<string, string>>;
-    let s: string | undefined;
-    if (language && dict[language]) {
-      s = dict[language]?.[key];
-    }
-    if (!s) s = dict.en[key] || dict.zh[key] || key;
+    const packs = RES_PACKS as Record<string, any>;
+
+    // 查找顺序：当前语言 JSON → 当前语言内联 → 英文 JSON → 英文内联 → 中文内联 → key
+    const tryFromPack = (lang: Language): string | undefined => {
+      const pack = packs[lang];
+      if (!pack) return undefined;
+      const val = resolveFromPack(pack, key);
+      return typeof val === 'string' && val !== '...' ? val : undefined;
+    };
+
+    let s =
+      tryFromPack(language) ||
+      dict[language]?.[key] ||
+      tryFromPack('en') ||
+      dict.en[key] ||
+      dict.zh[key] ||
+      key;
+
     if (vars && s) {
       for (const k in vars) {
         s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);

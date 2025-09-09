@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { Chrome as Home, List, ChartBar as BarChart3, Brain, Plus } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+
 import { View, Pressable, Text, StyleSheet, Animated, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';

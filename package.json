@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
     "build:web": "expo export --platform web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "i18n:scan": "node scripts/i18n-scan.mjs",
+    "i18n:sync": "node scripts/i18n-sync.mjs",
+    "i18n:todo": "node scripts/i18n-todo.mjs",
+    "i18n:fill": "node scripts/i18n-fill.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

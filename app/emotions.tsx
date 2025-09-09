@@ -10,12 +10,13 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Chip from '@/components/ui/Chip';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
+import { displayNameFor } from '@/lib/i18n';
 
 
 export default function EmotionsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const tt = React.useCallback((k: string, fallback: string) => {
     const v = t(k as any);
     return v === k ? fallback : v;
@@ -48,15 +49,15 @@ export default function EmotionsScreen() {
     const name = newName.trim();
     const emoji = firstGrapheme(newEmoji.trim());
     if (!name) {
-      Alert.alert(t('nameRequired') || '请填写名称');
+      Alert.alert(t('nameRequired'));
       return;
     }
     if (!emoji) {
-      Alert.alert(t('emojiRequired') || '请填写表情');
+      Alert.alert(t('emojiRequired'));
       return;
     }
     if (emotions.some(e => e.name === name)) {
-      Alert.alert(t('duplicateName') || '名称已存在');
+      Alert.alert(t('duplicateName'));
       return;
     }
     addEmotionTag(name, emoji);
@@ -66,11 +67,11 @@ export default function EmotionsScreen() {
 
   const handleResetDefault = () => {
     Alert.alert(
-      t('confirm') || '确认',
-      t('resetToDefault') || '将恢复为默认，确定继续？',
+      t('confirm'),
+      t('resetToDefault'),
       [
-        { text: t('cancel') || '取消', style: 'cancel' },
-        { text: t('resetToDefault') || '恢复默认', style: 'destructive', onPress: () => resetEmotionTagsToDefault() },
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('resetToDefault'), style: 'destructive', onPress: () => resetEmotionTagsToDefault() },
       ],
     );
   };
@@ -83,8 +84,8 @@ export default function EmotionsScreen() {
 
   const handleRemove = (id: string, name: string) => {
     Alert.alert(
-      t('confirm') || '确认',
-      (t('deleteConfirm') as string) || `确定要删除“${name}”吗？`,
+      t('confirm'),
+      t('deleteConfirm') as string,
       [
         { text: t('cancel'), style: 'cancel' },
         { text: t('remove'), style: 'destructive', onPress: () => removeEmotionTag(id) },
@@ -111,11 +112,11 @@ export default function EmotionsScreen() {
         
           {/* 顶部工具条：与类别管理一致 */}
           <View style={styles.segmentWrapper}>
-            <Text style={[styles.toolbarTitle, { color: colors.text }]} numberOfLines={1}>{t('emotionTagManagement') || '情绪标签管理'}</Text>
+            <Text style={[styles.toolbarTitle, { color: colors.text }]} numberOfLines={1}>{t('emotionTagManagement')}</Text>
             <Button
               variant="outline"
               size="sm"
-              label={(t('resetToDefault') as string) || '恢复默认'}
+              label={t('resetToDefault') as string}
               onPress={handleResetDefault}
             />
           </View>
@@ -123,7 +124,7 @@ export default function EmotionsScreen() {
             {/* 行内新增（与类别页一致） */}
             <View style={styles.addRow}>
               <View style={{ width: 72 }}>
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('emoji') || '表情'}</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('emoji')}</Text>
                 <TextInput
                   value={newEmoji}
                   onChangeText={(txt) => setNewEmoji(firstGrapheme(txt))}
@@ -132,7 +133,7 @@ export default function EmotionsScreen() {
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('name') || '名称'}</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('name')}</Text>
                 <TextInput
                   value={newName}
                   onChangeText={setNewName}
@@ -143,7 +144,7 @@ export default function EmotionsScreen() {
               <Chip
                 onPress={handleSaveNew}
                 icon={<Plus size={16} color={colors.primary} />}
-                label={(t('add') as string) || '添加'}
+                label={t('add') as string}
                 style={{ marginTop: 18 }}
               />
             </View>
@@ -156,7 +157,7 @@ export default function EmotionsScreen() {
                   <View style={{ width: 28, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ fontSize: 18 }} numberOfLines={1}>{item.emoji}</Text>
                   </View>
-                  <Text style={{ color: colors.text, flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, overflow: 'hidden' }} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+                  <Text style={{ color: colors.text, flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0, overflow: 'hidden' }} numberOfLines={1} ellipsizeMode="tail">{displayNameFor(item, 'emotions', t as any, language as any)}</Text>
                 </View>
                 <IconButton onPress={() => handleRemove(item.id, item.name)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Trash2 size={18} color={colors.textSecondary} />

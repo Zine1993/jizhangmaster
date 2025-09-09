@@ -41,14 +41,14 @@ export default function AddAccountScreen() {
   const handleSave = () => {
     const trimmedName = (name || '').trim();
     if (!trimmedName) {
-      Alert.alert(t('tip') || '提示', t('pleaseEnterName') || '请输入账户名');
+      Alert.alert(t('tip'), t('pleaseEnterName'));
       return;
     }
 
     // 名称唯一性（忽略大小写/空白）
     const duplicate = (accounts || []).some(a => (a.name || '').trim().toLowerCase() === trimmedName.toLowerCase());
     if (duplicate) {
-      Alert.alert(t('tip') || '提示', t('accountNameExists') || '账户名已存在');
+      Alert.alert(t('tip'), t('accountNameExists'));
       return;
     }
 
@@ -56,13 +56,13 @@ export default function AddAccountScreen() {
     const ibNum = Number(initialBalance);
     const isIbNumeric = initialBalance.trim() !== '' && Number.isFinite(ibNum);
     if (!isIbNumeric) {
-      Alert.alert(t('tip') || '提示', t('initialBalanceMustBeNumber') || '初始余额必须为数字');
+      Alert.alert(t('tip'), t('initialBalanceMustBeNumber'));
       return;
     }
     const ib = ibNum;
 
     if ((type === 'cash' || type === 'debit_card' || type === 'prepaid_card') && ib < 0) {
-      Alert.alert(t('tip') || '提示', t('initialBalanceNonNegative') || '初始余额不能为负');
+      Alert.alert(t('tip'), t('initialBalanceNonNegative'));
       return;
     }
 
@@ -71,7 +71,7 @@ export default function AddAccountScreen() {
       if (creditLimit && creditLimit.trim() !== '') {
         const v = Number(creditLimit);
         if (!Number.isFinite(v) || v <= 0) {
-          Alert.alert(t('tip') || '提示', t('creditLimitMustBeNumber') || '信用额度必须是大于 0 的数字');
+          Alert.alert(t('tip'), t('creditLimitMustBeNumber'));
           return;
         }
         cl = v;
@@ -90,11 +90,11 @@ export default function AddAccountScreen() {
     } catch (e: any) {
       const msg = String(e?.message || '');
       if (msg === 'INITIAL_BALANCE_NEGATIVE') {
-        Alert.alert(t('tip') || '提示', t('initialBalanceNonNegative') || '初始余额不能为负');
+        Alert.alert(t('tip'), t('initialBalanceNonNegative'));
       } else if (msg === 'ACCOUNT_NAME_DUPLICATE') {
-        Alert.alert(t('tip') || '提示', t('accountNameExists') || '账户名已存在');
+        Alert.alert(t('tip'), t('accountNameExists'));
       } else {
-        Alert.alert(t('tip') || '提示', t('operationFailed') || '操作失败，请稍后重试');
+        Alert.alert(t('tip'), t('operationFailed'));
       }
     }
   };
@@ -102,7 +102,7 @@ export default function AddAccountScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <GradientHeader
-        title={t('addAccount') || '添加账户'}
+        title={t('addAccount')}
         left={
           <TouchableOpacity onPress={() => router.back()} style={{ padding: 8 }}>
             <ChevronLeft size={28} color="#fff" />
@@ -257,7 +257,7 @@ export default function AddAccountScreen() {
           />
           {type === 'credit_card' && (
             <>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('creditLimit') || 'Credit limit'}</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('creditLimit')}</Text>
               <TextInput
                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
                 value={creditLimit}

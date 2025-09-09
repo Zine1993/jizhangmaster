@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, ReactNo
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 import Constants from 'expo-constants';
+import * as ExpoLinking from 'expo-linking';
 import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 
@@ -28,6 +29,29 @@ const AUTH_REDIRECT: string =
   (process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL as string) ||
   (EX?.authRedirectUrl as string) ||
   'https://zine1993.github.io/jizhangmaster/auth/reset.html'; // GitHub Pages 中转页
+
+// 开发期自动附加 Expo 深链到回调 (?dl=...)
+const DEV_DL_AUTO: boolean = (() => {
+  const v = (process.env.EXPO_PUBLIC_AUTH_DEV_DL_AUTO as any) ?? (EX?.authDevDlAuto as any);
+  if (v === undefined || v === null) return false;
+  const s = String(v).toLowerCase();
+  return s === '1' || s === 'true' || s === 'yes';
+})();
+
+// 可选：手动指定深链（如 exp://...），优先于自动推导
+const DEV_DL_OVERRIDE: string | undefined =
+  (process.env.EXPO_PUBLIC_AUTH_DEV_DL as string) || (EX?.authDevDl as string) || undefined;
+
+// 当开关开启时推导 Expo 开发期深链
+const DEV_DL_BASE: string | null =
+  DEV_DL_AUTO ? (DEV_DL_OVERRIDE || ExpoLinking.createURL('/auth/reset')) : null;
+
+// 将 ?dl= 附加到回调地址
+function withDevDl(url: string): string {
+  if (!DEV_DL_BASE) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}dl=${encodeURIComponent(DEV_DL_BASE)}`;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => (isSupabaseConfigured() ? getSupabase() : null as any), []);
@@ -89,7 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithPassword = async (email: string, password: string) => {
     if (!isSupabaseConfigured()) return { ok: false, error: 'Cloud sync is not configured' };
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: withDevDl(AUTH_REDIRECT),
+      },
+    });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   };
@@ -97,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     if (!isSupabaseConfigured()) return { ok: false, error: 'Cloud sync is not configured' };
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: AUTH_REDIRECT,
+      redirectTo: withDevDl(AUTH_REDIRECT),
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true };

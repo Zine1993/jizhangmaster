@@ -59,8 +59,8 @@ export default function AccountsScreen() {
                 await Promise.resolve(archiveAccount(item.id));
               } catch (e) {
                 Alert.alert(
-                  t('operationFailed') || 'Operation failed',
-                  t('balanceMustBeZeroToArchive') || 'Balance must be zero to archive'
+                  t('operationFailed'),
+                  t('balanceMustBeZeroToArchive')
                 );
               } finally {
                 setArchivingId(null);
@@ -73,7 +73,7 @@ export default function AccountsScreen() {
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
               <Text style={{ color: Math.abs(balance) <= 1e-8 ? colors.primary : colors.textTertiary, fontSize: 12 }}>
-                {t('archive') || 'Archive'}
+                {t('archive') as string}
               </Text>
             )}
           </TouchableOpacity>
@@ -85,7 +85,7 @@ export default function AccountsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
       <GradientHeader
-        title={t('accountManagement') || '资产管理'}
+        title={t('accountManagement') as string}
         left={
           <TouchableOpacity onPress={() => router.back()} style={{ padding: 8 }}>
             <ChevronLeft size={28} color="#fff" />
@@ -105,7 +105,7 @@ export default function AccountsScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
             <Wallet size={18} color={colors.textSecondary} />
             <Text style={{ color: colors.text }} numberOfLines={1} ellipsizeMode="tail">
-              {selectedType === 'ALL' ? (t('all') || '全部') : (t(selectedType) || selectedType)}
+              {selectedType === 'ALL' ? (t('all') as string) : (t(selectedType) || selectedType)}
             </Text>
           </View>
           <ChevronDown size={16} color={colors.textSecondary} />
@@ -128,7 +128,7 @@ export default function AccountsScreen() {
               <DollarSign size={18} color={colors.textSecondary} />
             )}
             <Text style={{ color: colors.text }} numberOfLines={1} ellipsizeMode="tail">
-              {selectedCurrency === 'ALL' ? (t('all') || '全部') : selectedCurrency}
+              {selectedCurrency === 'ALL' ? (t('all') as string) : selectedCurrency}
             </Text>
           </View>
           <ChevronDown size={16} color={colors.textSecondary} />
@@ -141,14 +141,14 @@ export default function AccountsScreen() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.primary + '20', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999 }}
         >
           <Plus size={18} color={colors.primary} />
-          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('addAccount') || 'Add Account'}</Text>
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('addAccount') as string}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push('/transfer')}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.primary + '20', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999 }}
         >
           <ArrowLeftRight size={18} color={colors.primary} />
-          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('transfer') || 'Transfer'}</Text>
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('transfer') as string}</Text>
         </TouchableOpacity>
       </View>
 
@@ -165,7 +165,7 @@ export default function AccountsScreen() {
                   onPress={() => { setSelectedCurrency(code as string); setShowCurrencyModal(false); }}
                 >
                   <Text style={{ color: colors.text }}>
-                    {code === 'ALL' ? (t('all') || 'All') : code}
+                    {code === 'ALL' ? (t('all') as string) : code}
                   </Text>
                   {selected && <Check size={18} color={colors.primary} />}
                 </TouchableOpacity>
@@ -188,7 +188,7 @@ export default function AccountsScreen() {
                   onPress={() => { setSelectedType(tp as string); setShowTypeModal(false); }}
                 >
                   <Text style={{ color: colors.text }}>
-                    {tp === 'ALL' ? (t('all') || 'All') : (t(tp) || tp)}
+                    {tp === 'ALL' ? (t('all') as string) : (t(tp) || tp)}
                   </Text>
                   {selected && <Check size={18} color={colors.primary} />}
                 </TouchableOpacity>

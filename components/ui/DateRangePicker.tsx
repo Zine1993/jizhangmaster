@@ -73,12 +73,12 @@ export default function DateRangePicker({ visible, onClose, initialStartDate, in
     return [
       { key: 'today', label: t('today'), range: { start: startOfDay(now), end: endOfDay(now) } },
       { key: 'yesterday', label: t('yesterday'), range: { start: startOfDay(addDays(now, -1)), end: endOfDay(addDays(now, -1)) } },
-      { key: 'thisWeek', label: t('thisWeek') || 'This week', range: { start: thisWeekStart, end: thisWeekEnd } },
-      { key: 'lastWeek', label: t('lastWeek') || 'Last week', range: { start: lastWeekStart, end: lastWeekEnd } },
+      { key: 'thisWeek', label: t('thisWeek'), range: { start: thisWeekStart, end: thisWeekEnd } },
+      { key: 'lastWeek', label: t('lastWeek'), range: { start: lastWeekStart, end: lastWeekEnd } },
       { key: 'last7', label: t('last7Days'), range: { start: startOfDay(addDays(now, -6)), end: endOfDay(now) } },
-      { key: 'last14', label: t('last14Days') || 'Last 14 days', range: { start: startOfDay(addDays(now, -13)), end: endOfDay(now) } },
+      { key: 'last14', label: t('last14Days'), range: { start: startOfDay(addDays(now, -13)), end: endOfDay(now) } },
       { key: 'thisMonth', label: t('thisMonth'), range: { start: thisMonthStart, end: thisMonthEnd } },
-      { key: 'lastMonth', label: t('lastMonth') || 'Last month', range: { start: lastMonthStart, end: lastMonthEnd } },
+      { key: 'lastMonth', label: t('lastMonth'), range: { start: lastMonthStart, end: lastMonthEnd } },
       { key: 'last30', label: t('last30Days'), range: { start: startOfDay(addDays(now, -29)), end: endOfDay(now) } },
       { key: 'thisYear', label: t('thisYear'), range: { start: min, end: endOfDay(now) } },
       { key: 'custom', label: t('customRange'), range: null as any },
@@ -274,11 +274,11 @@ export default function DateRangePicker({ visible, onClose, initialStartDate, in
 
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <Pressable style={[styles.btn, styles.btnGhost, { borderColor: colors.border }]} onPress={onClose}>
-            <Text style={{ color: colors.textSecondary }}>{t('cancel') || 'Cancel'}</Text>
+            <Text style={{ color: colors.textSecondary }}>{t('cancel')}</Text>
           </Pressable>
 
           <Pressable style={[styles.btn, { backgroundColor: colors.primary }]} onPress={apply}>
-            <Text style={{ color: '#fff', fontWeight: '700' }}>{t('apply') || 'Apply'}</Text>
+            <Text style={{ color: '#fff', fontWeight: '700' }}>{t('apply')}</Text>
           </Pressable>
         </View>
       </View>

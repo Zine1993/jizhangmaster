@@ -5,22 +5,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Transaction, useTransactions } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Check } from 'lucide-react-native';
+import { formatCurrency } from '@/lib/i18n';
+import { displayNameFor } from '@/lib/i18n';
 
-const currencies = [
-  { code: 'CNY', name: '人民币', symbol: '¥' }, { code: 'USD', name: 'US Dollar', symbol: '$' },
-  { code: 'EUR', name: 'Euro', symbol: '€' }, { code: 'GBP', name: 'British Pound', symbol: '£' },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' }, { code: 'KRW', name: 'Korean Won', symbol: '₩' },
-  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' }, { code: 'TWD', name: 'Taiwan Dollar', symbol: 'NT$' },
-  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' }, { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' }, { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
-  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' }, { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
-  { code: 'DKK', name: 'Danish Krone', symbol: 'kr' }, { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
-  { code: 'INR', name: 'Indian Rupee', symbol: '₹' }, { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
-  { code: 'MXN', name: 'Mexican Peso', symbol: '$' }, { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
-  { code: 'THB', name: 'Thai Baht', symbol: '฿' }, { code: 'VND', name: 'Vietnamese Dong', symbol: '₫' },
-  { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp' }, { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
-  { code: 'PHP', name: 'Philippine Peso', symbol: '₱' },
-];
+
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -36,18 +24,17 @@ function formatDateYYYYMMDD(date: Date) {
 }
 
 export default function TransactionItem({ transaction, onDelete }: TransactionItemProps) {
-  const { t } = useLanguage();
-  const { deleteTransaction, getCurrencySymbol, emotions } = useTransactions();
+  const { t, language } = useLanguage();
+  const { deleteTransaction, emotions, currency } = useTransactions();
   const { colors } = useTheme();
 
   const isIncome = transaction.type === 'income';
   const color = isIncome ? colors.income : colors.expense;
   
-  const currencySymbol = React.useMemo(() => {
-    const code = (transaction as any).currency;
-    if (!code) return getCurrencySymbol();
-    return currencies.find(c => c.code === code)?.symbol || code;
-  }, [transaction, getCurrencySymbol]);
+  const formattedAmount = React.useMemo(() => {
+    const code = (transaction as any)?.currency || (currency as any);
+    return formatCurrency(Number(transaction.amount), code as any);
+  }, [transaction.amount, transaction, currency]);
 
   // Long-press 2s circular countdown
   const [counting, setCounting] = React.useState(false);
@@ -114,12 +101,12 @@ export default function TransactionItem({ transaction, onDelete }: TransactionIt
       }
     });
   }, [cancelCountdown, progress, deleteTransaction, transaction.id, onDelete]);
-  // 当翻译缺失时避免显示为"..."，回退为原始分类名
-  const translatedCategory = t(transaction.category);
-  const title =
-    !translatedCategory || translatedCategory === '...'
-      ? (transaction.category || t('category'))
-      : translatedCategory;
+  const title = displayNameFor(
+    { id: String(transaction.category || ''), name: String(transaction.category || '') },
+    (transaction.type === 'income') ? 'incomeCategories' : 'expenseCategories',
+    t as any,
+    language as any
+  );
 
   const emoji = (() => {
     if (!transaction.emotion) return '🙂';
@@ -196,14 +183,14 @@ export default function TransactionItem({ transaction, onDelete }: TransactionIt
             {!!transaction.emotion && (
               <View style={[styles.emotionPill, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
                 <Text style={[styles.emotionText, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
-                  {(() => { const s = t(transaction.emotion); return s && s !== '...' ? s : transaction.emotion; })()}
+                  {displayNameFor({ id: String(transaction.emotion || ''), name: String(transaction.emotion || '') }, 'emotions', t as any, language as any)}
                 </Text>
               </View>
             )}
           </View>
 
           <Text style={[styles.amount, { color }]} numberOfLines={1}>
-            {currencySymbol}{Number(transaction.amount).toFixed(2)}
+            {formattedAmount}
           </Text>
         </View>
 

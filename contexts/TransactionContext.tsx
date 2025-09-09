@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useMe
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
 import { useSupabaseSync, type ServerTransaction } from '@/hooks/useSupabaseSync';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export type Currency =
   | 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'KRW' | 'HKD' | 'TWD' | 'SGD'
@@ -104,6 +106,8 @@ interface TransactionContextType {
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
+
+
 const STORAGE_KEY = '@expense_tracker_transactions';
 const CURRENCY_STORAGE_KEY = '@expense_tracker_currency';
 const EMOTION_STORAGE_KEY = '@expense_tracker_emotions';
@@ -168,6 +172,8 @@ interface TransactionProviderProps {
 
 export function TransactionProvider({ children }: TransactionProviderProps) {
   const { user } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
+  const { themeMode, setThemeMode } = useTheme();
   const { getUserSettings, upsertUserSettings, upsertTransactions, fetchTransactions, deleteTransactions, upsertAccounts, fetchAccounts, deleteAccounts } = useSupabaseSync();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -237,7 +243,11 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         // pull settings
         try {
           const s = await getUserSettings(user.id);
-          if (s && isValidCurrency(s.currency)) setCurrencyState(s.currency as Currency);
+          if (s) {
+            if (isValidCurrency(s.currency)) setCurrencyState(s.currency as Currency);
+            try { if ((s as any).language) setLanguage((s as any).language as any); } catch {}
+            try { if ((s as any).theme) setThemeMode((s as any).theme as any); } catch {}
+          }
         } catch (_) {}
         
         // sync accounts
@@ -319,6 +329,16 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     upsertUserSettings(user.id, { currency }).catch(() => {});
   }, [currency, user, upsertUserSettings]);
 
+  useEffect(() => {
+    if (!user) return;
+    upsertUserSettings(user.id, { language: (language as any) }).catch(() => {});
+  }, [language, user, upsertUserSettings]);
+
+  useEffect(() => {
+    if (!user) return;
+    upsertUserSettings(user.id, { theme: (themeMode as any) }).catch(() => {});
+  }, [themeMode, user, upsertUserSettings]);
+
   const loadTransactions = async () => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -342,24 +362,40 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         setCurrencyState(stored as Currency);
         return;
       }
-      // 无存储：按设备 locale 推断地区 -> 币种；失败回退 USD
-      let locale = '';
-      try {
-        const ro = (Intl as any)?.DateTimeFormat?.().resolvedOptions?.();
-        locale = String(ro?.locale ?? '');
-      } catch {}
-      const sep = locale.includes('-') ? '-' : (locale.includes('_') ? '_' : '');
-      const region = sep ? locale.split(sep)[1]?.toUpperCase?.() : '';
-      const eurSet = new Set(['DE','FR','ES','IT','NL','BE','PT','GR','IE','FI','AT','LU','SK','SI','LV','LT','EE','MT','CY']);
-      const map: Record<string, Currency> = {
-        CN:'CNY', US:'USD', GB:'GBP', JP:'JPY', KR:'KRW', HK:'HKD', TW:'TWD', SG:'SGD',
-        AU:'AUD', CA:'CAD', CH:'CHF', SE:'SEK', NO:'NOK', DK:'DKK', RU:'RUB', IN:'INR',
-        BR:'BRL', MX:'MXN', ZA:'ZAR', TH:'THB', VN:'VND', ID:'IDR', MY:'MYR', PH:'PHP'
+      // 无存储：优先根据语言映射默认币种；不匹配再按地区；最终兜底 USD
+      let cur: Currency | null = null;
+      // 语言优先映射
+      const langToCurrency: Record<string, Currency> = {
+        zh: 'CNY',
+        ja: 'JPY',
+        ko: 'KRW',
+        es: 'EUR',
+        fr: 'EUR',
+        de: 'EUR',
+        en: 'USD',
       };
-      let cur: Currency = 'USD';
-      if (region && eurSet.has(region)) cur = 'EUR';
-      else if (region && map[region]) cur = map[region];
-      setCurrencyState(cur);
+      if (language && langToCurrency[language]) {
+        cur = langToCurrency[language];
+      }
+      if (!cur) {
+        // 回退地区推断
+        let locale = '';
+        try {
+          const ro = (Intl as any)?.DateTimeFormat?.().resolvedOptions?.();
+          locale = String(ro?.locale ?? '');
+        } catch {}
+        const sep = locale.includes('-') ? '-' : (locale.includes('_') ? '_' : '');
+        const region = sep ? locale.split(sep)[1]?.toUpperCase?.() : '';
+        const eurSet = new Set(['DE','FR','ES','IT','NL','BE','PT','GR','IE','FI','AT','LU','SK','SI','LV','LT','EE','MT','CY']);
+        const map: Record<string, Currency> = {
+          CN:'CNY', US:'USD', GB:'GBP', JP:'JPY', KR:'KRW', HK:'HKD', TW:'TWD', SG:'SGD',
+          AU:'AUD', CA:'CAD', CH:'CHF', SE:'SEK', NO:'NOK', DK:'DKK', RU:'RUB', IN:'INR',
+          BR:'BRL', MX:'MXN', ZA:'ZAR', TH:'THB', VN:'VND', ID:'IDR', MY:'MYR', PH:'PHP'
+        };
+        if (region && eurSet.has(region)) cur = 'EUR';
+        else if (region && map[region]) cur = map[region];
+      }
+      setCurrencyState((cur ?? 'USD') as Currency);
     } catch (error) {
       console.error('Failed to load currency:', error);
       setCurrencyState('USD');
@@ -466,7 +502,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         const parsed = JSON.parse(stored);
         const list: Account[] = (Array.isArray(parsed) ? parsed : []).map((a: any) => ({
           id: String(a.id),
-          name: String(a.name ?? '默认账户'),
+          name: String(a.name ?? t('defaultAccountName')),
           type: a.type as AccountType ?? 'cash',
           currency: isValidCurrency(String(a.currency)) ? String(a.currency) as Currency : currency,
           initialBalance: Number(a.initialBalance ?? 0),
@@ -483,7 +519,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       // 无账户则创建默认现金钱包
       setAccounts([{
         id: genUUIDv4(),
-        name: '默认账户',
+        name: t('defaultAccountName'),
         type: 'cash',
         currency,
         initialBalance: 0,
@@ -495,7 +531,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     } catch {
       setAccounts([{
         id: genUUIDv4(),
-        name: '默认账户',
+        name: t('defaultAccountName'),
         type: 'cash',
         currency,
         initialBalance: 0,

@@ -10,14 +10,16 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import IconButton from '@/components/ui/IconButton';
 import Chip from '@/components/ui/Chip';
+import { formatCurrency } from '@/lib/i18n';
+import { displayNameFor } from '@/lib/i18n';
 
 export default function InsightsScreen() {
-  const { transactions, getEmotionStatsForRange, getUsageDaysCount, getCurrencySymbol } = useTransactions();
+  const { transactions, getEmotionStatsForRange, getUsageDaysCount, currency } = useTransactions();
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
 
-  const currencySymbol = getCurrencySymbol();
+  // currencySymbol removed; using formatCurrency
   const days = getUsageDaysCount();
 
   const [metric, setMetric] = React.useState<'count' | 'amount'>('count');
@@ -90,37 +92,37 @@ export default function InsightsScreen() {
     if (top) {
       lines.push(
         t('patternTopShareLine', {
-          emotion: t(top.name),
+          emotion: displayNameFor({ id: String(top?.name || ''), name: String(top?.name || '') }, 'emotions', t as any, language as any),
           share: (topShare * 100).toFixed(0),
-          avg: `${currencySymbol}${topAvg.toFixed(2)}`,
-          overallAvg: `${currencySymbol}${avgAll.toFixed(2)}`
+          avg: formatCurrency(topAvg, currency as any),
+          overallAvg: formatCurrency(avgAll, currency as any)
         })
       );
     }
     const deltaStr = `${riseAmtPct >= 0 ? '+' : ''}${(riseAmtPct * 100).toFixed(0)}`;
     lines.push(
       t('patternWeekCompareLine', {
-        amount: `${currencySymbol}${totalAmt.toFixed(2)}`,
+        amount: formatCurrency(totalAmt, currency as any),
         delta: deltaStr
       })
     );
     return lines;
-  }, [top, topShare, topAvg, avgAll, currencySymbol, totalAmt, riseAmtPct, t]);
+  }, [top, topShare, topAvg, avgAll, totalAmt, riseAmtPct, t]);
 
   const adviceLines = React.useMemo(() => {
     const lines: string[] = [];
     if (top && topAvg > avgAll * 1.3) {
       lines.push(
         t('adviceHighAvg', {
-          emotion: t(top.name),
-          threshold: `${currencySymbol}${(topAvg * 1.2).toFixed(0)}`
+          emotion: displayNameFor({ id: String(top?.name || ''), name: String(top?.name || '') }, 'emotions', t as any, language as any),
+          threshold: formatCurrency(topAvg * 1.2, currency as any)
         })
       );
     }
     if (riseAmtPct > 0.2) {
       lines.push(
         t('adviceBudgetCap', {
-          cap: `${currencySymbol}${(totalAmt * 1.1).toFixed(0)}`
+          cap: formatCurrency(totalAmt * 1.1, currency as any)
         })
       );
     }
@@ -128,7 +130,7 @@ export default function InsightsScreen() {
       lines.push(t('keepRecordingTip'));
     }
     return lines;
-  }, [top, topAvg, avgAll, riseAmtPct, totalAmt, currencySymbol, t]);
+  }, [top, topAvg, avgAll, riseAmtPct, totalAmt, t]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -172,9 +174,11 @@ export default function InsightsScreen() {
               <View key={s.name} style={[styles.rankItem, { borderColor: colors.border }]}>
                 <Text style={styles.rankIndex}>{idx + 1}</Text>
                 <Text style={styles.rankEmoji}>{s.emoji}</Text>
-                <Text style={[styles.rankName, { color: colors.text }]}>{t(s.name)}</Text>
+                <Text style={[styles.rankName, { color: colors.text }]}>
+                  {displayNameFor({ id: String(s.name), name: String(s.name) }, 'emotions', t as any, language as any)}
+                </Text>
                 <Text style={[styles.rankAmount, { color: colors.text }]}>
-                  {metric === 'count' ? `${s.count} ${t('spendTimes')}` : `${currencySymbol}${s.amount.toFixed(2)}`}
+                  {metric === 'count' ? `${s.count} ${t('spendTimes')}` : formatCurrency(s.amount, currency as any)}
                 </Text>
               </View>
             ))

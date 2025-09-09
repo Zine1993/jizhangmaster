@@ -19,22 +19,9 @@ import { useTheme } from '@/contexts/ThemeContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import Fab from '@/components/ui/Fab';
+import { formatCurrency } from '@/lib/i18n';
 
-const currencies = [
-  { code: 'CNY', name: '人民币', symbol: '¥' }, { code: 'USD', name: 'US Dollar', symbol: '$' },
-  { code: 'EUR', name: 'Euro', symbol: '€' }, { code: 'GBP', name: 'British Pound', symbol: '£' },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' }, { code: 'KRW', name: 'Korean Won', symbol: '₩' },
-  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' }, { code: 'TWD', name: 'Taiwan Dollar', symbol: 'NT$' },
-  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' }, { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' }, { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
-  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' }, { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
-  { code: 'DKK', name: 'Danish Krone', symbol: 'kr' }, { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
-  { code: 'INR', name: 'Indian Rupee', symbol: '₹' }, { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
-  { code: 'MXN', name: 'Mexican Peso', symbol: '$' }, { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
-  { code: 'THB', name: 'Thai Baht', symbol: '฿' }, { code: 'VND', name: 'Vietnamese Dong', symbol: '₫' },
-  { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp' }, { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
-  { code: 'PHP', name: 'Philippine Peso', symbol: '₱' },
-];
+
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -52,9 +39,7 @@ export default function HomeScreen() {
   const recentTransactions = transactions.slice(0, 5);
   const topEmotion = getTopEmotionToday();
 
-  const symbolOf = useCallback((code: string) => {
-    return currencies.find(c => c.code === code)?.symbol || code;
-  }, []);
+
 
   const handleScroll = (event: any) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
@@ -107,16 +92,16 @@ export default function HomeScreen() {
                 <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
                   <Text style={[styles.cardBalanceLabel, { color: colors.textSecondary }]}>{t('monthlyBalance')} ({item.currency})</Text>
                   <Text style={[styles.cardBalanceValue, { color: colors.text }]}>
-                    {symbolOf(item.currency)}{item.balance.toFixed(2)}
+                    {formatCurrency(item.balance, item.currency as any)}
                   </Text>
                   <View style={[styles.cardRow, { borderTopColor: colors.border }]}>
                     <View style={styles.cardTile}>
                       <Text style={[styles.cardTileLabel, { color: colors.textSecondary }]}>{t('income')}</Text>
-                      <Text style={[styles.cardTileValue, { color: colors.income }]}>{symbolOf(item.currency)}{item.income.toFixed(2)}</Text>
+                      <Text style={[styles.cardTileValue, { color: colors.income }]}>{formatCurrency(item.income, item.currency as any)}</Text>
                     </View>
                     <View style={[styles.cardTile, { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.border }]}>
                       <Text style={[styles.cardTileLabel, { color: colors.textSecondary }]}>{t('expense')}</Text>
-                      <Text style={[styles.cardTileValue, { color: colors.expense }]}>{symbolOf(item.currency)}{item.expense.toFixed(2)}</Text>
+                      <Text style={[styles.cardTileValue, { color: colors.expense }]}>{formatCurrency(item.expense, item.currency as any)}</Text>
                     </View>
                   </View>
                 </View>

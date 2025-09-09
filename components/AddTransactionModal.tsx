@@ -15,22 +15,9 @@ import { useTransactions, Transaction } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import { useEmojiRain } from '@/contexts/EmojiRainContext';
+import { displayNameFor, getCurrencySymbol } from '@/lib/i18n';
 
-const currencies = [
-  { code: 'CNY', name: '人民币', symbol: '¥' }, { code: 'USD', name: 'US Dollar', symbol: '$' },
-  { code: 'EUR', name: 'Euro', symbol: '€' }, { code: 'GBP', name: 'British Pound', symbol: '£' },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' }, { code: 'KRW', name: 'Korean Won', symbol: '₩' },
-  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' }, { code: 'TWD', name: 'Taiwan Dollar', symbol: 'NT$' },
-  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' }, { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' }, { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
-  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' }, { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
-  { code: 'DKK', name: 'Danish Krone', symbol: 'kr' }, { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
-  { code: 'INR', name: 'Indian Rupee', symbol: '₹' }, { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
-  { code: 'MXN', name: 'Mexican Peso', symbol: '$' }, { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
-  { code: 'THB', name: 'Thai Baht', symbol: '฿' }, { code: 'VND', name: 'Vietnamese Dong', symbol: '₫' },
-  { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp' }, { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
-  { code: 'PHP', name: 'Philippine Peso', symbol: '₱' },
-];
+
 
 interface AddTransactionModalProps {
   visible: boolean;
@@ -53,8 +40,8 @@ const defaultExpenseCategoryNames = [
 
 
 export default function AddTransactionModal({ visible, onClose, editTransaction, autoFocusAmount }: AddTransactionModalProps) {
-  const { t } = useLanguage();
-  const { addTransaction, updateTransaction, getCurrencySymbol, emotions, accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
+  const { t, language } = useLanguage();
+  const { addTransaction, updateTransaction, getCurrencySymbol: getDefaultCurrencySymbol, emotions, accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
   const { colors } = useTheme();
   const { triggerEmojiRain } = useEmojiRain();
 
@@ -78,14 +65,14 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
   );
 
   const effectiveEmotions = emotions && emotions.length ? emotions : [
-    { id: 'happy', name: '开心', emoji: '😊' },
-    { id: 'anxious', name: '焦虑', emoji: '😰' },
-    { id: 'lonely', name: '孤独', emoji: '😔' },
-    { id: 'bored', name: '无聊', emoji: '😑' },
-    { id: 'reward', name: '奖励自己', emoji: '🎉' },
-    { id: 'stress', name: '压力大', emoji: '😣' },
-    { id: 'excited', name: '兴奋', emoji: '😄' },
-    { id: 'sad', name: '难过', emoji: '😢' },
+    { id: 'happy', name: 'happy', emoji: '😊' },
+    { id: 'anxious', name: 'anxious', emoji: '😰' },
+    { id: 'lonely', name: 'lonely', emoji: '😔' },
+    { id: 'bored', name: 'bored', emoji: '😑' },
+    { id: 'reward', name: 'reward', emoji: '🎉' },
+    { id: 'stress', name: 'stress', emoji: '😣' },
+    { id: 'excited', name: 'excited', emoji: '😄' },
+    { id: 'sad', name: 'sad', emoji: '😢' },
   ];
   
   const [type, setType] = useState<'income' | 'expense'>('expense');
@@ -103,9 +90,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
   }, [accountId, accounts]);
 
   const symbolOf = useCallback((code: string | undefined) => {
-    if (!code) return getCurrencySymbol();
-    return currencies.find(c => c.code === code)?.symbol || code;
-  }, [getCurrencySymbol]);
+    if (!code) return getDefaultCurrencySymbol();
+    return getCurrencySymbol(code);
+  }, [getDefaultCurrencySymbol]);
 
   const currencySymbol = symbolOf(selectedAccount?.currency);
 
@@ -139,28 +126,28 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
 
   const handleSave = () => {
     if (!amount || isNaN(Number(amount)) || parseFloat(amount) <= 0) {
-      const title = (t && t('amountInvalidTitle')) || 'Error';
-      const msg = (t && t('amountInvalidMessage')) || 'Please enter a valid amount';
+      const title = t('amountInvalidTitle') as string;
+      const msg = t('amountInvalidMessage') as string;
       Alert.alert(title, msg);
       return;
     }
 
     if (!emotion || emotion.trim() === '') {
-      const et = (t && (t('emotionRequiredTitle') || t('error'))) || '提示';
-      const em = (t && (t('emotionRequiredMessage') || t('pleaseSelectEmotion'))) || '请选择一个情绪';
+      const et = t('emotionRequiredTitle') as string;
+      const em = t('emotionRequiredMessage') as string;
       Alert.alert(et, em);
       return;
     }
 
     const finalAccountId = accountId || accounts?.[0]?.id;
     if (!finalAccountId) {
-      Alert.alert(t('noAccountAvailableTitle') || '无可用账户', t('noAccountAvailableMessage') || '请先在设置中添加一个账户');
+      Alert.alert(t('noAccountAvailableTitle'), t('noAccountAvailableMessage'));
       return;
     }
     const finalAccount = accounts?.find(a => a.id === finalAccountId);
     if (!finalAccount) {
       // This should not happen if logic is correct
-      Alert.alert('Error', 'Selected account not found.');
+      Alert.alert(t('operationFailed'), '');
       return;
     }
 
@@ -171,7 +158,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     if (type === 'expense' && finalAccount && ['cash','debit_card','prepaid_card'].includes(finalAccount.type)) {
       const available = getAccountBalance(finalAccountId);
       if (available < parseFloat(amount) - 1e-8) {
-        Alert.alert(t('insufficientFunds') || '余额不足');
+        Alert.alert(t('insufficientFunds'));
         return;
       }
     }
@@ -196,10 +183,10 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       } catch (e: any) {
         const msg = String(e?.message || '');
         if (msg === 'INSUFFICIENT_FUNDS' || msg === 'CREDIT_LIMIT_EXCEEDED') {
-          Alert.alert(t('insufficientFunds') || '余额不足');
+          Alert.alert(t('insufficientFunds'));
           return;
         }
-        Alert.alert(t('operationFailed') || '操作失败', msg);
+        Alert.alert(t('operationFailed'), msg);
         return;
       }
       // 触发表情雨：根据所选情绪名称在有效情绪中查找 emoji，找不到则使用默认
@@ -263,7 +250,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           category === categoryKey && { color: colors.primary, fontWeight: '600' },
         ]}
       >
-        {(() => { const s = t(categoryKey); return s && s !== '...' ? s : categoryKey; })()}
+        {displayNameFor({ id: categoryKey, name: categoryKey }, type === 'income' ? 'incomeCategories' : 'expenseCategories', t as any, language as any)}
       </Text>
     </TouchableOpacity>
   );
@@ -284,12 +271,12 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           category === item.name && { color: colors.primary, fontWeight: '600' },
         ]}
       >
-        {(item.emoji ? item.emoji + ' ' : '') + ((() => { const s = t(item.name); return s && s !== '...' ? s : item.name; })())}
+        {(item.emoji ? item.emoji + ' ' : '') + displayNameFor(item as any, type === 'income' ? 'incomeCategories' : 'expenseCategories', t as any, language as any)}
       </Text>
     </TouchableOpacity>
   );
 
-  const EmotionTag = ({ name, emoji }: { name: string; emoji: string }) => (
+  const EmotionTag = ({ id, name, emoji }: { id: string; name: string; emoji: string }) => (
     <TouchableOpacity activeOpacity={0.8}
       style={[
         styles.emotionTag,
@@ -299,10 +286,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       onPress={() => setEmotion(name)}
     >
       <Text style={{ fontSize: 16, marginRight: 6 }}>{emoji}</Text>
-      {(() => {
-        const translated = t(name);
-        return <Text style={{ color: emotion === name ? colors.primary : colors.text }}>{!translated || translated === '...' ? name : translated}</Text>;
-      })()}
+      <Text style={{ color: emotion === name ? colors.primary : colors.text }}>
+        {displayNameFor({ id, name }, 'emotions', t as any, language as any)}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -327,7 +313,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           contentContainerStyle={{ paddingBottom: 24 }}
         >
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{(() => { const s = t('transactionType'); return s && s !== '...' ? s : '交易类型'; })()}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('transactionType')}</Text>
             <View style={styles.typeContainer}>
               <TypeButton transactionType="expense" label={t('expense')} color={colors.expense} />
               <TypeButton transactionType="income" label={t('income')} color={colors.income} />
@@ -335,7 +321,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{(() => { const s = t('account'); return s && s !== '...' ? s : '账户'; })()}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('account')}</Text>
             <View style={styles.emotionContainer}>
               {(accounts || []).map((a) => (
                 <TouchableOpacity
@@ -389,10 +375,10 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{(() => { const s = t('currentEmotion'); return s && s !== '...' ? s : '当前情绪'; })()}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('currentEmotion')}</Text>
             <View style={styles.emotionContainer}>
               {effectiveEmotions.map((e) => (
-                <EmotionTag key={e.id} name={e.name} emoji={e.emoji} />
+                <EmotionTag key={e.id} id={e.id} name={e.name} emoji={e.emoji} />
               ))}
             </View>
           </View>
@@ -403,7 +389,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
               style={[styles.descriptionInput, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
               value={description}
               onChangeText={setDescription}
-              placeholder={(() => { const s = t('notePlaceholder'); return s && s !== '...' ? s : '备注信息（可选）'; })()}
+              placeholder={t('notePlaceholder')}
               placeholderTextColor={colors.textTertiary}
               multiline
               numberOfLines={3}

@@ -62,28 +62,28 @@ export default function AuthGate({ children }: { children: ReactNode }) {
           if (res.error?.includes('Cloud sync is not configured')) {
             // 继续执行，不显示错误
           } else {
-            setErr(res.error || ((t ? t('loginFailed') : '') || 'Login failed'));
+            setErr(res.error || t('loginFailed'));
           }
         }
       } else if (mode === 'register') {
         if (password !== confirmPassword) {
-          setErr((t ? t('passwordMismatch') : '') || 'Passwords do not match');
+          setErr(t('passwordMismatch'));
           return;
         }
         const res = await signUpWithPassword(email.trim(), password);
         if (!res.ok) {
           // 如果是云同步未配置的错误，显示本地注册成功消息
           if (res.error?.includes('Cloud sync is not configured')) {
-            setMsg((t ? t('registerSuccessLocal') : '') || 'Registration successful. You can now log in with your credentials.');
+            setMsg(t('registerSuccessLocal'));
             setPassword('');
             setConfirmPassword('');
             setMode('login');
           } else {
-            setErr(res.error || ((t ? t('registerFailed') : '') || 'Register failed'));
+            setErr(res.error || t('registerFailed'));
           }
         }
         else {
-          setMsg((t ? t('registerSuccessCheckEmail') : '') || 'Registration successful. Check your email or log in directly');
+          setMsg(t('registerSuccessCheckEmail'));
           setPassword('');
           setConfirmPassword('');
           setMode('login');
@@ -93,14 +93,14 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         if (!res.ok) {
           // 如果是云同步未配置的错误，不显示错误消息，直接视为重置邮件发送成功
           if (res.error?.includes('Cloud sync is not configured')) {
-            setMsg((t ? t('resetEmailSent') : '') || 'Reset email sent. Please check your inbox');
+            setMsg(t('resetEmailSent'));
             setMode('login');
           } else {
-            setErr(res.error || ((t ? t('resetEmailFailed') : '') || 'Failed to send reset email'));
+            setErr(res.error || t('resetEmailFailed'));
           }
         }
         else {
-          setMsg((t ? t('resetEmailSent') : '') || 'Reset email sent. Please check your inbox');
+          setMsg(t('resetEmailSent'));
           setMode('login');
         }
       }
@@ -121,8 +121,8 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  const title = (t ? t('appName') : 'MoodLedger');
-  const subtitle = (t ? t('slogan') : 'Your wallet writes, your heart speaks.');
+  const title = t('appName');
+  const subtitle = t('slogan');
   const screenHeight = Dimensions.get('window').height;
 
   const GradientText = ({ children, style }: { children: ReactNode; style?: any }) => {
@@ -181,19 +181,19 @@ export default function AuthGate({ children }: { children: ReactNode }) {
               <Heart size={16} color={colors.primary} />
               <Text style={[styles.welcome, { color: colors.text }]}>
                 {mode === 'login'
-                  ? (t ? t('welcomeBack') : 'Welcome back')
+                  ? t('welcomeBack')
                   : mode === 'register'
-                  ? (t ? t('createAccount') : 'Create your account')
-                  : (t ? t('resetPassword') : 'Reset password')}
+                  ? t('createAccount')
+                  : t('resetPassword')}
               </Text>
             </View>
 
             {!!err && <Text style={[styles.error, { color: colors.error }]}>{err}</Text>}
             {!!msg && <Text style={[styles.message, { color: colors.text }]}>{msg}</Text>}
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{(t ? t('emailLabel') : '') || 'Email'}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('emailLabel')}</Text>
             <Input
-              placeholder={(t ? t('emailPlaceholder') : '') || 'Enter your email'}
+              placeholder={t('emailPlaceholder')}
               autoCapitalize="none"
               keyboardType="email-address"
               value={email}
@@ -202,18 +202,18 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
             {mode !== 'reset' && (
               <>
-                <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>{(t ? t('passwordLabel') : '') || 'Password'}</Text>
+                <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>{t('passwordLabel')}</Text>
                 <Input
-                  placeholder={(t ? t('passwordPlaceholder') : '') || 'Enter your password'}
+                  placeholder={t('passwordPlaceholder')}
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
                 />
                 {mode === 'register' && (
                   <>
-                    <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>{(t ? t('confirmPasswordLabel') : '') || 'Confirm password'}</Text>
+                    <Text style={[styles.label, { color: colors.textSecondary, marginTop: 12 }]}>{t('confirmPasswordLabel')}</Text>
                     <Input
-                      placeholder={(t ? t('confirmPasswordPlaceholder') : '') || 'Re-enter password'}
+                      placeholder={t('confirmPasswordPlaceholder')}
                       secureTextEntry
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
@@ -227,10 +227,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
               <PrimaryButton
                 label={
                   mode === 'login'
-                    ? (t ? t('login') : 'Login')
+                    ? t('login')
                     : mode === 'register'
-                    ? (t ? t('register') : 'Register')
-                    : (t ? t('sendResetEmail') : 'Send reset email')
+                    ? t('register')
+                    : t('sendResetEmail')
                 }
                 onPress={handleSubmit}
                 disabled={!canSubmit}
@@ -240,27 +240,27 @@ export default function AuthGate({ children }: { children: ReactNode }) {
             <View style={styles.linksRow}>
               {mode !== 'login' && (
                 <TouchableOpacity onPress={() => { setMode('login'); setErr(null); setMsg(null); }}>
-                  <Text style={[styles.link, { color: colors.primary }]}>{(t ? t('backToLogin') : '') || 'Back to login'}</Text>
+                  <Text style={[styles.link, { color: colors.primary }]}>{t('backToLogin')}</Text>
                 </TouchableOpacity>
               )}
               {mode !== 'register' && (
                 <TouchableOpacity onPress={() => { setMode('register'); setErr(null); setMsg(null); }}>
-                  <Text style={[styles.link, { color: colors.primary }]}>{(t ? t('goRegister') : '') || 'Go register'}</Text>
+                  <Text style={[styles.link, { color: colors.primary }]}>{t('goRegister')}</Text>
                 </TouchableOpacity>
               )}
               {mode !== 'reset' && (
                 <TouchableOpacity onPress={() => { setMode('reset'); setErr(null); setMsg(null); }}>
-                  <Text style={[styles.link, { color: colors.primary }]}>{(t ? t('forgotPassword') : '') || 'Forgot password'}</Text>
+                  <Text style={[styles.link, { color: colors.primary }]}>{t('forgotPassword')}</Text>
                 </TouchableOpacity>
               )}
             </View>
 
             <View style={[styles.quickBox, { borderColor: '#FDBA74' + '66', backgroundColor: '#FFEDD5' }]}>
-              <Text style={[styles.quickTitle, { color: '#EA580C' }]}>{(t ? t('quickTryTitle') : '') || 'Quick Try'}</Text>
-              <Text style={[styles.quickDesc, { color: '#9A3412' }]}>{(t ? t('quickTryDesc') : '') || 'No signup needed, try all features now'}</Text>
+              <Text style={[styles.quickTitle, { color: '#EA580C' }]}>{t('quickTryTitle')}</Text>
+              <Text style={[styles.quickDesc, { color: '#9A3412' }]}>{t('quickTryDesc')}</Text>
               <TouchableOpacity style={styles.quickBtn} onPress={skipLogin}>
                 <ArrowLeft size={16} color={'#EA580C'} />
-                <Text style={[styles.quickBtnText, { color: '#EA580C' }]}>{' '}{(t ? t('skipForNow') : '') || 'Skip for now'}</Text>
+                <Text style={[styles.quickBtnText, { color: '#EA580C' }]}>{' '}{t('skipForNow')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -272,22 +272,22 @@ export default function AuthGate({ children }: { children: ReactNode }) {
             <View style={[styles.featureIcon, { backgroundColor: colors.primary + '15' }]}>
               <BarChart3 size={18} color={colors.primary} />
             </View>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>{(t ? t('featureAnalytics') : '') || 'Analytics'}</Text>
-            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{(t ? t('featureAnalyticsSub') : '') || 'Spending distribution and trends'}</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('featureAnalytics')}</Text>
+            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{t('featureAnalyticsSub')}</Text>
           </View>
           <View style={[styles.feature, { backgroundColor: colors.surface }]}>
             <View style={[styles.featureIcon, { backgroundColor: colors.primary + '15' }]}>
               <Brain size={18} color={colors.primary} />
             </View>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>{(t ? t('featureInsights') : '') || 'Insights'}</Text>
-            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{(t ? t('featureInsightsSub') : '') || 'Discover emotion patterns'}</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('featureInsights')}</Text>
+            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{t('featureInsightsSub')}</Text>
           </View>
           <View style={[styles.feature, { backgroundColor: colors.surface }]}>
             <View style={[styles.featureIcon, { backgroundColor: colors.primary + '15' }]}>
               <Shield size={18} color={colors.primary} />
             </View>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>{(t ? t('featurePrivacy') : '') || 'Privacy'}</Text>
-            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{(t ? t('featurePrivacySub') : '') || 'Local and cloud sync'}</Text>
+            <Text style={[styles.featureTitle, { color: colors.text }]}>{t('featurePrivacy')}</Text>
+            <Text style={[styles.featureSub, { color: colors.textTertiary }]}>{t('featurePrivacySub')}</Text>
           </View>
         </View>
       </ScrollView>

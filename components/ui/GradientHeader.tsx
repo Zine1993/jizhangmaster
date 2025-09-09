@@ -39,13 +39,7 @@ const StatusBarSync = ({ color }: { color: string }) => {
   );
 };
 
-const defaultWarmMessages = [
-  '愿你被世界温柔以待',
-  '今天也要元气满满',
-  '记账是和未来的自己打招呼',
-  '花钱有度，生活有光',
-  '小目标，一点点实现'
-];
+
 
 export default function GradientHeader({
   title,
@@ -69,7 +63,7 @@ export default function GradientHeader({
   const [avatarEmoji, setAvatarEmoji] = useState('😊');
   const msgs = useMemo(() => {
     if (messages && messages.length > 0) return messages;
-    return [t('warm_1'), t('warm_2'), t('warm_3'), t('warm_4'), t('warm_5')];
+    return [t('warm.warm_1'), t('warm.warm_2'), t('warm.warm_3'), t('warm.warm_4'), t('warm.warm_5')];
   }, [messages, t]);
   const intervalMs = Math.max(1200, messageIntervalMs ?? 6000);
   const [msgIndex, setMsgIndex] = useState(0);

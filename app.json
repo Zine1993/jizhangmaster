@@ -14,7 +14,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "6"
+      "buildNumber": "6",
+      "bundleIdentifier": "com.moodledger.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +26,11 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.moodledger.app",
-      "versionCode": 10
+      "versionCode": 10,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -46,7 +54,8 @@
       },
       "supabaseUrl": "https://ddindapkkfgiwzfitbjk.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkaW5kYXBra2ZnaXd6Zml0YmprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMDcyNjIsImV4cCI6MjA3MTY4MzI2Mn0.n82gsuuC0gIgutVBcUGly243T-Vha1N7upsYRgpc2Ms",
-      "authRedirectUrl": "https://zine1993.github.io/jizhangmaster/auth/reset.html"
+      "authRedirectUrl": "https://zine1993.github.io/jizhangmaster/auth/reset.html",
+      "authDevDlAuto": true
     },
     "owner": "cocbang"
   }

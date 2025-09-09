@@ -19,12 +19,14 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import Chip from '@/components/ui/Chip';
 import IconButton from '@/components/ui/IconButton';
+import { formatCurrency } from '@/lib/i18n';
+import { displayNameFor } from '@/lib/i18n';
 
 
 export default function StatsScreen() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
-  const { transactions, getCurrencySymbol } = useTransactions();
+  const { transactions, currency } = useTransactions();
   const { colors } = useTheme();
 
   const [rangeLabel, setRangeLabel] = React.useState<string>('');
@@ -34,7 +36,7 @@ export default function StatsScreen() {
   const [endDate, setEndDate] = React.useState<Date>(new Date());
   const [showRangePicker, setShowRangePicker] = React.useState(false);
 
-  const currencySymbol = getCurrencySymbol();
+  // currencySymbol removed; using formatCurrency
   React.useEffect(() => {
     setRangeLabel(t('last7Days'));
     setActivePreset('last7');
@@ -212,14 +214,14 @@ export default function StatsScreen() {
           {/* 快速预设区间 */}
           <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'wrap', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 2 }]} >
             <Chip
-              label={(t('last7Days') as string) || '近7天'}
+              label={t('last7Days') as string}
               selected={activePreset === 'last7'}
               onPress={() => {
                 const now = new Date();
                 const s = new Date(now); s.setDate(s.getDate() - 6);
                 setStartDate(s);
                 setEndDate(now);
-                const lbl = t('last7Days') || '近7天';
+                const lbl = t('last7Days') as string;
                 setRangeLabel(lbl);
                 setActivePreset('last7');
               }}
@@ -228,7 +230,7 @@ export default function StatsScreen() {
 
 
             <Chip
-              label={(t('thisMonth') as string) || '本月'}
+              label={t('thisMonth') as string}
               selected={activePreset === 'thisMonth'}
               onPress={() => {
                 const now = new Date();
@@ -236,14 +238,14 @@ export default function StatsScreen() {
                 const e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
                 setStartDate(s);
                 setEndDate(e);
-                const lbl = t('thisMonth') || '本月';
+                const lbl = t('thisMonth') as string;
                 setRangeLabel(lbl);
                 setActivePreset('thisMonth');
               }}
             />
 
             <Chip
-              label={(t('lastMonth') as string) || '上月'}
+              label={t('lastMonth') as string}
               selected={activePreset === 'lastMonth'}
               onPress={() => {
                 const now = new Date();
@@ -251,14 +253,14 @@ export default function StatsScreen() {
                 const e = new Date(now.getFullYear(), now.getMonth(), 0);
                 setStartDate(s);
                 setEndDate(e);
-                const lbl = t('lastMonth') || '上月';
+                const lbl = t('lastMonth') as string;
                 setRangeLabel(lbl);
                 setActivePreset('lastMonth');
               }}
             />
 
             <Chip
-              label={(t('thisYear') as string) || '今年'}
+              label={t('thisYear') as string}
               selected={activePreset === 'thisYear'}
               onPress={() => {
                 const now = new Date();
@@ -266,7 +268,7 @@ export default function StatsScreen() {
                 const e = now;
                 setStartDate(s);
                 setEndDate(e);
-                const lbl = t('thisYear') || '今年';
+                const lbl = t('thisYear') as string;
                 setRangeLabel(lbl);
                 setActivePreset('thisYear');
               }}
@@ -326,9 +328,11 @@ export default function StatsScreen() {
             {incomeTop.map(item => (
               <View key={item.category} style={styles.categoryItem}>
                 <View style={styles.categoryInfo}>
-                  <Text style={[styles.categoryName, { color: colors.text }]} > { t(item.category) } </Text>
+                  <Text style={[styles.categoryName, { color: colors.text }]} >
+                    {displayNameFor({ id: String(item.category), name: String(item.category) }, 'incomeCategories', t as any, language as any)}
+                  </Text>
                   <Text style={[styles.categoryAmount, { color: colors.textSecondary }]} >
-                    {`${currencySymbol}${item.amount.toFixed(2)}`}
+                    {formatCurrency(item.amount, currency as any)}
                   </Text>
                 </View>
                 <View style={[styles.categoryBar, { backgroundColor: colors.border }]} >
@@ -356,9 +360,11 @@ export default function StatsScreen() {
             {expenseTop.map(item => (
               <View key={item.category} style={styles.categoryItem}>
                 <View style={styles.categoryInfo}>
-                  <Text style={[styles.categoryName, { color: colors.text }]} > { t(item.category) } </Text>
+                  <Text style={[styles.categoryName, { color: colors.text }]} >
+                    {displayNameFor({ id: String(item.category), name: String(item.category) }, 'expenseCategories', t as any, language as any)}
+                  </Text>
                   <Text style={[styles.categoryAmount, { color: colors.textSecondary }]} >
-                    {`${currencySymbol}${item.amount.toFixed(2)}`}
+                    {formatCurrency(item.amount, currency as any)}
                   </Text>
                 </View>
                 <View style={[styles.categoryBar, { backgroundColor: colors.border }]} >
