@@ -19,12 +19,26 @@ interface EmotionTagContextValue {
 const STORAGE_KEY = 'emotion_tags_map_v1';
 
 const DEFAULTS: EmotionTagMap = {
-  开心: { type: 'emoji', value: '😄' },
-  满足: { type: 'emoji', value: '😊' },
-  期待: { type: 'emoji', value: '✨' },
-  平静: { type: 'emoji', value: '😌' },
-  焦虑: { type: 'emoji', value: '😟' },
-  沮丧: { type: 'emoji', value: '😞' },
+  开心:   { type: 'emoji', value: '😄' },
+  满足:   { type: 'emoji', value: '😊' },
+  期待:   { type: 'emoji', value: '✨' },
+  平静:   { type: 'emoji', value: '😌' },
+  焦虑:   { type: 'emoji', value: '😟' },
+  沮丧:   { type: 'emoji', value: '😞' },
+  奖励自己: { type: 'emoji', value: '🎉' },
+  孤独:   { type: 'emoji', value: '😔' },
+  无聊:   { type: 'emoji', value: '😑' },
+  难过:   { type: 'emoji', value: '😢' },
+  兴奋:   { type: 'emoji', value: '😆' },
+  感激:   { type: 'emoji', value: '🙏' },
+  放松:   { type: 'emoji', value: '🧘' },
+  紧张:   { type: 'emoji', value: '😬' },
+  生气:   { type: 'emoji', value: '😠' },
+  内疚:   { type: 'emoji', value: '😣' },
+  压力大: { type: 'emoji', value: '😫' },
+  惊喜:   { type: 'emoji', value: '🤩' },
+  期待落空: { type: 'emoji', value: '😕' },
+  平和:   { type: 'emoji', value: '🙂' },
 };
 
 const EmotionTagContext = createContext<EmotionTagContextValue | undefined>(undefined);
