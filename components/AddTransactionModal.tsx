@@ -72,19 +72,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     [expenseCategoryNames, incomeCategoryNames]
   );
 
-  // 从 EmotionTagContext.tagsMap 生成可选情绪列表（以键为名称）
+  // 仅使用 EmotionTagContext.tagsMap，不再提供兜底，确保与设置页完全一致
   const effectiveEmotions = useMemo(() => {
     const entries = Object.entries(tagsMap || {});
-    if (!entries.length) {
-      // 兜底一组基础情绪，避免空白
-      return [
-        { id: 'happy', name: '开心', emoji: '😄' },
-        { id: 'reward', name: '奖励自己', emoji: '🎉' },
-        { id: '平静', name: '平静', emoji: '😌' },
-        { id: '焦虑', name: '焦虑', emoji: '😰' },
-        { id: '沮丧', name: '沮丧', emoji: '😔' },
-      ];
-    }
     return entries.map(([name, res]) => {
       const emoji = res?.type === 'emoji' ? String(res.value) : '🙂';
       return { id: name, name, emoji };
@@ -123,9 +113,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       setAmount('');
       setCategory(getListForType('expense')[0]);
       setDescription('');
-      // 等待情绪标签准备好后再设置默认选项
-      const firstEmotion = effectiveEmotions[0]?.name || '';
-      setEmotion(firstEmotion);
+      // 默认情绪在 ready 后由同步逻辑决定，避免用到兜底列表
       if (!accountId) setAccountId((accounts?.[0]?.id) || '');
     }
   }, [editTransaction, visible]);
@@ -403,6 +391,10 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
             {!ready ? (
               <Text style={{ color: colors.textTertiary, marginTop: 6, fontSize: 12 }}>
                 {t('loading') || '加载中…'}
+              </Text>
+            ) : tagNames.length === 0 ? (
+              <Text style={{ color: colors.textTertiary, marginTop: 6, fontSize: 12 }}>
+                {(t('emotionTags') as any) || '情绪标签'}：{(t('noData') as any) || '暂无数据'}
               </Text>
             ) : (
               <View style={styles.emotionContainer}>
