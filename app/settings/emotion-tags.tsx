@@ -8,6 +8,11 @@ type Row = { emotion: string; res: EmojiResource };
 
 export default function EmotionTagsManager() {
   const { colors } = useTheme();
+  // 调试：打印设置页看到的 tagsMap 键
+  try {
+    // eslint-disable-next-line no-console
+    console.log('[EmotionTagsManager] tagNames=%o', Object.keys((useEmotionTags() as any).tagsMap || {}));
+  } catch {}
   const { tagsMap, setTag, removeTag, resetToDefaults, ready } = useEmotionTags();
   const [emotion, setEmotion] = useState('');
   const [emojiChar, setEmojiChar] = useState('');
