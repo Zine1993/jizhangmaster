@@ -13,6 +13,7 @@ import { X } from 'lucide-react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions, Transaction } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useEmotionTags } from '@/contexts/EmotionTagContext';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import { useEmojiRain } from '@/contexts/EmojiRainContext';
 import { displayNameFor, getCurrencySymbol } from '@/lib/i18n';
@@ -41,9 +42,10 @@ const defaultExpenseCategoryNames = [
 
 export default function AddTransactionModal({ visible, onClose, editTransaction, autoFocusAmount }: AddTransactionModalProps) {
   const { t, language } = useLanguage();
-  const { addTransaction, updateTransaction, getCurrencySymbolFor, emotions, accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
+  const { addTransaction, updateTransaction, getCurrencySymbolFor, /* emotions, */ accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
   const { colors } = useTheme();
   const { triggerEmojiRain } = useEmojiRain();
+  const { tagsMap, ready } = useEmotionTags();
 
   const expenseCategoryNames = useMemo(
     () => ((ctxExpenseCategories && ctxExpenseCategories.length)
@@ -64,16 +66,24 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     [expenseCategoryNames, incomeCategoryNames]
   );
 
-  const effectiveEmotions = emotions && emotions.length ? emotions : [
-    { id: 'happy', name: 'happy', emoji: '😊' },
-    { id: 'anxious', name: 'anxious', emoji: '😰' },
-    { id: 'lonely', name: 'lonely', emoji: '😔' },
-    { id: 'bored', name: 'bored', emoji: '😑' },
-    { id: 'reward', name: 'reward', emoji: '🎉' },
-    { id: 'stress', name: 'stress', emoji: '😣' },
-    { id: 'excited', name: 'excited', emoji: '😄' },
-    { id: 'sad', name: 'sad', emoji: '😢' },
-  ];
+  // 从 EmotionTagContext.tagsMap 生成可选情绪列表（以键为名称）
+  const effectiveEmotions = useMemo(() => {
+    const entries = Object.entries(tagsMap || {});
+    if (!entries.length) {
+      // 兜底一组基础情绪，避免空白
+      return [
+        { id: 'happy', name: '开心', emoji: '😄' },
+        { id: 'reward', name: '奖励自己', emoji: '🎉' },
+        { id: '平静', name: '平静', emoji: '😌' },
+        { id: '焦虑', name: '焦虑', emoji: '😰' },
+        { id: '沮丧', name: '沮丧', emoji: '😔' },
+      ];
+    }
+    return entries.map(([name, res]) => {
+      const emoji = res?.type === 'emoji' ? String(res.value) : '🙂';
+      return { id: name, name, emoji };
+    });
+  }, [tagsMap]);
   
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
@@ -107,7 +117,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       setAmount('');
       setCategory(getListForType('expense')[0]);
       setDescription('');
-      setEmotion(effectiveEmotions[0]?.name || '');
+      // 等待情绪标签准备好后再设置默认选项
+      const firstEmotion = effectiveEmotions[0]?.name || '';
+      setEmotion(firstEmotion);
       if (!accountId) setAccountId((accounts?.[0]?.id) || '');
     }
   }, [editTransaction, visible]);
@@ -187,8 +199,9 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
         Alert.alert(t('operationFailed'), msg);
         return;
       }
-      // 触发表情雨：根据所选情绪名称在有效情绪中查找 emoji，找不到则使用默认
-      const emojiChar = (effectiveEmotions.find(e => e.name === (emotion || ''))?.emoji) || '🙂';
+      // 触发表情雨：优先从 tagsMap 找资源
+      const res = (tagsMap || {})[emotion || ''];
+      const emojiChar = res && res.type === 'emoji' ? String(res.value) : (effectiveEmotions.find(e => e.name === (emotion || ''))?.emoji) || '🙂';
       triggerEmojiRain(emojiChar, { count: 16, duration: 3000, size: 28 });
     }
     setType('expense');
@@ -379,6 +392,11 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
                 <EmotionTag key={e.id} id={e.id} name={e.name} emoji={e.emoji} />
               ))}
             </View>
+            {!ready && (
+              <Text style={{ color: colors.textTertiary, marginTop: 6, fontSize: 12 }}>
+                {t('loading') || '加载中…'}
+              </Text>
+            )}
           </View>
 
           <View style={styles.section}>
