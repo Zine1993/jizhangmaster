@@ -46,6 +46,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
   const { colors } = useTheme();
   const { triggerEmojiRain } = useEmojiRain();
   const { tagsMap, ready } = useEmotionTags();
+  const tagNames = useMemo(() => Object.keys(tagsMap || {}), [tagsMap]);
 
   const expenseCategoryNames = useMemo(
     () => ((ctxExpenseCategories && ctxExpenseCategories.length)
@@ -123,6 +124,13 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       if (!accountId) setAccountId((accounts?.[0]?.id) || '');
     }
   }, [editTransaction, visible]);
+  // ready 切换后，若当前 emotion 不在 tagsMap，则重设为第一项，避免 fallback 残留
+  useEffect(() => {
+    if (!visible) return;
+    if (!ready) return;
+    if (tagNames.length === 0) return;
+    setEmotion((prev) => (prev && tagNames.includes(prev)) ? prev : tagNames[0]);
+  }, [ready, tagNames, visible]);
 
   useEffect(() => {
     if (visible) {
@@ -387,15 +395,16 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('currentEmotion')}</Text>
-            <View style={styles.emotionContainer}>
-              {effectiveEmotions.map((e) => (
-                <EmotionTag key={e.id} id={e.id} name={e.name} emoji={e.emoji} />
-              ))}
-            </View>
-            {!ready && (
+            {!ready ? (
               <Text style={{ color: colors.textTertiary, marginTop: 6, fontSize: 12 }}>
                 {t('loading') || '加载中…'}
               </Text>
+            ) : (
+              <View style={styles.emotionContainer}>
+                {effectiveEmotions.map((e) => (
+                  <EmotionTag key={e.id} id={e.id} name={e.name} emoji={e.emoji} />
+                ))}
+              </View>
             )}
           </View>
 
