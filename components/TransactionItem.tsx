@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Transaction, useTransactions } from '@/contexts/TransactionContext';
+import { useEmotionTags } from '@/contexts/EmotionTagContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Check } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/i18n';
@@ -26,8 +27,9 @@ function formatDateYYYYMMDD(date: Date) {
 
 export default function TransactionItem({ transaction, onDelete }: TransactionItemProps) {
   const { t, language } = useLanguage();
-  const { deleteTransaction, emotions, currency } = useTransactions();
+  const { deleteTransaction, /* emotions, */ currency } = useTransactions();
   const { colors } = useTheme();
+  const { tagsMap } = useEmotionTags();
 
   const isIncome = transaction.type === 'income';
   const color = isIncome ? colors.income : colors.expense;
@@ -112,9 +114,11 @@ export default function TransactionItem({ transaction, onDelete }: TransactionIt
   );
 
   const emoji = (() => {
-    if (!transaction.emotion) return '🙂';
-    const tag = emotions.find(e => e.name === transaction.emotion);
-    return tag?.emoji || '🙂';
+    const key = String(transaction.emotion || '').trim();
+    if (!key) return '🙂';
+    const res = (tagsMap || {})[key];
+    if (!res) return '🙂';
+    return res.type === 'emoji' ? String(res.value) : '🙂';
   })();
 
 

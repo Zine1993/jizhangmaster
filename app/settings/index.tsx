@@ -311,7 +311,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon={<Smile size={20} color={colors.primary} />}
             title={t('emotionTagManagement')}
-            onPress={() => router.push('/emotions')}
+            onPress={() => router.push('/settings/emotion-tags')}
           />
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
