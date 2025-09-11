@@ -112,7 +112,7 @@ export default function AddAccountScreen() {
         centerTitle={true}
       />
       <ScrollView contentContainerStyle={styles.content}>
-        <Card>
+        <Card style={{ marginHorizontal: 16, marginTop: 16 }}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('accountName')}</Text>
           <TextInput
             style={[styles.input, { color: colors.text, borderColor: colors.border }]}
@@ -251,7 +251,7 @@ export default function AddAccountScreen() {
             style={[styles.input, { color: colors.text, borderColor: colors.border }]}
             value={initialBalance}
             onChangeText={(txt) => setInitialBalance(sanitizeDecimal(txt))}
-            placeholder="0.00"
+            placeholder={currency ? require('@/lib/i18n').formatCurrency(0, currency as any) : '0.00'}
             placeholderTextColor={colors.textTertiary}
             keyboardType="decimal-pad"
           />
@@ -262,7 +262,7 @@ export default function AddAccountScreen() {
                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
                 value={creditLimit}
                 onChangeText={(txt) => setCreditLimit(sanitizeDecimal(txt))}
-                placeholder="0.00"
+                placeholder={currency ? require('@/lib/i18n').formatCurrency(0, currency as any) : '0.00'}
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="decimal-pad"
               />

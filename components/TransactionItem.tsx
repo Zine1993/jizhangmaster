@@ -6,6 +6,7 @@ import { Transaction, useTransactions } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Check } from 'lucide-react-native';
 import { formatCurrency } from '@/lib/i18n';
+import AmountText from '@/components/ui/AmountText';
 import { displayNameFor } from '@/lib/i18n';
 
 
@@ -31,10 +32,12 @@ export default function TransactionItem({ transaction, onDelete }: TransactionIt
   const isIncome = transaction.type === 'income';
   const color = isIncome ? colors.income : colors.expense;
   
+  // 始终显示完整金额，配合 Text 的自适应缩放避免溢出
   const formattedAmount = React.useMemo(() => {
     const code = (transaction as any)?.currency || (currency as any);
-    return formatCurrency(Number(transaction.amount), code as any);
-  }, [transaction.amount, transaction, currency]);
+    const amt = Number(transaction.amount) || 0;
+    return formatCurrency(amt, code as any);
+  }, [transaction.amount, transaction, currency, language]);
 
   // Long-press 2s circular countdown
   const [counting, setCounting] = React.useState(false);
@@ -120,6 +123,28 @@ export default function TransactionItem({ transaction, onDelete }: TransactionIt
 
 
 
+  // 运行时动态测量宽度：header 总宽、类别宽
+  const [headerW, setHeaderW] = React.useState(0);
+  const [categoryW, setCategoryW] = React.useState(0);
+
+  // 常量：与样式保持一致
+  const EMOJI_WRAP_W = 40; // styles.emojiWrap width
+  const EMOJI_GAP = 12;    // emoji 与内容之间的 marginRight
+  const GAP_BETWEEN_TITLE_AND_AMOUNT = 8; // titleRow 与金额之间的 marginLeft
+  const H_PADDING = 14; // container paddingHorizontal
+
+  const computedAmountWidth = React.useMemo(() => {
+    if (!headerW) return undefined;
+    // header 区域是容器的内容区（不含外部 padding），这里 headerW 是按 onLayout 得到的 header 自身宽度
+    // 我们要从 header 总宽里扣除：类别实际宽 + 两侧间距
+    const minW = 110;
+    const maxW = 180;
+    // headerW 已经不含 emoji 区域，因 emoji 不在 header 内；我们只需减去标题与金额之间的间距
+    const rest = headerW - categoryW - GAP_BETWEEN_TITLE_AND_AMOUNT;
+    const w = Math.max(minW, Math.min(maxW, Math.floor(rest)));
+    return isFinite(w) && w > 0 ? w : minW;
+  }, [headerW, categoryW]);
+
   return (
       <Pressable
         style={[
@@ -177,21 +202,24 @@ export default function TransactionItem({ transaction, onDelete }: TransactionIt
       <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={[styles.category, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
+            <Text
+              style={[styles.category, { color: colors.text }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {title}
             </Text>
-            {!!transaction.emotion && (
-              <View style={[styles.emotionPill, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-                <Text style={[styles.emotionText, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">
-                  {displayNameFor({ id: String(transaction.emotion || ''), name: String(transaction.emotion || '') }, 'emotions', t as any, language as any)}
-                </Text>
-              </View>
-            )}
+            {/* 情绪文字徽标已按需求隐藏 */}
           </View>
 
-          <Text style={[styles.amount, { color }]} numberOfLines={1}>
-            {formattedAmount}
-          </Text>
+          <View style={styles.amountWrap}>
+            <AmountText
+              value={formattedAmount}
+              color={color}
+              style={styles.amount}
+              align="right"
+            />
+          </View>
         </View>
 
         <View style={styles.details}>
@@ -250,10 +278,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flex: 1,
-    flexShrink: 1,
+    minWidth: 0
   },
-  category: { fontSize: 16, fontWeight: '600', maxWidth: '60%', flexShrink: 1 },
-  amount: { fontSize: 16, fontWeight: '800', minWidth: 88, textAlign: 'right', flexShrink: 0, fontVariant: ['tabular-nums'] },
+  // 类别占满剩余空间，单行省略，不被金额区域挤压
+  category: {
+    fontSize: 16,
+    fontWeight: '600',
+    flexShrink: 1,
+    flexGrow: 1,
+    minWidth: 0,
+    flexBasis: 'auto',
+    overflow: 'hidden'
+  },
+  // 金额容器限定最大宽度，优先保留标题可见
+  amountWrap: {
+    maxWidth: 140,
+    minWidth: 120,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginLeft: 8,
+    flexShrink: 0
+  },
+  // 金额文本自适应缩放，保持右对齐
+  amount: {
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
+  },
   details: {
     flexDirection: 'row',
     alignItems: 'center',

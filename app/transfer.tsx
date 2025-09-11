@@ -108,7 +108,7 @@ export default function TransferScreen() {
         centerTitle={true}
       />
       <ScrollView contentContainerStyle={styles.content}>
-        <Card>
+        <Card style={{ marginHorizontal: 16, marginTop: 16 }}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('fromAccount')}</Text>
           <TouchableOpacity onPress={() => setShowFromModal(true)} style={[styles.dropdownBtn, { borderColor: colors.border }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
@@ -136,7 +136,7 @@ export default function TransferScreen() {
             style={[styles.input, { color: colors.text, borderColor: colors.border }]}
             value={amount}
             onChangeText={setAmount}
-            placeholder={fromId ? `${currencySymbol} 0.00` : '0.00'}
+            placeholder={fromAccount ? formatCurrency(0, fromAccount.currency as any) : '0.00'}
             placeholderTextColor={colors.textTertiary}
             keyboardType="numeric"
           />
@@ -146,7 +146,7 @@ export default function TransferScreen() {
             style={[styles.input, { color: colors.text, borderColor: colors.border }]}
             value={fee}
             onChangeText={setFee}
-            placeholder={fromId ? `${currencySymbol} 0.00` : '0.00'}
+            placeholder={fromAccount ? formatCurrency(0, fromAccount.currency as any) : '0.00'}
             placeholderTextColor={colors.textTertiary}
             keyboardType="numeric"
           />

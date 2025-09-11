@@ -160,34 +160,53 @@ export function getCurrencySymbol(code: string, locale?: string): string {
 
 export function formatCurrency(amount: number, currency: string, locale?: string): string {
   const norm = normalizeCurrency(currency) || 'USD';
-  const n = Number.isFinite(amount) ? amount : 0;
+  // 将可能的科学计数转换为普通十进制字符串再转回数字，避免 1e±n
+  const raw = Number.isFinite(amount) ? amount : 0;
+  // 对极端值控制精度后再格式化（最多保留 6 位小数，常规显示 2 位）
+  const abs = Math.abs(raw);
+  const safeNum = (() => {
+    // 转普通字符串（不使用 toExponential）
+    if (abs !== 0 && (abs < 1e-6 || abs >= 1e12)) {
+      // 对极小/极大数先定点到 6 位，再转数字，避免 Intl 触发科学计数
+      const fixed = raw.toFixed(6);
+      return Number(fixed);
+    }
+    return raw;
+  })();
 
-  // 对 USD 强制使用 $，避免部分 locale 输出“US$”
+  const loc =
+    locale ||
+    ((Intl as any)?.DateTimeFormat?.().resolvedOptions?.().locale as string) ||
+    'en';
+
+  // 统一数值部分：最多两位小数（金额场景）
+  const numberOptions: Intl.NumberFormatOptions = {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  };
+
+  // 对 USD 强制使用自定义符号，避免部分地区显示 US$
   if (norm === 'USD') {
     try {
-      const loc =
-        locale ||
-        ((Intl as any)?.DateTimeFormat?.().resolvedOptions?.().locale as string) ||
-        'en';
-      // 先用本地数字格式化，再用自定义符号拼接，避免 Intl 的“US$”
-      const num = new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+      const num = new Intl.NumberFormat(loc, numberOptions).format(safeNum);
       const sym = SYMBOLS['USD'] || '$';
       return `${sym}${num}`;
     } catch {
       const sym = SYMBOLS['USD'] || '$';
-      return `${sym}${n.toFixed(2)}`;
+      return `${sym}${safeNum.toFixed(2)}`;
     }
   }
 
   try {
-    const loc =
-      locale ||
-      ((Intl as any)?.DateTimeFormat?.().resolvedOptions?.().locale as string) ||
-      'en';
-    return new Intl.NumberFormat(loc, { style: 'currency', currency: norm }).format(n);
+    // 多数币种用 Intl 货币格式，但仍用固定两位小数，避免 1e±n
+    return new Intl.NumberFormat(loc, {
+      style: 'currency',
+      currency: norm,
+      ...numberOptions,
+    }).format(safeNum);
   } catch {
     const sym = SYMBOLS[norm] || norm;
-    return `${sym}${n.toFixed(2)}`;
+    return `${sym}${safeNum.toFixed(2)}`;
   }
 }
 

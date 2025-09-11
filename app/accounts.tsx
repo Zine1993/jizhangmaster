@@ -8,6 +8,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions, Account } from '@/contexts/TransactionContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
+import { formatCurrency } from '@/lib/i18n';
+import AmountText from '@/components/ui/AmountText';
 
 import { ChevronLeft, Plus, ArrowLeftRight, ChevronDown, Check, Wallet, Banknote, CreditCard, BadgeDollarSign, Smartphone, DollarSign, Euro, JapaneseYen, PoundSterling } from 'lucide-react-native';
 
@@ -42,15 +44,9 @@ export default function AccountsScreen() {
     const balance = getAccountBalance(item.id);
     return (
       <Card style={styles.accountCard}>
-        <View>
-          <Text style={[styles.accountName, { color: colors.text }]}>{item.name}</Text>
-          <Text style={[styles.accountType, { color: colors.textSecondary }]}>{t(item.type) || item.type}</Text>
-        </View>
-        <View style={styles.balanceContainer}>
-          <Text style={[styles.balance, { color: balance >= 0 ? colors.text : colors.expense }]}>
-            {balance.toFixed(2)}
-          </Text>
-          <Text style={[styles.currency, { color: colors.textSecondary }]}>{item.currency}</Text>
+        {/* 行1：左侧账户名，右侧归档按钮 */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={[styles.accountName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
           <TouchableOpacity
             onPress={async () => {
               if (Math.abs(balance) > 1e-8 || archivingId === item.id) return;
@@ -67,7 +63,7 @@ export default function AccountsScreen() {
               }
             }}
             disabled={Math.abs(balance) > 1e-8 || archivingId === item.id}
-            style={{ marginTop: 6, opacity: (Math.abs(balance) <= 1e-8 && archivingId !== item.id) ? 1 : 0.5 }}
+            style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, opacity: (Math.abs(balance) <= 1e-8 && archivingId !== item.id) ? 1 : 0.5, backgroundColor: colors.primary + '20' }}
           >
             {archivingId === item.id ? (
               <ActivityIndicator size="small" color={colors.primary} />
@@ -77,6 +73,38 @@ export default function AccountsScreen() {
               </Text>
             )}
           </TouchableOpacity>
+        </View>
+
+        {/* 行2：账户类型右缩进两字符；信用卡显示额度 */}
+        <View style={{ marginTop: 3, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text
+            style={[styles.accountType, { color: colors.textSecondary, marginLeft: 8 }]}
+            numberOfLines={1}
+          >
+            {t(item.type) || item.type}
+          </Text>
+          {item.type === 'credit_card' ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{t('creditLimit') || 'Credit limit'}:</Text>
+              <AmountText
+                value={String(formatCurrency((item as any)?.creditLimit ?? 0, (item as any)?.currency || 'USD'))}
+                color={colors.textSecondary}
+                style={{ fontSize: 12, fontWeight: '600' }}
+                align="right"
+              />
+            </View>
+          ) : null}
+        </View>
+
+        {/* 行3：右对齐金额与币种 */}
+        <View style={{ marginTop: 4, alignItems: 'flex-end' }}>
+          <AmountText
+            value={String(formatCurrency(balance, item.currency as any))}
+            color={balance >= 0 ? colors.text : colors.expense}
+            style={styles.balance}
+            align="right"
+          />
+
         </View>
       </Card>
     );
@@ -259,10 +287,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   accountCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
     padding: 16,
   },
   accountName: {

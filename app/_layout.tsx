@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import AuthGate from '@/components/AuthGate';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { EmotionTagProvider } from '@/contexts/EmotionTagContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -20,18 +21,20 @@ export default function RootLayout() {
       <SafeAreaProvider>
       <ThemeProvider>
         <LanguageProvider>
-          <TransactionProvider>
-            <EmojiRainProvider>
-              <AuthGate>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="settings" />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="auto" />
-              </AuthGate>
-            </EmojiRainProvider>
-          </TransactionProvider>
+          <EmotionTagProvider>
+            <TransactionProvider>
+              <EmojiRainProvider>
+                <AuthGate>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+  
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="auto" />
+                </AuthGate>
+              </EmojiRainProvider>
+            </TransactionProvider>
+          </EmotionTagProvider>
         </LanguageProvider>
       </ThemeProvider>
       </SafeAreaProvider>

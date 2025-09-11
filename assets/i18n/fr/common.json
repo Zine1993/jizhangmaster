@@ -1,4 +1,6 @@
 {
+  "tapToSeeValues": "Touchez les barres pour voir les valeurs",
+  "tapToViewValues": "Touchez les barres pour voir les valeurs",
   "common": {
     "add": "Ajouter",
     "addFirst": "Ajoutez votre première transaction !",

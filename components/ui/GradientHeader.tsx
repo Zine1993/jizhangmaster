@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, InteractionManager } from 'react-native';
 import { Mail } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -29,7 +29,13 @@ type Props = {
 
 const StatusBarSync = ({ color }: { color: string }) => {
   useFocusEffect(useCallback(() => {
-    setStatusBarStyle('light');
+    const task = InteractionManager.runAfterInteractions(() => {
+      setStatusBarStyle('light');
+    });
+    return () => {
+      // @ts-ignore 兼容旧版无 cancel
+      task?.cancel?.();
+    };
   }, [color]));
   return (
     <ExpoStatusBar

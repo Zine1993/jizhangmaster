@@ -350,7 +350,7 @@ const translations = {
   zh: {
     // Tabs
     home: '首页',
-    transactions: '交易记录',
+    transactions: '交易',
     stats: '统计',
     settings: '设置',
     assets: '资产',

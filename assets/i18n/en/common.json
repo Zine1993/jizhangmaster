@@ -1,6 +1,17 @@
 {
+  "tapToSeeValues": "Tap bars to see values",
+  "tapToViewValues": "Tap bars to see values",
+  "timeRange": "Time Range",
+  "periodOverview": "Period Overview",
+  "summaryByCurrency": "Summary by Currency",
+  "pieChart": "Category Share",
+  "incomeTopCategories": "Top Income Categories",
+  "expenseTopCategories": "Top Expense Categories",
   "common": {
     "appName": "MoodLedger",
+    "insightsSubtitle": "AI analyzes your mood and finances",
+    "usedDaysPrefix": "Used days: ",
+    "keepRecordingTip": "Keep recording to better understand your mood and finances.",
     "slogan": "Your wallet writes, your heart speaks.",
     "guestSubtitle": "Guest mode · Data stored locally",
     "logout": "Logout",
@@ -15,6 +26,8 @@
     "todayTopEmotion": "Today's Top Emotion",
     "spendTimes": "times",
     "noData": "No data",
+    "others": "Others",
+    "overspent": "Overspent",
     "recentTransactions": "Recent Transactions",
     "noTransactions": "No transactions yet",
     "addFirst": "Add your first transaction",
@@ -179,6 +192,83 @@
   "darkTheme": "Dark",
   "language": "Language",
   "defaultAccountName": "Default account",
+  "insight": {
+    "emotion": {
+      "sectionTitle": "Emotion Insights",
+      "distributionTitle": "Emotion distribution",
+      "byCount": "By count",
+      "byAmount": "By amount",
+      "timeTitle": "Emotion-time hotspots",
+      "timeTip": "Spot peak periods in a day/week and related spending",
+      "amountTitle": "Amount by emotion",
+      "amountTip": "Compare average amount under different emotions",
+      "categoryTitle": "Emotion-category affinity",
+      "categoryTip": "Find frequent emotion-category pairs",
+      "incomeTitle": "Income source and emotion",
+      "incomeTip": "Understand emotions when income arrives",
+      "detailWip": "Detailed visualization coming soon",
+      "empty": "No related data yet",
+      "viewDetail": "View details"
+    },
+    "health": {
+      "sectionTitle": "Financial Health Assessment",
+      "ratio": {
+        "title": "Income-Expense Ratio",
+        "ratio": "Ratio",
+        "excellent": "Excellent",
+        "good": "Good",
+        "pass": "Pass",
+        "poor": "Needs Improvement",
+        "advice": {
+          "keep": "Healthy structure. Consider setting a higher saving goal.",
+          "savingGoal": "Good performance. Auto-transfer monthly surplus to saving/investment.",
+          "reduceExpense": "Meets the baseline. Optimize frequent expenses and set budget alerts.",
+          "raiseIncome": "Income is weak or expense is high. Consider increasing income or cutting costs."
+        }
+      },
+      "debt": {
+        "title": "Debt Risk",
+        "ratio": "Debt/Income",
+        "safe": "Safe",
+        "warn": "Caution",
+        "danger": "Danger",
+        "advice": {
+          "safe": "Debt pressure is under control. Keep good repayment records.",
+          "warn": "Limit new installments. Prioritize high-interest debt repayment.",
+          "danger": "High debt ratio. Make a repayment plan and cut unnecessary spending now."
+        }
+      },
+      "flow": {
+        "title": "Cashflow Forecast",
+        "monthN": "Month {n}",
+        "advice": {
+          "risk": "Possible negative cashflow ahead. Prepare emergency fund or cut spending.",
+          "ok": "Cashflow looks stable. Consider increasing saving or investment."
+        }
+      },
+      "saving": {
+        "title": "Savings Health",
+        "months": "Emergency fund covers about {n} months of expense",
+        "advice": {
+          "strong": "Very solid savings. Consider long-term allocation.",
+          "keep": "Reached basic safety cushion. Keep going.",
+          "increase": "Insufficient savings. Set a fixed monthly transfer to emergency account."
+        }
+      }
+    },
+    "sectionFinancialInsight": "Financial Insight",
+    "sectionBudgetAnalysis": "Budget Analysis",
+    "sectionSmartAdvice": "Smart Suggestions",
+    "expenseTitle": "Spending under {emName}",
+    "incomeTitle": "Income under {emName}",
+    "expenseTip": "You tend to spend more when feeling {emName}. Consider alerts or a budget cap to stay mindful.",
+    "incomeTip": "You tend to have more income when feeling {emName}. Allocate wisely to improve stability.",
+    "share": "Share",
+    "helpful": "Helpful",
+    "noData": "No insight data yet",
+    "amountDiffIncrease": "Up {value} vs last week",
+    "amountDiffDecrease": "Down {value} vs last week"
+  },
 
 
 
@@ -272,5 +362,12 @@
   "myAccount": "My account",
   "editNickname": "Edit nickname",
   "enterNickname": "Enter nickname",
-  "resetEmailSent": "Reset email sent. Please check your inbox"
+  "resetEmailSent": "Reset email sent. Please check your inbox",
+  "swipeForMore": "Swipe to see more analysis",
+  "dataHint": {
+    "thisMonthRequired": "No transactions this month. Add income/expense to get a more accurate assessment.",
+    "debtSetup": "No debt accounts or monthly income detected. Add credit/loan accounts and fill income.",
+    "historyFew": "Not enough history (less than 3 months). Forecast confidence is low.",
+    "savingSetup": "No liquid savings or monthly expense detected. Complete balances and recent spending."
+  }
 }

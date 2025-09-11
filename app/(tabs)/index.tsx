@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   FlatList,
-  Dimensions,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,11 +19,13 @@ import { useTheme } from '@/contexts/ThemeContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import Fab from '@/components/ui/Fab';
+import IconButton from '@/components/ui/IconButton';
 import { formatCurrency } from '@/lib/i18n';
+import AmountText from '@/components/ui/AmountText';
 
 
 
-const { width: screenWidth } = Dimensions.get('window');
+
 
 export default function HomeScreen() {
   const { t } = useLanguage();
@@ -34,6 +36,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const aligningRef = useRef(false);
 
   const monthlyStatsByCurrency = getMonthlyStatsByCurrency().sort((a, b) => a.firstAccountDate.getTime() - b.firstAccountDate.getTime());
   const recentTransactions = transactions.slice(0, 5);
@@ -41,14 +44,35 @@ export default function HomeScreen() {
 
 
 
+  const { width } = useWindowDimensions();
+  const pageWidth = Math.max(100, (width || 0) - 32);
+
   const handleScroll = (event: any) => {
+    if (aligningRef.current) return;
     const scrollPosition = event.nativeEvent.contentOffset.x;
-    const cardWidth = screenWidth - 32;
-    const index = Math.round(scrollPosition / cardWidth);
-    if (index !== activeIndex) {
-      setActiveIndex(index);
-    }
+    const index = Math.round(scrollPosition / pageWidth);
+    if (index !== activeIndex) setActiveIndex(index);
   };
+
+  // 在折叠屏切换（width 变化）时，按当前索引对齐到新页宽，防止分页点偏移
+  useEffect(() => {
+    const ref = flatListRef.current as any;
+    if (!ref) return;
+    aligningRef.current = true;
+    // 第一次对齐：下一帧，使用新 pageWidth
+    requestAnimationFrame(() => {
+      try {
+        ref.scrollToOffset({ offset: activeIndex * pageWidth, animated: false });
+      } catch {}
+      // 第二次对齐：再等一小段时间，等布局/阴影/滚动条稳定
+      setTimeout(() => {
+        try {
+          ref.scrollToOffset({ offset: activeIndex * pageWidth, animated: false });
+        } catch {}
+        aligningRef.current = false;
+      }, 50);
+    });
+  }, [pageWidth]);
 
   const handleCloseModal = () => {
     setShowAddModal(false);
@@ -69,16 +93,15 @@ export default function HomeScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <GradientHeader
         variant="emojiTicker"
-
         messageIntervalMs={6000}
         right={
-          <TouchableOpacity onPress={() => router.push('/settings')} style={{ padding: 8 }}>
+          <IconButton onPress={() => router.push('/settings')}>
             <Settings size={24} color="#fff" />
-          </TouchableOpacity>
+          </IconButton>
         }
       />
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 95 }}>
-        <Card padding={16}>
+        <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>{t('home')}</Text>
           <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }}>{t('homeSubtitle')}</Text>
         </Card>
@@ -89,19 +112,32 @@ export default function HomeScreen() {
               ref={flatListRef}
               data={monthlyStatsByCurrency}
               renderItem={({ item }) => (
-                <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+                <View style={[styles.statCard, { backgroundColor: colors.surface, width: Math.max(100, (width || 0) - 32) }]}>
                   <Text style={[styles.cardBalanceLabel, { color: colors.textSecondary }]}>{t('monthlyBalance')} ({item.currency})</Text>
-                  <Text style={[styles.cardBalanceValue, { color: colors.text }]}>
-                    {formatCurrency(item.balance, item.currency as any)}
-                  </Text>
+                  <AmountText
+                    value={formatCurrency(item.balance, item.currency as any)}
+                    color={colors.text}
+                    style={styles.cardBalanceValue}
+                    align="center"
+                  />
                   <View style={[styles.cardRow, { borderTopColor: colors.border }]}>
                     <View style={styles.cardTile}>
                       <Text style={[styles.cardTileLabel, { color: colors.textSecondary }]}>{t('income')}</Text>
-                      <Text style={[styles.cardTileValue, { color: colors.income }]}>{formatCurrency(item.income, item.currency as any)}</Text>
+                      <AmountText
+                        value={formatCurrency(item.income, item.currency as any)}
+                        color={colors.income}
+                        style={styles.cardTileValue}
+                        align="center"
+                      />
                     </View>
                     <View style={[styles.cardTile, { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.border }]}>
                       <Text style={[styles.cardTileLabel, { color: colors.textSecondary }]}>{t('expense')}</Text>
-                      <Text style={[styles.cardTileValue, { color: colors.expense }]}>{formatCurrency(item.expense, item.currency as any)}</Text>
+                      <AmountText
+                        value={formatCurrency(item.expense, item.currency as any)}
+                        color={colors.expense}
+                        style={styles.cardTileValue}
+                        align="center"
+                      />
                     </View>
                   </View>
                 </View>
@@ -110,8 +146,15 @@ export default function HomeScreen() {
               showsHorizontalScrollIndicator={false}
               onScroll={handleScroll}
               keyExtractor={item => item.currency}
+              getItemLayout={(_, index) => ({
+                length: pageWidth,
+                offset: pageWidth * index,
+                index,
+              })}
               decelerationRate="fast"
-              snapToInterval={screenWidth - 32}
+              snapToInterval={Math.max(100, (width || 0) - 32)}
+              snapToAlignment="start"
+              disableIntervalMomentum
             />
             <View style={styles.pagination}>
               {monthlyStatsByCurrency.map((_, index) => (
@@ -121,7 +164,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <Card padding={16}>
+        <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('todayTopEmotion')}</Text>
           {topEmotion ? (
             <View style={{flexDirection:'row', alignItems:'center', gap:8, marginTop:8}}>
@@ -136,7 +179,7 @@ export default function HomeScreen() {
           )}
         </Card>
 
-        <Card padding={16}>
+        <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recentTransactions')}</Text>
           {recentTransactions.length === 0 ? (
             <View style={styles.emptyState}>
@@ -171,7 +214,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   statCard: {
-    width: screenWidth - 32,
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 20,
@@ -185,6 +227,8 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 16,
+    maxWidth: 220,
+    textAlign: 'center',
   },
   cardRow: {
     flexDirection: 'row',
@@ -203,6 +247,8 @@ const styles = StyleSheet.create({
   cardTileValue: {
     fontSize: 18,
     fontWeight: '600',
+    maxWidth: 140,
+    textAlign: 'center',
   },
   pagination: {
     flexDirection: 'row',

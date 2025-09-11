@@ -1,4 +1,120 @@
 {
+  "tapToSeeValues": "点击柱状图查看数值",
+  "insight": {
+    "sectionFinancialInsight": "财务洞察",
+    "sectionBudgetAnalysis": "预算进度分析",
+    "sectionSmartAdvice": "智能建议",
+    "expenseTitle": "“{emName}”下的支出",
+    "incomeTitle": "“{emName}”下的收入",
+    "expenseTip": "当你处于“{emName}”时更容易发生支出，建议开启提醒或设置预算上限以保持理性。",
+    "incomeTip": "当你处于“{emName}”时更容易获得收入，建议合理分配以提升稳定性。",
+    "health": {
+      "sectionTitle": "财务健康评估",
+      "ratio": {
+        "title": "收支比分析",
+        "ratio": "收支比",
+        "excellent": "优秀",
+        "good": "良好",
+        "pass": "合格",
+        "poor": "需改善",
+        "advice": {
+          "keep": "收支结构健康，建议设定更高的储蓄目标。",
+          "savingGoal": "表现良好，可将每月固定结余转入储蓄或理财。",
+          "reduceExpense": "基本达标，建议优化高频支出并设置预算提醒。",
+          "raiseIncome": "收入偏弱或支出偏高，考虑增收/止损措施。"
+        }
+      },
+      "debt": {
+        "title": "债务风险评估",
+        "ratio": "负债/收入",
+        "safe": "安全",
+        "warn": "警戒",
+        "danger": "危险",
+        "advice": {
+          "safe": "债务压力可控，保持良好还款记录。",
+          "warn": "注意控制新增分期，优先偿还高利率负债。",
+          "danger": "债务占比过高，建议立即制定还款计划并减少不必要开支。"
+        }
+      },
+      "flow": {
+        "title": "现金流预测",
+        "monthN": "未来{n}月",
+        "advice": {
+          "risk": "未来可能出现负现金流，请提前准备应急资金或缩减支出。",
+          "ok": "现金流稳定，可适当提高储蓄或理财比例。"
+        }
+      },
+      "saving": {
+        "title": "储蓄健康度",
+        "months": "应急储蓄可覆盖约 {n} 个月支出",
+        "advice": {
+          "strong": "储蓄非常稳健，可考虑长期投资配置。",
+          "keep": "已达基础安全垫，继续保持。",
+          "increase": "储蓄不足，建议每月固定结余转入应急账户。"
+        }
+      }
+    }
+  },
+  "tapToViewValues": "点击柱状图查看数值",
+  "periodOverview": "时间段总览",
+  "summaryByCurrency": "按币种汇总",
+
+
+
+  "insightEmotion": {
+    "sectionBudgetAnalysis": "预算进度分析",
+    "sectionSmartAdvice": "智能建议",
+    "expenseTitle": "“{emName}”下的支出",
+    "incomeTitle": "“{emName}”下的收入",
+    "expenseTip": "当你处于“{emName}”时更容易发生支出，建议开启提醒或设置预算上限以保持理性。",
+    "incomeTip": "当你处于“{emName}”时更容易获得收入，建议合理分配以提升稳定性。",
+    "health": {
+      "sectionTitle": "财务健康评估",
+      "ratio": {
+        "title": "收支比分析",
+        "ratio": "收支比",
+        "excellent": "优秀",
+        "good": "良好",
+        "pass": "合格",
+        "poor": "需改善",
+        "advice": {
+          "keep": "收支结构健康，建议设定更高的储蓄目标。",
+          "savingGoal": "表现良好，可将每月固定结余转入储蓄或理财。",
+          "reduceExpense": "基本达标，建议优化高频支出并设置预算提醒。",
+          "raiseIncome": "收入偏弱或支出偏高，考虑增收/止损措施。"
+        }
+      },
+      "debt": {
+        "title": "债务风险评估",
+        "ratio": "负债/收入",
+        "safe": "安全",
+        "warn": "警戒",
+        "danger": "危险",
+        "advice": {
+          "safe": "债务压力可控，保持良好还款记录。",
+          "warn": "注意控制新增分期，优先偿还高利率负债。",
+          "danger": "债务占比过高，建议立即制定还款计划并减少不必要开支。"
+        }
+      },
+      "flow": {
+        "title": "现金流预测",
+        "monthN": "未来{n}月",
+        "advice": {
+          "risk": "未来可能出现负现金流，请提前准备应急资金或缩减支出。",
+          "ok": "现金流稳定，可适当提高储蓄或理财比例。"
+        }
+      },
+      "saving": {
+        "title": "储蓄健康度",
+        "months": "应急储蓄可覆盖约 {n} 个月支出",
+        "advice": {
+          "strong": "储蓄非常稳健，可考虑长期投资配置。",
+          "keep": "已达基础安全垫，继续保持。",
+          "increase": "储蓄不足，建议每月固定结余转入应急账户。"
+        }
+      }
+    }
+  },
   "common": {
     "add": "添加",
     "addFirst": "添加您的第一笔交易！",
@@ -24,6 +140,9 @@
     "logout": "退出",
     "monthlyBalance": "本月余额",
     "noData": "暂无数据",
+    "others": "其他",
+    "overspent": "已超支",
+    "usedDaysPrefix": "已使用天数：",
     "noTransactions": "暂无交易记录",
     "recentTransactions": "最近交易",
     "remove": "移除",
@@ -40,7 +159,7 @@
     "tip": "提示",
     "today": "今天",
     "todayTopEmotion": "今日主导情绪",
-    "transactions": "交易记录",
+    "transactions": "交易",
     "update": "更新",
     "yesterday": "昨天"
   },
@@ -244,49 +363,49 @@
 
   "clear": "清空",
   "cloudSyncNotConfigured": "未配置云同步。请在配置中填写 Supabase URL 与匿名密钥后再试",
-  "common.add": "添加",
-  "common.addFirst": "添加您的第一笔交易！",
-  "common.appName": "MoodLedger",
-  "common.apply": "应用",
-  "common.cancel": "取消",
-  "common.confirm": "确认",
-  "common.customRange": "自定义日期",
-  "common.delete": "删除",
-  "common.deleteConfirm": "确定要删除这笔交易吗？",
-  "common.edit": "编辑",
-  "common.expense": "支出",
-  "common.guestSubtitle": "游客模式 · 数据仅存本地",
-  "common.home": "首页",
-  "common.homeSubtitle": "数据总览",
-  "common.income": "收入",
-  "common.insights": "洞察",
-  "common.last14Days": "近14天",
-  "common.last30Days": "近30天",
-  "common.last7Days": "近7天",
-  "common.lastMonth": "上个月",
-  "common.lastWeek": "上周",
-  "common.logout": "退出",
-  "common.monthlyBalance": "本月余额",
-  "common.noData": "暂无数据",
-  "common.noTransactions": "暂无交易记录",
-  "common.recentTransactions": "最近交易",
-  "common.remove": "移除",
-  "common.reset": "重置",
-  "common.resetToDefault": "恢复默认",
-  "common.save": "保存",
-  "common.settings": "设置",
-  "common.slogan": "钱包在写，心在诉说",
-  "common.spendTimes": "次出现",
-  "common.stats": "统计",
-  "common.thisMonth": "本月",
-  "common.thisWeek": "本周",
-  "common.thisYear": "本年",
-  "common.tip": "提示",
-  "common.today": "今天",
-  "common.todayTopEmotion": "今日主导情绪",
-  "common.transactions": "交易记录",
-  "common.update": "更新",
-  "common.yesterday": "昨天",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   "confirmPassword": "确认密码",
   "continue": "继续",
   "createFirstAccount": "创建您的第一个账户",
@@ -363,6 +482,14 @@
   "initialBalanceIncluded": "包含初始余额",
   "initialBalanceQuestion": "在使用本应用前您的账户余额是多少？",
   "insightsSubtitle": "AI分析你的情绪与收支关系",
+  "swipeForMore": "左右滑动查看更多分析模块",
+  "dataHint": {
+    "thisMonthRequired": "本月暂无交易，建议先记录收入/支出以获得更准确评估。",
+    "debtSetup": "未识别到负债账户或月收入为空，建议添加信用卡/分期等负债账户并补全收入。",
+    "historyFew": "历史数据不足（少于3个月），预测可信度较低。",
+    "savingSetup": "未识别到可动用储蓄或月均支出，建议完善账户余额与近期支出。"
+  },
+
   "invalidJSON": "JSON 内容不合法",
 
   "keepRecordingTip": "坚持记录能更好理解你的情绪与收支关系。",
@@ -438,25 +565,6 @@
   "noAccountAvailableMessage": "请先在设置中添加一个账户",
   "topCategories": "热门分类",
   "totalExpense": "总支出",
-  "totalIncome": "总收入",
-  "transactionsPage.account": "账户",
-  "transactionsPage.addTransaction": "添加交易",
-  "transactionsPage.amount": "金额",
-  "transactionsPage.amountInvalidMessage": "请输入有效金额",
-  "transactionsPage.amountInvalidTitle": "错误",
-  "transactionsPage.category": "分类",
-  "transactionsPage.currentEmotion": "当前情绪",
-  "transactionsPage.description": "描述",
-  "transactionsPage.descriptionOptional": "备注（可选）",
-  "transactionsPage.editTransaction": "编辑交易",
-  "transactionsPage.emotionRequiredMessage": "请选择一个情绪",
-  "transactionsPage.emotionRequiredTitle": "提示",
-  "transactionsPage.insufficientFunds": "余额不足",
-  "transactionsPage.noAccountAvailableMessage": "请先在设置中添加一个账户",
-  "transactionsPage.noAccountAvailableTitle": "无可用账户",
-  "transactionsPage.notePlaceholder": "备注信息（可选）",
-  "transactionsPage.operationFailed": "操作失败",
-  "transactionsPage.pleaseSelectEmotion": "请选择一个情绪",
-  "transactionsPage.selectAccount": "选择账户",
-  "transactionsPage.transactionType": "交易类型"
+  "totalIncome": "总收入"
+
 }

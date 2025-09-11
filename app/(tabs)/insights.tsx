@@ -1,22 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, AppState } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, AppState, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Trophy, Activity, Settings } from 'lucide-react-native';
+import { Activity, Settings, Lightbulb } from 'lucide-react-native';
 import { useTransactions } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
+import { RuleProvider } from '@/contexts/RuleContext';
+import EmotionCloudCard from '@/components/insights/emotion/EmotionCloudCard';
+
+import IncomeExpenseRatioCard from '@/components/insights/health/IncomeExpenseRatioCard';
+
+import DebtRiskCard from '@/components/insights/health/DebtRiskCard';
+import CashflowForecastCard from '@/components/insights/health/CashflowForecastCard';
+import SavingsHealthCard from '@/components/insights/health/SavingsHealthCard';
+
 import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import IconButton from '@/components/ui/IconButton';
-import Chip from '@/components/ui/Chip';
+
 import { formatCurrency } from '@/lib/i18n';
 import { displayNameFor } from '@/lib/i18n';
 
 export default function InsightsScreen() {
-  const { transactions, getEmotionStatsForRange, getUsageDaysCount, currency } = useTransactions();
+  const { transactions, accounts, getEmotionStatsForRange, getUsageDaysCount, currency } = useTransactions();
   const { colors } = useTheme();
   const { t, language } = useLanguage();
   const router = useRouter();
@@ -25,6 +34,7 @@ export default function InsightsScreen() {
   const days = getUsageDaysCount();
 
   const [metric, setMetric] = React.useState<'count' | 'amount'>('count');
+  const [rankType, setRankType] = React.useState<'expense' | 'income'>('expense');
 
   const { monday, sunday } = React.useMemo(() => {
     const now = new Date();
@@ -39,12 +49,14 @@ export default function InsightsScreen() {
     return { monday: m, sunday: s };
   }, []);
 
+
+
   // 使用实际交易币种进行聚合（emotion + currency）
   const statsSorted = React.useMemo(() => {
     type Row = { name: string; emoji: string; currency?: string; amount: number; count: number };
     const map = new Map<string, Row>();
     for (const t of transactions) {
-      if (t.type !== 'expense') continue;
+      if (t.type !== rankType) continue;
       const d = new Date(t.date);
       if (d.getTime() < monday.getTime() || d.getTime() > sunday.getTime()) continue;
       const key = `${String(t.emotion || '')}__${String((t as any).currency || '')}`;
@@ -55,7 +67,7 @@ export default function InsightsScreen() {
     }
     const arr = Array.from(map.values());
     return arr.sort((a, b) => (metric === 'count' ? b.count - a.count : b.amount - a.amount));
-  }, [transactions, monday, sunday, metric]);
+  }, [transactions, monday, sunday, metric, rankType]);
 
   // 预算进度分析：读取预算并计算进行中预算的使用率
   type Budget = { id: string; name: string; currency?: string; amount: number; startDate: string; endDate: string; enabled?: boolean };
@@ -129,106 +141,166 @@ export default function InsightsScreen() {
   }, [budgetsForInsights, transactions]);
 
   // Derived analytics for pattern analysis and smart advice
-  const lastWeekRange = React.useMemo(() => {
-    const m = new Date(monday);
-    m.setDate(m.getDate() - 7);
-    m.setHours(0, 0, 0, 0);
-    const s = new Date(sunday);
-    s.setDate(s.getDate() - 7);
-    s.setHours(23, 59, 59, 999);
-    return { start: m, end: s };
+
+  // ——— 财务状态洞察数据生成（基于真实交易） ———
+  type Insight = {
+    emotion: string;
+    title: string;
+    amount: { currency: string; value: number; type: 'expense' | 'income' };
+    diff: string;
+    suggestion: string;
+    emoji: string;
+    chartData: { label: string; value: number; currency: string; type: 'expense' | 'income' }[];
+  };
+
+  const toKey = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0,0,0,0).getTime();
+
+  const thisWeekRange = React.useMemo(() => {
+    // 与上文 monday/sunday 对齐
+    return { start: new Date(monday), end: new Date(sunday) };
   }, [monday, sunday]);
 
-  const inRange = React.useCallback((d: Date, start: Date, end: Date) => {
-    const ts = d.getTime();
-    return ts >= start.getTime() && ts <= end.getTime();
-  }, []);
+  const lastWeekRange = React.useMemo(() => {
+    const s = new Date(thisWeekRange.start); s.setDate(s.getDate() - 7);
+    const e = new Date(thisWeekRange.end);   e.setDate(e.getDate() - 7);
+    return { start: s, end: e };
+  }, [thisWeekRange]);
 
-  const weekTx = React.useMemo(
-    () => transactions.filter(t => t.type === 'expense' && inRange(new Date(t.date), monday, sunday)),
-    [transactions, inRange, monday, sunday]
-  );
+  const inRange = (dateInput: string | Date, start: Date, end: Date) => {
+    const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    return d >= start && d <= end;
+  };
+
+  const insightsData = React.useMemo<Insight[]>(() => {
+    if (!Array.isArray(transactions) || transactions.length === 0) return [];
+
+    // 收集本周和上周：按 emotion + type + currency 聚合
+    type Agg = { amount: number; count: number; emoji?: string };
+    const thisAgg = new Map<string, Agg>();
+    const lastAgg = new Map<string, Agg>();
+
+    const push = (map: Map<string, Agg>, k: string, amt: number, emoji?: string) => {
+      const cur = map.get(k) || { amount: 0, count: 0, emoji };
+      cur.amount += amt;
+      cur.count += 1;
+      if (emoji && !cur.emoji) cur.emoji = emoji;
+      map.set(k, cur);
+    };
+
+    for (const tx of transactions) {
+      if (!tx.emotion) continue;
+      const keyBase = `${tx.emotion}__${(tx as any).currency || ''}__${tx.type}`;
+      if (inRange(tx.date, thisWeekRange.start, thisWeekRange.end)) {
+        push(thisAgg, keyBase, tx.amount, (tx as any).emoji);
+      } else if (inRange(tx.date, lastWeekRange.start, lastWeekRange.end)) {
+        push(lastAgg, keyBase, tx.amount, (tx as any).emoji);
+      }
+    }
+
+    // 将 thisAgg 生成 insight：每个 emotion 下最多挑选一条 expense 与一条 income（若存在）
+    const byEmotion: Record<string, { expense?: string; income?: string }> = {};
+    for (const k of thisAgg.keys()) {
+      const [emotion, currencyCode, type] = k.split('__');
+      byEmotion[emotion] = byEmotion[emotion] || {};
+      if (type === 'expense' && !byEmotion[emotion].expense) byEmotion[emotion].expense = k;
+      if (type === 'income' && !byEmotion[emotion].income) byEmotion[emotion].income = k;
+    }
+
+    
+
+    const makeSuggestion = (emotion: string, type: 'expense' | 'income') => {
+      return type === 'expense'
+        ? t('insight.expenseTip')
+        : t('insight.incomeTip');
+    };
+
+    const res: Insight[] = [];
+    const toReadableEmotion = (e: string) => e; // 可用 displayNameFor 进一步本地化
+
+    Object.entries(byEmotion).forEach(([emotion, pair]) => {
+      (['expense','income'] as const).forEach(type => {
+        const key = pair[type];
+        if (!key) return;
+        const [_, currencyCode] = key.split('__');
+        const thisRow = thisAgg.get(key)!;
+        const lastRow = lastAgg.get(key);
+        const lastAmt = Math.max(0, lastRow?.amount || 0);
+        const thisAmt = Math.max(0, thisRow.amount || 0);
+        const diffPct = lastAmt > 0 ? (thisAmt - lastAmt) / lastAmt : (thisAmt > 0 ? 1 : 0);
+        const diffStr = `${diffPct >= 0 ? '+' : ''}${Math.round(diffPct * 100)}%`;
+
+        // chartData：该 emotion 下，同类型的“Top 类目/标签”占比（暂用 this vs other 简化）
+        const totalThisEmotionType = Array.from(thisAgg.entries())
+          .filter(([k]) => k.startsWith(`${emotion}__`) && k.endsWith(`__${type}`))
+          .reduce((s, [, r]) => s + Math.max(0, r.amount), 0);
+
+        const mainVal = thisAmt;
+        const otherVal = Math.max(0, totalThisEmotionType - thisAmt);
+
+        {
+          const emName = displayNameFor({ id: emotion, name: emotion }, 'emotions', t as any, language as any);
+          const titleText = type === 'expense'
+            ? t('insight.expenseTitle', { emName })
+            : t('insight.incomeTitle', { emName });
+          res.push({
+            emotion: toReadableEmotion(emotion),
+            title: titleText,
+            amount: { currency: currencyCode || (currency as any), value: type === 'expense' ? -thisAmt : thisAmt, type },
+            diff: diffStr,
+            suggestion: makeSuggestion(emotion, type),
+            emoji: thisRow.emoji || (type === 'expense' ? '🧾' : '💵'),
+            chartData: [
+              { label: `${emotion}`, value: Math.round(mainVal), currency: currencyCode || (currency as any), type },
+              { label: t('others'), value: Math.round(otherVal), currency: currencyCode || (currency as any), type },
+            ],
+          });
+        }
+      });
+    });
+
+    // 可按 amount 规模排序，先展示更显著的洞察
+    res.sort((a, b) => Math.abs(b.amount.value) - Math.abs(a.amount.value));
+    // 限制数量避免过多（可调整）
+    return res.slice(0, 6);
+  }, [transactions, thisWeekRange, lastWeekRange, currency]);
+
+
+
+
+
+
 
   // 仅比较与 Top 情绪同币种的上周交易
-  const lastWeekTx = React.useMemo(
-    () => transactions.filter(t => {
-      if (t.type !== 'expense') return false;
-      const d = new Date(t.date);
-      const inLast = inRange(d, lastWeekRange.start, lastWeekRange.end);
-      if (!statsSorted[0]) return inLast;
-      const sameEmotion = t.emotion === statsSorted[0].name;
-      const sameCurrency = !(statsSorted[0] as any).currency || (t as any).currency === (statsSorted[0] as any).currency;
-      return inLast && sameEmotion && sameCurrency;
-    }),
-    [transactions, inRange, lastWeekRange, statsSorted]
-  );
 
-  const totalAmt = React.useMemo(() => weekTx.reduce((s, t) => s + t.amount, 0), [weekTx]);
-  const totalCnt = weekTx.length;
-  const avgAll = totalCnt ? totalAmt / totalCnt : 0;
 
-  const top = statsSorted[0];
-  const topAmt = React.useMemo(
-    () => (top ? weekTx.filter(t => t.emotion === top.name).reduce((s, t) => s + t.amount, 0) : 0),
-    [weekTx, top]
-  );
-  const topCnt = React.useMemo(
-    () => (top ? weekTx.filter(t => t.emotion === top.name).length : 0),
-    [weekTx, top]
-  );
-  const topShare = totalCnt ? topCnt / totalCnt : 0;
-  const topAvg = topCnt ? topAmt / topCnt : 0;
 
-  const lastWeekAmt = React.useMemo(() => lastWeekTx.reduce((s, t) => s + t.amount, 0), [lastWeekTx]);
-  const riseAmtPct = lastWeekAmt > 0 ? (totalAmt - lastWeekAmt) / lastWeekAmt : 0;
 
-  const patternLines = React.useMemo(() => {
-    const lines: string[] = [];
-    if (top) {
-      lines.push(
-        t('patternTopShareLine', {
-          emotion: displayNameFor({ id: String(top?.name || ''), name: String(top?.name || '') }, 'emotions', t as any, language as any),
-          share: (topShare * 100).toFixed(0),
-          avg: formatCurrency(topAvg, ((top as any)?.currency as any) || (currency as any)),
-          overallAvg: formatCurrency(avgAll, (currency as any))
-        })
-      );
-    }
-    const deltaStr = `${riseAmtPct >= 0 ? '+' : ''}${(riseAmtPct * 100).toFixed(0)}`;
-    lines.push(
-      t('patternWeekCompareLine', {
-        amount: formatCurrency(totalAmt, (((top as any)?.currency) as any) || (currency as any)),
-        delta: deltaStr
-      })
-    );
-    return lines;
-  }, [top, topShare, topAvg, avgAll, totalAmt, riseAmtPct, t]);
+
+
+
+
+
+
+  // 基于筛选（情绪/币种）的派生计算
+
+
+
+
+
+
+
+
+
+
+
 
   const adviceLines = React.useMemo(() => {
-    const lines: string[] = [];
-    const topCurrency = ((top as any)?.currency as any) || (currency as any);
-    if (top && topAvg > avgAll * 1.3) {
-      lines.push(
-        t('adviceHighAvg', {
-          emotion: displayNameFor({ id: String(top?.name || ''), name: String(top?.name || '') }, 'emotions', t as any, language as any),
-          threshold: formatCurrency(topAvg * 1.2, topCurrency)
-        })
-      );
-    }
-    if (riseAmtPct > 0.2) {
-      lines.push(
-        t('adviceBudgetCap', {
-          cap: formatCurrency(totalAmt * 1.1, topCurrency)
-        })
-      );
-    }
-    if (!lines.length) {
-      lines.push(t('keepRecordingTip'));
-    }
-    return lines;
-  }, [top, topAvg, avgAll, riseAmtPct, totalAmt, t, currency]);
+    // 暂时移除复杂依赖，仅保留通用提示，避免引用已删除变量
+    return [t('keepRecordingTip')];
+  }, [t]);
 
   return (
+    <RuleProvider>
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <GradientHeader
         variant="emojiTicker"
@@ -238,64 +310,24 @@ export default function InsightsScreen() {
           </IconButton>
         }
       />
-      <Card padding={16}>
+      <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
         <Text style={[styles.pageTitle, { color: colors.text }]}>{t('insights')}</Text>
         <Text style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }}>{t('insightsSubtitle')}</Text>
       </Card>
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 95 }}>
-        <Card padding={16}>
-          <View style={styles.sectionHeader}>
-            <Trophy size={18} color={colors.textSecondary} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('weeklyEmotionRanking')}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-            <View style={{ marginLeft: 'auto', flexDirection: 'row', gap: 8 }}>
-              {(['count','amount'] as const).map(m => (
-                <Chip
-                  key={m}
-                  selected={metric === m}
-                  onPress={() => setMetric(m)}
-                >
-                  <Text style={{ color: metric === m ? colors.primary : colors.textSecondary }}>
-                    {m === 'count' ? t('metricByCount') : t('metricByAmount')}
-                  </Text>
-                </Chip>
-              ))}
-            </View>
-          </View>
-          {statsSorted.length === 0 ? (
-            <Text style={{ color: colors.textSecondary }}>{t('noData')}</Text>
-          ) : (
-            statsSorted.slice(0, 3).map((s, idx) => (
-              <View key={`${s.name}_${s.currency || 'ALL'}_${idx}`} style={[styles.rankItem, { borderColor: colors.border }]}>
-                <Text style={styles.rankIndex}>{idx + 1}</Text>
-                <Text style={styles.rankEmoji}>{s.emoji}</Text>
-                <Text style={[styles.rankName, { color: colors.text }]} numberOfLines={1}>
-                  {displayNameFor({ id: String(s.name), name: String(s.name) }, 'emotions', t as any, language as any)}
-                  {!!s.currency ? ` · ${s.currency}` : ''}
-                </Text>
-                <Text style={[styles.rankAmount, { color: colors.text }]}>
-                  {metric === 'count'
-                    ? `${s.count} ${t('spendTimes')}`
-                    : formatCurrency(s.amount, (s.currency as any) || (currency as any))}
-                </Text>
-              </View>
-            ))
-          )}
-        </Card>
 
-        {/* 预算进度分析：横向轮播单个预算进度，不展示汇总 */}
-        <Card padding={16}>
+      {/* 可滚动内容区域：预算进度分析放在第一位，与其他卡片一起滚动 */}
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 95 }}>
+        {/* 预算进度分析：与下方一致滚动 */}
+        <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
           <View style={styles.sectionHeader}>
-            <Activity size={18} color={colors.textSecondary} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('budgetProgressAnalysis')}</Text>
+            <Activity size={20} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('insight.sectionBudgetAnalysis')}</Text>
           </View>
           {budgetsForInsights.length === 0 ? (
             <Text style={{ color: colors.textSecondary }}>{t('noData')}</Text>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 4, gap: 12 }}>
               {budgetsForInsights.map((b) => {
-                // 仅计算每个预算自身周期内的支出进度
                 const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
                 const endOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
                 const bs = startOf(new Date(b.startDate));
@@ -347,27 +379,109 @@ export default function InsightsScreen() {
           )}
         </Card>
 
-        <Card padding={16}>
+        {/* 情绪云 */}
+        <EmotionCloudCard />
+
+        {/* 财务健康评估：四张子卡（收支比、债务、现金流、储蓄） */}
+        <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
           <View style={styles.sectionHeader}>
-            <Activity size={18} color={colors.textSecondary} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('patternAnalysis')}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]} numberOfLines={1}>
+              {t('insight.health.sectionTitle')}
+            </Text>
           </View>
-          {patternLines.length > 0 ? (
-            <View style={[styles.tipBox, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '33' }]} >
-              <Text style={{ fontSize: 18 }}>{statsSorted[0]?.emoji || '📈'}</Text>
-              <View style={{ flex: 1 }}>
-                {patternLines.map((line, i) => (
-                  <Text key={i} style={[styles.tipText, { color: colors.text }]}>{line}</Text>
-                ))}
-              </View>
-            </View>
-          ) : (
-            <Text style={{ color: colors.textSecondary }}>{t('recordMoreToSee')}</Text>
-          )}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+            {(() => {
+              // 数据校验标志
+              const hasThisMonthTx = transactions.some(tx => {
+                const now = new Date();
+                const m0 = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+                const ts = new Date(tx.date || (tx as any).createdAt || now).getTime();
+                return ts >= m0;
+              });
+              const hasHistory = transactions.length >= 1;
+              const monthsSet = new Set<string>();
+              transactions.forEach(tx => {
+                const d = new Date(tx.date || (tx as any).createdAt || new Date());
+                monthsSet.add(`${d.getFullYear()}-${d.getMonth()+1}`);
+              });
+              const monthHistoryCount = monthsSet.size;
+              const now = new Date();
+              const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+              const thisMonthTx = transactions.filter(tx => {
+                const ts = new Date(tx.date || (tx as any).createdAt || now).getTime();
+                return ts >= monthStart;
+              });
+              const currencyCode = (Array.isArray(transactions) && (transactions[0] as any)?.currency) || (currency as any) || 'CNY';
+              const monthIncome = thisMonthTx.filter(ti => ti.type === 'income').reduce((s, ti) => s + Math.max(0, ti.amount || 0), 0);
+              const monthExpense = thisMonthTx.filter(te => te.type === 'expense').reduce((s, te) => s + Math.abs(te.amount || 0), 0);
+
+              // 负债占位：识别账号名或类型中的关键词
+              const debtAccounts = (accounts?.filter?.((a: any) =>
+                /credit|loan|债|借|分期/i.test(String(a?.type || '')) ||
+                /信用|分期|花呗|白条/i.test(String(a?.name || ''))
+              ) || []) as Array<{ name?: string; type?: string; balance?: number; debt?: number }>;
+              const debts = debtAccounts.map((a) => ({
+                name: String(a.name || ''),
+                amount: Math.max(0, a.debt || (a.balance && a.balance < 0 ? -a.balance : 0) || 0),
+              }));
+
+              // 近6个月净现金流
+              const byMonth = new Map<string, number>();
+              transactions.forEach(tx => {
+                const d = new Date(tx.date || (tx as any).createdAt || now);
+                const key = `${d.getFullYear()}-${d.getMonth()+1}`;
+                const val = (tx.type === 'income' ? 1 : -1) * Math.abs(tx.amount || 0);
+                byMonth.set(key, (byMonth.get(key) || 0) + val);
+              });
+              const sortedKeys = Array.from(byMonth.keys()).sort((a,b)=> {
+                const [ay,am]=a.split('-').map(Number); const [by,bm]=b.split('-').map(Number);
+                return ay===by ? am-bm : ay-by;
+              }).slice(-6);
+              const history = sortedKeys.map(k => ({ label: k, value: byMonth.get(k) || 0 }));
+
+              // 可动用储蓄 & 月均支出（近3个月）
+              const liquid = (
+                accounts?.filter?.((a: any) => !/credit|loan|债|借/i.test(String(a?.type || '')))
+                  .reduce?.((s: number, a: any) => s + (Number(a?.balance) || 0), 0)
+              ) || 0;
+              const monthExpenseAvg = (() => {
+                const expByMonth = new Map<string, number>();
+                transactions.filter(t=>t.type==='expense').forEach(tx=>{
+                  const d = new Date(tx.date || (tx as any).createdAt || now);
+                  const key = `${d.getFullYear()}-${d.getMonth()+1}`;
+                  expByMonth.set(key, (expByMonth.get(key) || 0) + Math.abs(tx.amount || 0));
+                });
+                const keys = Array.from(expByMonth.keys()).sort().slice(-3);
+                const sum = keys.reduce((s,k)=> s + (expByMonth.get(k) || 0), 0);
+                return keys.length ? sum / keys.length : monthExpense || 0;
+              })();
+
+              // 传入数据充足性提示
+              const ratioHint = hasThisMonthTx ? null : t('dataHint.thisMonthRequired');
+              const debtHint = (debts && debts.length > 0 && monthIncome > 0) ? null : t('dataHint.debtSetup');
+              const flowHint = monthHistoryCount >= 3 ? null : t('dataHint.historyFew');
+              const savingHint = (typeof liquid === 'number' && monthExpenseAvg > 0) ? null : t('dataHint.savingSetup');
+
+              return (
+                <>
+                  <IncomeExpenseRatioCard agg={{ income: monthIncome, expense: monthExpense, currency: currencyCode }} hint={ratioHint || undefined} />
+                  <DebtRiskCard monthlyIncome={Math.max(monthIncome, 0)} currency={currencyCode} debts={debts} hint={debtHint || undefined} />
+                  <CashflowForecastCard currency={currencyCode} history={history} hint={flowHint || undefined} />
+                  <SavingsHealthCard liquidSavings={Math.max(liquid,0)} monthlyExpenseAvg={Math.max(monthExpenseAvg,0)} currency={currencyCode} hint={savingHint || undefined} />
+                </>
+              );
+            })()}
+          </ScrollView>
+          <Text style={{ color: colors.textSecondary, marginTop: 8, fontSize: 12 }}>
+            {t('swipeForMore')}
+          </Text>
         </Card>
 
         <Card padding={16}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('smartAdvice')}</Text>
+          <View style={styles.sectionHeader}>
+            <Lightbulb size={20} color={colors.textSecondary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('insight.sectionSmartAdvice')}</Text>
+          </View>
           <View style={[styles.tipBox, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '33', marginTop: 12 }]}>
             <Text style={{ fontSize: 18 }}>💡</Text>
             <View style={{ flex: 1 }}>
@@ -382,13 +496,34 @@ export default function InsightsScreen() {
         </Card>
       </ScrollView>
     </SafeAreaView>
+    </RuleProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, minWidth: 0, overflow: 'hidden' },
   pageTitle: { fontSize: 16, fontWeight: '700' },
   sectionTitle: { fontSize: 16, fontWeight: '600' },
+  dropdownBtn: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  modalSheet: { padding: 12, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  optionRow: {
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   rankItem: {
     flexDirection: 'row',
     alignItems: 'center',

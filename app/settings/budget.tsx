@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
 import { formatCurrency } from '@/lib/i18n';
+import AmountText from '@/components/ui/AmountText';
 
 type Budget = {
   id: string;
@@ -137,9 +138,17 @@ export default function BudgetSettingsScreen() {
               </View>
 
               {/* 金额与周期行（保持你的原有信息结构） */}
-              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                {formatCurrency(total, (b.currency as any) || (undefined as any))} · {b.startDate} ~ {b.endDate} {!!b.currency ? ` · ${b.currency}` : ''}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <AmountText
+                  value={formatCurrency(total, (b.currency as any) || (undefined as any))}
+                  color={colors.textSecondary}
+                  style={{ fontSize: 12 }}
+                  align="left"
+                />
+                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                  {` · ${b.startDate} ~ ${b.endDate}${!!b.currency ? ` · ${b.currency}` : ''}`}
+                </Text>
+              </View>
 
               {/* 预算完成度进度条 */}
               <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
@@ -154,9 +163,21 @@ export default function BudgetSettingsScreen() {
 
               {/* 进度说明：已花/总额 + 百分比/超支标识 */}
               <View style={styles.bottomRow}>
-                <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                  {formatCurrency(spent, (b.currency as any) || (undefined as any))} / {formatCurrency(total, (b.currency as any) || (undefined as any))}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <AmountText
+                    value={formatCurrency(spent, (b.currency as any) || (undefined as any))}
+                    color={colors.textSecondary}
+                    style={{ fontSize: 12 }}
+                    align="left"
+                  />
+                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{' / '}</Text>
+                  <AmountText
+                    value={formatCurrency(total, (b.currency as any) || (undefined as any))}
+                    color={colors.textSecondary}
+                    style={{ fontSize: 12 }}
+                    align="left"
+                  />
+                </View>
                 {over ? (
                   <Text style={{ color: colors.expense, fontSize: 12, fontWeight: '600' }}>
                     {(t('overspent') as any) || '已超支'}

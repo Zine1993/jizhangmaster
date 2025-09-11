@@ -1,4 +1,6 @@
 {
+  "tapToSeeValues": "バーをタップして数値を表示",
+  "tapToViewValues": "バーをタップして数値を表示",
   "common": {
     "add": "追加",
     "addFirst": "最初の取引を追加しましょう！",

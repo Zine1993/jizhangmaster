@@ -179,7 +179,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
   const { getUserSettings, upsertUserSettings, upsertTransactions, fetchTransactions, deleteTransactions, upsertAccounts, fetchAccounts, deleteAccounts } = useSupabaseSync();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [currency, setCurrencyState] = useState<Currency>('USD');
+  const [currency, setCurrencyState] = useState<Currency>('CNY');
   const [emotions, setEmotions] = useState<EmotionTag[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<IncomeCategory[]>([]);
@@ -397,10 +397,10 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         if (region && eurSet.has(region)) cur = 'EUR';
         else if (region && map[region]) cur = map[region];
       }
-      setCurrencyState((cur ?? 'USD') as Currency);
+      setCurrencyState((cur ?? 'CNY') as Currency);
     } catch (error) {
       console.error('Failed to load currency:', error);
-      setCurrencyState('USD');
+      setCurrencyState('CNY');
     }
   };
 

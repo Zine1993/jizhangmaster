@@ -1,4 +1,6 @@
 {
+  "tapToSeeValues": "막대를 탭하여 값을 확인하세요",
+  "tapToViewValues": "막대를 탭하여 값을 확인하세요",
   "common": {
     "add": "추가",
     "addFirst": "첫 거래를 추가해 보세요!",

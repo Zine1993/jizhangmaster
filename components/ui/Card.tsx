@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
+import { CARD_MARGIN_H, CARD_MARGIN_TOP } from './constants/layout';
 import { useTheme } from '@/contexts/ThemeContext';
 
 type Props = {
@@ -13,6 +14,10 @@ export default function Card({ children, style, padding = 16 }: Props) {
   return (
     <View
       style={[
+        {
+          marginHorizontal: CARD_MARGIN_H,
+          marginTop: CARD_MARGIN_TOP,
+        },
         styles.card,
         {
           backgroundColor: colors.surface,
@@ -30,8 +35,6 @@ export default function Card({ children, style, padding = 16 }: Props) {
 const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
-    marginHorizontal: 16,
-    marginTop: 16,
     // iOS shadow
     shadowOpacity: 0.08,
     shadowRadius: 10,
