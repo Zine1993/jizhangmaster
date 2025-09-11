@@ -60,12 +60,10 @@ function filterByPeriod(ts: number, period: TimePeriod): boolean {
 
 // 简单中心放射布局，按权重从大到小依次寻找不重叠位置
 function layoutCloud(items: Omit<CloudItem,'x'|'y'>[], width: number, height: number): CloudItem[] {
-  // 估算文字宽高（粗略）：宽 ~ fontSize * tag.length * 0.6, 高 ~ fontSize * 1.2
+  // 阿基米德螺线 + 细步进采样 + 碰撞退让，营造从中心向外扩散的顺滑排布
   const placed: CloudItem[] = [];
   const cx = width / 2;
   const cy = height / 2;
-  const spiralStep = 10;
-  const spiralTurns = 40;
 
   const getBox = (n: Omit<CloudItem,'x'|'y'> | CloudItem) => {
     const s = (n as any).size as number;
@@ -77,37 +75,93 @@ function layoutCloud(items: Omit<CloudItem,'x'|'y'>[], width: number, height: nu
   const collide = (a: CloudItem, b: CloudItem) => {
     const { w: aw, h: ah } = getBox(a);
     const { w: bw, h: bh } = getBox(b);
-    return !(a.x + aw/2 < b.x - bw/2 || a.x - aw/2 > b.x + bw/2 || a.y + ah/2 < b.y - bh/2 || a.y - ah/2 > b.y + bh/2);
+    // 轻微留白，避免贴边拥挤
+    const pad = 2;
+    return !(
+      a.x + aw/2 + pad < b.x - bw/2 ||
+      a.x - aw/2 - pad > b.x + bw/2 ||
+      a.y + ah/2 + pad < b.y - bh/2 ||
+      a.y - ah/2 - pad > b.y + bh/2
+    );
   };
 
-  items.forEach((it) => {
+  // 按权重降序，让大块优先占据更靠中心的位置
+  const sorted = [...items].sort((a, b) => b.weight - a.weight);
+
+  sorted.forEach((it, idx) => {
+    // 根据元素尺寸与序号决定初始半径与步进，避免一开始就过挤
+    const { w, h } = getBox(it as any);
+    const base = Math.max(w, h);
+    const aStep = Math.PI / 36;      // 角步进（更细腻）
+    const rStep = Math.max(2, base / 6); // 半径步进与尺寸相关
+    const jitter = (n: number) => ((n * 137) % 7) - 3; // 轻微抖动避免规则网格
+
     let angle = 0;
-    let radius = 0;
+    let radius = Math.max(0, (idx === 0 ? 0 : base / 2));
     let found = false;
-    let px = cx, py = cy;
-    for (let t = 0; t < spiralTurns; t++) {
-      angle += Math.PI / 12;
-      radius += spiralStep;
-      px = cx + radius * Math.cos(angle);
-      py = cy + radius * Math.sin(angle);
-      const candidate: CloudItem = { ...it, x: px, y: py };
-      const { w, h } = getBox(candidate);
-      const inside = px - w/2 >= 0 && px + w/2 <= width && py - h/2 >= 0 && py + h/2 <= height;
-      const overlaps = placed.some(p => collide(candidate, p));
-      if (!overlaps && inside) {
-        placed.push(candidate);
-        found = true;
-        break;
+    let best: CloudItem | null = null;
+
+    // 螺旋采样上限
+    const maxIter = 1200;
+    for (let i = 0; i < maxIter; i++) {
+      // 阿基米德螺线：r = a + bθ
+      const px = cx + (radius + jitter(i)) * Math.cos(angle);
+      const py = cy + (radius + jitter(i)) * Math.sin(angle);
+      const candidate: CloudItem = { ...(it as any), x: px, y: py };
+
+      const inside =
+        px - w/2 >= 0 && px + w/2 <= width &&
+        py - h/2 >= 0 && py + h/2 <= height;
+
+      if (inside) {
+        const overlaps = placed.some(p => collide(candidate, p));
+        if (!overlaps) {
+          best = candidate;
+          found = true;
+          break;
+        }
+      }
+
+      // 增长角度与半径，形成连续螺旋
+      angle += aStep;
+      radius += rStep * aStep / (2 * Math.PI); // 每圈半径平滑增长
+    }
+
+    if (!found) {
+      // 尝试在已放置元素之间寻找插缝：对现有点的角度附近再微调搜索
+      const slices = 48;
+      for (let s = 0; s < slices && !found; s++) {
+        const theta = (2 * Math.PI * s) / slices;
+        for (let rr = base / 2; rr < Math.min(width, height) / 1.8; rr += Math.max(2, base / 8)) {
+          const px = cx + rr * Math.cos(theta);
+          const py = cy + rr * Math.sin(theta);
+          const candidate: CloudItem = { ...(it as any), x: px, y: py };
+          const inside =
+            px - w/2 >= 0 && px + w/2 <= width &&
+            py - h/2 >= 0 && py + h/2 <= height;
+          if (!inside) continue;
+          const overlaps = placed.some(p => collide(candidate, p));
+          if (!overlaps) {
+            best = candidate;
+            found = true;
+            break;
+          }
+        }
       }
     }
+
     if (!found) {
-      // 钳制到边界内
-      const { w, h } = getBox(it as any);
+      // 最终兜底：钳制到边界内（尽量保留当前位置的角度关系）
+      const px = cx + radius * Math.cos(angle);
+      const py = cy + radius * Math.sin(angle);
       const clampedX = Math.max(w/2, Math.min(width - w/2, px));
       const clampedY = Math.max(h/2, Math.min(height - h/2, py));
-      placed.push({ ...it, x: clampedX, y: clampedY });
+      best = { ...(it as any), x: clampedX, y: clampedY };
     }
+
+    placed.push(best!);
   });
+
   return placed;
 }
 
@@ -178,15 +232,24 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
     if (top.length === 0) return t('noData') || '暂无数据';
     const names = top.map(([k]) => k);
     const dom = names[0];
+
     let tone = t('good') || '良好';
     if (NEGATIVE.has(dom)) tone = t('needAttention') || '需关注';
     if (NEUTRAL.has(dom))  tone = t('steady') || '平稳';
-    const k = 'emotionCloudSummary';
-    const fallback = `本期情绪云显示，最常感受的是「${dom}」，整体情绪${tone}。也经常出现「${names[1] ?? ''}${names[2] ? '、'+names[2] : ''}」等情绪。`;
-    const maybe = (t as any)(k);
-    if (typeof maybe === 'function') return maybe({ dominant: dom, tone, top2: names[1] ?? '', top3: names[2] ?? '' });
-    if (typeof maybe === 'string' && maybe !== k) return maybe;
-    return fallback;
+
+    const top2 = names[1] ?? '';
+    const top3 = names[2] ?? '';
+    const sep = top2 && top3 ? '、' : '';
+
+    // 优先本地化插值；若 i18n 未配置对应键，则回退中文组装
+    const localized = t('emotionCloudSummary', { dominant: dom, tone, top2, top3, sep });
+    if (localized && typeof localized === 'string' && localized !== 'emotionCloudSummary') return localized;
+
+    // 回退：无 top2/top3 时省略“同时较常见”
+    if (!top2 && !top3) {
+      return `本期情绪云显示，最常感受的是「${dom}」，整体情绪${tone}。`;
+    }
+    return `本期情绪云显示，最常感受的是「${dom}」，整体情绪${tone}。也经常出现「${top2}${sep}${top3}」等情绪。`;
   }, [data.freq, t]);
 
   const handleLayout = (e: LayoutChangeEvent) => {
