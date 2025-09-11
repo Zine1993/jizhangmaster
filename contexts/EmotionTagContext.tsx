@@ -51,12 +51,7 @@ export function EmotionTagProvider({ children }: { children: React.ReactNode }) 
     (async () => {
       try {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
-        // 调试：记录加载到的键
-        try {
-          const keys = saved ? Object.keys(JSON.parse(saved) || {}) : [];
-          // eslint-disable-next-line no-console
-          console.log('[EmotionTagProvider] loaded keys=%o', keys);
-        } catch {}
+
         if (saved) {
           const parsed = JSON.parse(saved);
           // 仅在格式正确时替换

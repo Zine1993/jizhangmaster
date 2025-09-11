@@ -7,6 +7,7 @@
   "pieChart": "Category Share",
   "incomeTopCategories": "Top Income Categories",
   "expenseTopCategories": "Top Expense Categories",
+
   "common": {
     "appName": "MoodLedger",
     "insightsSubtitle": "AI analyzes your mood and finances",
@@ -55,8 +56,16 @@
     "last30Days": "Last 30 days",
     "thisYear": "This year",
     "customRange": "Custom range",
-    "tip": "Tip"
+    "tip": "Tip",
+
+    "emotionCloudTitle": "Emotion Cloud",
+    "noEmotionData": "No emotion data for this period",
+    "emotionCloudSummary": "This period's cloud shows dominant: \"{{dominant}}\", overall tone: {{tone}}. Also common: \"{{top2}}{{sep}}{{top3}}\".",
+    "good": "Good",
+    "needAttention": "Needs attention",
+    "steady": "Steady"
   },
+
   "auth": {
     "login": "Login",
     "register": "Register",
@@ -90,6 +99,7 @@
     "featurePrivacy": "Privacy",
     "featurePrivacySub": "Local and cloud sync"
   },
+
   "transactionsPage": {
     "addTransaction": "Add transaction",
     "editTransaction": "Edit transaction",
@@ -112,6 +122,7 @@
     "insufficientFunds": "Insufficient funds",
     "operationFailed": "Operation failed"
   },
+
   "accounts": {
     "addAccount": "Add account",
     "accountName": "Account name",
@@ -127,6 +138,7 @@
     "creditLimitMustBeNumber": "Credit limit must be a number greater than 0",
     "operationFailed": "Operation failed, please try again later"
   },
+
   "categories": {
     "categoryManagement": "Category management",
     "expenseCategoryManagement": "Expense category management",
@@ -137,12 +149,14 @@
     "areYouSureYouWantToResetIncomeCategories": "Are you sure to reset income categories to default?",
     "areYouSureYouWantToRemoveThisCategory": "Are you sure to remove this category?"
   },
+
   "emotionsPage": {
     "emotionTagManagement": "Emotion tag management",
     "nameRequired": "Please enter a name",
     "emojiRequired": "Please enter an emoji",
     "duplicateName": "Name already exists"
   },
+
   "emotions": {
     "happy": "Happy",
     "anxious": "Anxious",
@@ -153,6 +167,7 @@
     "excited": "Excited",
     "sad": "Sad"
   },
+
   "expenseCategories": {
     "food": "Food",
     "transport": "Transport",
@@ -166,10 +181,9 @@
     "travel": "Travel",
     "gifts": "Gifts",
     "transfer": "Transfer",
-  "budgetSettings": "Budget settings",
-  "budgetSetupComingSoon": "Budget setup is coming soon",
     "other": "Other"
   },
+
   "incomeCategories": {
     "salary": "Salary",
     "freelance": "Freelance",
@@ -178,6 +192,7 @@
     "transfer": "Transfer",
     "other": "Other"
   },
+
   "warm": {
     "warm_1": "Small steps, big changes",
     "warm_2": "Spend mindfully, live joyfully",
@@ -185,6 +200,7 @@
     "warm_4": "Balance is a journey",
     "warm_5": "Treat yourself kindly"
   },
+
   "login": "Login",
   "theme": "Theme",
   "systemTheme": "Follow system",
@@ -192,6 +208,7 @@
   "darkTheme": "Dark",
   "language": "Language",
   "defaultAccountName": "Default account",
+
   "insight": {
     "emotion": {
       "sectionTitle": "Emotion Insights",
@@ -269,12 +286,6 @@
     "amountDiffIncrease": "Up {value} vs last week",
     "amountDiffDecrease": "Down {value} vs last week"
   },
-
-
-
-
-
-
 
   "lang.zh": "中文",
   "lang.en": "English",
@@ -364,6 +375,7 @@
   "enterNickname": "Enter nickname",
   "resetEmailSent": "Reset email sent. Please check your inbox",
   "swipeForMore": "Swipe to see more analysis",
+
   "dataHint": {
     "thisMonthRequired": "No transactions this month. Add income/expense to get a more accurate assessment.",
     "debtSetup": "No debt accounts or monthly income detected. Add credit/loan accounts and fill income.",

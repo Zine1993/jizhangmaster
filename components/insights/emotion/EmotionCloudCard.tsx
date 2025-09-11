@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useTransactions } from '@/contexts/TransactionContext';
 import { useEmotionTags } from '@/contexts/EmotionTagContext';
 
-type TimePeriod = 'this_month' | 'last_month' | 'this_quarter' | 'this_year';
+type TimePeriod = 'last_7_days' | 'this_month' | 'last_month' | 'this_year';
 
 const EMOTION_COLORS: Record<string, string> = {
   '开心': '#FFB300',
@@ -37,17 +37,20 @@ function filterByPeriod(ts: number, period: TimePeriod): boolean {
   const now = new Date();
   const year = d.getFullYear();
   const month = d.getMonth();
+  if (period === 'last_7_days') {
+    const start = new Date(now);
+    start.setDate(now.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+    return d >= start && d <= end;
+  }
   if (period === 'this_month') {
     return year === now.getFullYear() && month === now.getMonth();
   }
   if (period === 'last_month') {
     const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return year === lm.getFullYear() && month === lm.getMonth();
-  }
-  if (period === 'this_quarter') {
-    const qStartMonth = Math.floor(now.getMonth() / 3) * 3;
-    const start = new Date(now.getFullYear(), qStartMonth, 1);
-    return d >= start && year === now.getFullYear();
   }
   if (period === 'this_year') {
     return year === now.getFullYear();
@@ -114,7 +117,7 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
   const { transactions } = useTransactions();
   const { tagsMap, supported } = useEmotionTags();
 
-  const [period, setPeriod] = useState<TimePeriod>('this_month');
+  const [period, setPeriod] = useState<TimePeriod>('last_7_days');
   const [canvas, setCanvas] = useState({ w: 0, h: 0 });
 
   const data = useMemo(() => {
@@ -175,10 +178,15 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
     if (top.length === 0) return t('noData') || '暂无数据';
     const names = top.map(([k]) => k);
     const dom = names[0];
-    let tone = '良好';
-    if (NEGATIVE.has(dom)) tone = '需关注';
-    if (NEUTRAL.has(dom)) tone = '平稳';
-    return `本期情绪云显示，最常感受的是「${dom}」，整体情绪${tone}。也经常出现「${names[1] ?? ''}${names[2] ? '、'+names[2] : ''}」等情绪。`;
+    let tone = t('good') || '良好';
+    if (NEGATIVE.has(dom)) tone = t('needAttention') || '需关注';
+    if (NEUTRAL.has(dom))  tone = t('steady') || '平稳';
+    const k = 'emotionCloudSummary';
+    const fallback = `本期情绪云显示，最常感受的是「${dom}」，整体情绪${tone}。也经常出现「${names[1] ?? ''}${names[2] ? '、'+names[2] : ''}」等情绪。`;
+    const maybe = (t as any)(k);
+    if (typeof maybe === 'function') return maybe({ dominant: dom, tone, top2: names[1] ?? '', top3: names[2] ?? '' });
+    if (typeof maybe === 'string' && maybe !== k) return maybe;
+    return fallback;
   }, [data.freq, t]);
 
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -189,38 +197,39 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
 
   return (
     <Card style={{ marginTop: 16 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+      {/* 第一行：标题 */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: '600' }}>
-          {t('emotionCloud') || '情绪云'}
+          {t('emotionCloudTitle') || '情绪云'}
         </Text>
-        {/* 简易时间周期选择 */}
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {([
-            { k: 'this_month', label: '本月' },
-            { k: 'last_month', label: '上月' },
-            { k: 'this_quarter', label: '本季' },
-            { k: 'this_year', label: '全年' },
-          ] as {k: TimePeriod; label: string}[]).map(opt => {
-            const active = period === opt.k;
-            return (
-              <Pressable
-                key={opt.k}
-                onPress={() => setPeriod(opt.k)}
-                style={({ pressed }) => ({
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                  borderRadius: 999,
-                  backgroundColor: active ? colors.primary + '20' : 'transparent',
-                  opacity: pressed ? 0.8 : 1,
-                })}
-              >
-                <Text style={{ color: active ? colors.primary : colors.textSecondary, fontSize: 12 }}>
-                  {opt.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      </View>
+      {/* 第二行：紧贴标题下方，右对齐的筛选按钮 */}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginTop: 6, marginBottom: 8 }}>
+        {([
+          { k: 'last_7_days', label: (t('last7Days') as any) || '近7天' },
+          { k: 'this_month',  label: (t('thisMonth') as any) || '本月' },
+          { k: 'last_month',  label: (t('lastMonth') as any) || '上个月' },
+          { k: 'this_year',   label: (t('thisYear') as any) || '本年' },
+        ] as {k: TimePeriod; label: string}[]).map(opt => {
+          const active = period === opt.k;
+          return (
+            <Pressable
+              key={opt.k}
+              onPress={() => setPeriod(opt.k)}
+              style={({ pressed }) => ({
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 999,
+                backgroundColor: active ? colors.primary + '20' : 'transparent',
+                opacity: pressed ? 0.8 : 1,
+              })}
+            >
+              <Text style={{ color: active ? colors.primary : colors.textSecondary, fontSize: 12 }}>
+                {opt.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {/* 词云画布 */}
@@ -263,7 +272,7 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
         })}
         {placed.length === 0 && (
           <View style={{ height: 220, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: colors.textSecondary }}>本期没有情绪数据</Text>
+            <Text style={{ color: colors.textSecondary }}>{t('noEmotionData') || '本期没有情绪数据'}</Text>
           </View>
         )}
       </View>

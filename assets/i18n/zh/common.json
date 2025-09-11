@@ -1,570 +1,280 @@
 {
-  "tapToSeeValues": "点击柱状图查看数值",
-  "insight": {
-    "sectionFinancialInsight": "财务洞察",
-    "sectionBudgetAnalysis": "预算进度分析",
-    "sectionSmartAdvice": "智能建议",
-    "expenseTitle": "“{emName}”下的支出",
-    "incomeTitle": "“{emName}”下的收入",
-    "expenseTip": "当你处于“{emName}”时更容易发生支出，建议开启提醒或设置预算上限以保持理性。",
-    "incomeTip": "当你处于“{emName}”时更容易获得收入，建议合理分配以提升稳定性。",
-    "health": {
-      "sectionTitle": "财务健康评估",
-      "ratio": {
-        "title": "收支比分析",
-        "ratio": "收支比",
-        "excellent": "优秀",
-        "good": "良好",
-        "pass": "合格",
-        "poor": "需改善",
-        "advice": {
-          "keep": "收支结构健康，建议设定更高的储蓄目标。",
-          "savingGoal": "表现良好，可将每月固定结余转入储蓄或理财。",
-          "reduceExpense": "基本达标，建议优化高频支出并设置预算提醒。",
-          "raiseIncome": "收入偏弱或支出偏高，考虑增收/止损措施。"
-        }
-      },
-      "debt": {
-        "title": "债务风险评估",
-        "ratio": "负债/收入",
-        "safe": "安全",
-        "warn": "警戒",
-        "danger": "危险",
-        "advice": {
-          "safe": "债务压力可控，保持良好还款记录。",
-          "warn": "注意控制新增分期，优先偿还高利率负债。",
-          "danger": "债务占比过高，建议立即制定还款计划并减少不必要开支。"
-        }
-      },
-      "flow": {
-        "title": "现金流预测",
-        "monthN": "未来{n}月",
-        "advice": {
-          "risk": "未来可能出现负现金流，请提前准备应急资金或缩减支出。",
-          "ok": "现金流稳定，可适当提高储蓄或理财比例。"
-        }
-      },
-      "saving": {
-        "title": "储蓄健康度",
-        "months": "应急储蓄可覆盖约 {n} 个月支出",
-        "advice": {
-          "strong": "储蓄非常稳健，可考虑长期投资配置。",
-          "keep": "已达基础安全垫，继续保持。",
-          "increase": "储蓄不足，建议每月固定结余转入应急账户。"
-        }
-      }
-    }
-  },
-  "tapToViewValues": "点击柱状图查看数值",
-  "periodOverview": "时间段总览",
-  "summaryByCurrency": "按币种汇总",
+  "tapToSeeValues": "点击柱状查看数值",
+  "tapToViewValues": "点击柱状查看数值",
+  "timeRange": "时间范围",
+  "periodOverview": "期间概览",
+  "summaryByCurrency": "按货币汇总",
+  "pieChart": "类别占比",
+  "incomeTopCategories": "收入前三类别",
+  "expenseTopCategories": "支出前三类别",
 
-
-
-  "insightEmotion": {
-    "sectionBudgetAnalysis": "预算进度分析",
-    "sectionSmartAdvice": "智能建议",
-    "expenseTitle": "“{emName}”下的支出",
-    "incomeTitle": "“{emName}”下的收入",
-    "expenseTip": "当你处于“{emName}”时更容易发生支出，建议开启提醒或设置预算上限以保持理性。",
-    "incomeTip": "当你处于“{emName}”时更容易获得收入，建议合理分配以提升稳定性。",
-    "health": {
-      "sectionTitle": "财务健康评估",
-      "ratio": {
-        "title": "收支比分析",
-        "ratio": "收支比",
-        "excellent": "优秀",
-        "good": "良好",
-        "pass": "合格",
-        "poor": "需改善",
-        "advice": {
-          "keep": "收支结构健康，建议设定更高的储蓄目标。",
-          "savingGoal": "表现良好，可将每月固定结余转入储蓄或理财。",
-          "reduceExpense": "基本达标，建议优化高频支出并设置预算提醒。",
-          "raiseIncome": "收入偏弱或支出偏高，考虑增收/止损措施。"
-        }
-      },
-      "debt": {
-        "title": "债务风险评估",
-        "ratio": "负债/收入",
-        "safe": "安全",
-        "warn": "警戒",
-        "danger": "危险",
-        "advice": {
-          "safe": "债务压力可控，保持良好还款记录。",
-          "warn": "注意控制新增分期，优先偿还高利率负债。",
-          "danger": "债务占比过高，建议立即制定还款计划并减少不必要开支。"
-        }
-      },
-      "flow": {
-        "title": "现金流预测",
-        "monthN": "未来{n}月",
-        "advice": {
-          "risk": "未来可能出现负现金流，请提前准备应急资金或缩减支出。",
-          "ok": "现金流稳定，可适当提高储蓄或理财比例。"
-        }
-      },
-      "saving": {
-        "title": "储蓄健康度",
-        "months": "应急储蓄可覆盖约 {n} 个月支出",
-        "advice": {
-          "strong": "储蓄非常稳健，可考虑长期投资配置。",
-          "keep": "已达基础安全垫，继续保持。",
-          "increase": "储蓄不足，建议每月固定结余转入应急账户。"
-        }
-      }
-    }
-  },
   "common": {
-    "add": "添加",
-    "addFirst": "添加您的第一笔交易！",
-    "appName": "MoodLedger",
-    "apply": "应用",
-    "cancel": "取消",
-    "confirm": "确认",
-    "customRange": "自定义日期",
-    "delete": "删除",
-    "deleteConfirm": "确定要删除这笔交易吗？",
-    "edit": "编辑",
-    "expense": "支出",
+    "appName": "心晴账本",
+    "insightsSubtitle": "用 AI 理解情绪与财务",
+    "usedDaysPrefix": "已使用天数：",
+    "keepRecordingTip": "坚持记录，帮助你更好理解情绪与财务。",
+    "slogan": "钱包在写，情绪在说。",
     "guestSubtitle": "游客模式 · 数据仅存本地",
+    "logout": "退出登录",
     "home": "首页",
-    "homeSubtitle": "数据总览",
-    "income": "收入",
+    "homeSubtitle": "记录金钱与情绪，认识自己",
+    "transactions": "记账",
+    "stats": "统计",
     "insights": "洞察",
-    "last14Days": "近14天",
-    "last30Days": "近30天",
-    "last7Days": "近7天",
-    "lastMonth": "上个月",
-    "lastWeek": "上周",
-    "logout": "退出",
-    "monthlyBalance": "本月余额",
+    "monthlyBalance": "本月结余",
+    "income": "收入",
+    "expense": "支出",
+    "todayTopEmotion": "今日主导情绪",
+    "spendTimes": "次",
     "noData": "暂无数据",
     "others": "其他",
-    "overspent": "已超支",
-    "usedDaysPrefix": "已使用天数：",
-    "noTransactions": "暂无交易记录",
-    "recentTransactions": "最近交易",
-    "remove": "移除",
-    "reset": "重置",
-    "resetToDefault": "恢复默认",
+    "overspent": "超支",
+    "recentTransactions": "最近账单",
+    "noTransactions": "还没有账单",
+    "addFirst": "去添加第一笔账单",
+    "confirm": "确认",
+    "cancel": "取消",
     "save": "保存",
-    "settings": "设置",
-    "slogan": "钱包在写，心在诉说",
-    "spendTimes": "次出现",
-    "stats": "统计",
-    "thisMonth": "本月",
-    "thisWeek": "本周",
-    "thisYear": "本年",
-    "tip": "提示",
-    "today": "今天",
-    "todayTopEmotion": "今日主导情绪",
-    "transactions": "交易",
     "update": "更新",
-    "yesterday": "昨天"
+    "delete": "删除",
+    "remove": "移除",
+    "edit": "编辑",
+    "add": "添加",
+    "settings": "设置",
+    "resetToDefault": "恢复默认",
+    "reset": "重置",
+    "deleteConfirm": "确定要删除“{name}”吗？",
+    "apply": "应用",
+    "today": "今天",
+    "yesterday": "昨天",
+    "thisWeek": "本周",
+    "lastWeek": "上周",
+    "last7Days": "近7天",
+    "last14Days": "近14天",
+    "thisMonth": "本月",
+    "lastMonth": "上个月",
+    "last30Days": "近30天",
+    "thisYear": "本年",
+    "customRange": "自定义",
+    "tip": "提示",
+
+    "emotionCloudTitle": "情绪云",
+    "noEmotionData": "该周期暂无情绪数据",
+    "emotionCloudSummary": "本期云图主导情绪：“{{dominant}}”，整体倾向：{{tone}}。同时较常见：“{{top2}}{{sep}}{{top3}}”。",
+    "good": "良好",
+    "needAttention": "需关注",
+    "steady": "平稳"
   },
+
   "auth": {
-    "backToLogin": "返回登录",
-    "confirmPasswordLabel": "确认密码",
-    "confirmPasswordPlaceholder": "再次输入密码",
-    "createAccount": "创建你的账号",
-    "emailLabel": "邮箱",
-    "emailPlaceholder": "输入你的邮箱",
-    "featureAnalytics": "数据分析",
-    "featureAnalyticsSub": "支出分布与趋势",
-    "featureInsights": "智能洞察",
-    "featureInsightsSub": "发现情绪模式",
-    "featurePrivacy": "隐私保护",
-    "featurePrivacySub": "本地与云端同步",
-    "forgotPassword": "忘记密码",
-    "goRegister": "去注册",
     "login": "登录",
-    "loginFailed": "登录失败",
-    "passwordLabel": "密码",
-    "passwordMismatch": "两次输入的密码不一致",
-    "passwordPlaceholder": "输入你的密码",
-    "quickTryDesc": "无需注册，立即体验所有功能",
-    "quickTryTitle": "快速体验",
     "register": "注册",
-    "registerFailed": "注册失败",
-    "registerSuccessCheckEmail": "注册成功。请到邮箱确认或直接登录",
-    "registerSuccessLocal": "注册成功。您现在可以使用您的凭据登录。",
-    "resetEmailFailed": "重置邮件发送失败",
-    "resetEmailSent": "已发送重置邮件，请查收",
-    "resetPassword": "重置密码",
     "sendResetEmail": "发送重置邮件",
-    "skipForNow": "暂时跳过",
-    "welcomeBack": "欢迎回来"
+    "backToLogin": "返回登录",
+    "goRegister": "去注册",
+    "forgotPassword": "忘记密码",
+    "welcomeBack": "欢迎回来",
+    "createAccount": "创建账号",
+    "resetPassword": "重置密码",
+    "emailLabel": "邮箱",
+    "emailPlaceholder": "请输入邮箱",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "confirmPasswordLabel": "确认密码",
+    "confirmPasswordPlaceholder": "请再次输入密码",
+    "loginFailed": "登录失败",
+    "passwordMismatch": "两次输入的密码不一致",
+    "registerSuccessLocal": "注册成功，可使用账号登录。",
+    "registerFailed": "注册失败",
+    "registerSuccessCheckEmail": "注册成功，请查看邮箱或直接登录",
+    "resetEmailSent": "重置邮件已发送，请查收",
+    "resetEmailFailed": "发送失败"
   },
+
   "transactionsPage": {
+    "addTransaction": "新增账单",
+    "editTransaction": "编辑账单",
+    "transactionType": "类型",
     "account": "账户",
-    "addTransaction": "添加交易",
-    "amount": "金额",
-    "amountInvalidMessage": "请输入有效金额",
-    "amountInvalidTitle": "错误",
-    "category": "分类",
-    "currentEmotion": "当前情绪",
-    "description": "描述",
-    "descriptionOptional": "备注（可选）",
-    "editTransaction": "编辑交易",
-    "emotionRequiredMessage": "请选择一个情绪",
-    "emotionRequiredTitle": "提示",
-    "insufficientFunds": "余额不足",
-    "noAccountAvailableMessage": "请先在设置中添加一个账户",
-    "noAccountAvailableTitle": "无可用账户",
-    "notePlaceholder": "备注信息（可选）",
-    "operationFailed": "操作失败",
-    "pleaseSelectEmotion": "请选择一个情绪",
     "selectAccount": "选择账户",
-    "transactionType": "交易类型"
+    "amount": "金额",
+    "category": "类别",
+    "currentEmotion": "当前情绪",
+    "description": "备注",
+    "descriptionOptional": "备注（可选）",
+    "notePlaceholder": "可填写备注",
+    "amountInvalidTitle": "错误",
+    "amountInvalidMessage": "请输入有效金额",
+    "emotionRequiredTitle": "提示",
+    "emotionRequiredMessage": "请选择一个情绪",
+    "pleaseSelectEmotion": "请选择情绪",
+    "noAccountAvailableTitle": "暂无可用账户",
+    "noAccountAvailableMessage": "请先在设置中添加账户",
+    "insufficientFunds": "余额不足",
+    "operationFailed": "操作失败"
   },
+
   "accounts": {
-    "accountName": "账户名称",
-    "accountNameExists": "账户名已存在",
-    "accountType": "账户类型",
     "addAccount": "添加账户",
-    "creditLimit": "授信额度",
-    "creditLimitMustBeNumber": "授信额度必须大于 0 的数字",
+    "accountName": "账户名称",
+    "egSavingsAccount": "如：储蓄卡",
+    "accountType": "账户类型",
     "currency": "货币",
-    "egSavingsAccount": "例如 储蓄账户",
     "initialBalance": "初始余额",
+    "creditLimit": "授信额度",
+    "pleaseEnterName": "请输入账户名称",
+    "accountNameExists": "账户名称已存在",
     "initialBalanceMustBeNumber": "初始余额必须为数字",
     "initialBalanceNonNegative": "初始余额不能为负",
-    "pleaseEnterName": "请输入名称"
+    "creditLimitMustBeNumber": "授信额度必须大于 0",
+    "operationFailed": "操作失败，请稍后重试"
   },
+
   "categories": {
-    "areYouSureYouWantToRemoveThisCategory": "确认删除该类别？",
-    "areYouSureYouWantToResetExpenseCategories": "确定恢复默认支出类别吗？",
-    "areYouSureYouWantToResetIncomeCategories": "确定恢复默认收入类别吗？",
     "categoryManagement": "类别管理",
-    "emoji": "表情符号",
-    "expenseCategoryManagement": "支出类别定义",
-    "incomeCategoryManagement": "收入类别定义",
-    "name": "名称"
+    "expenseCategoryManagement": "支出类别管理",
+    "incomeCategoryManagement": "收入类别管理",
+    "emoji": "表情",
+    "name": "名称",
+    "areYouSureYouWantToResetExpenseCategories": "确定恢复支出类别为默认吗？",
+    "areYouSureYouWantToResetIncomeCategories": "确定恢复收入类别为默认吗？",
+    "areYouSureYouWantToRemoveThisCategory": "确定要删除该类别吗？"
   },
+
   "emotionsPage": {
-    "duplicateName": "名称已存在",
-    "emojiRequired": "请填写表情",
     "emotionTagManagement": "情绪标签管理",
-    "nameRequired": "请填写名称"
+    "nameRequired": "请输入名称",
+    "emojiRequired": "请输入表情",
+    "duplicateName": "名称已存在"
   },
+
   "emotions": {
-    "anxious": "焦虑",
-    "bored": "无聊",
-    "excited": "兴奋",
     "happy": "开心",
+    "anxious": "焦虑",
     "lonely": "孤独",
+    "bored": "无聊",
     "reward": "奖励自己",
-    "sad": "难过",
-    "stress": "压力大"
+    "stress": "压力",
+    "excited": "兴奋",
+    "sad": "难过"
   },
+
   "expenseCategories": {
-    "education": "教育",
-    "entertainment": "娱乐",
     "food": "餐饮",
-    "gifts": "礼物",
-    "health": "医疗",
-    "housing": "住房",
-    "medical": "医疗",
-    "other": "其他",
-    "shopping": "购物",
-    "transfer": "转账",
     "transport": "交通",
+    "shopping": "购物",
+    "entertainment": "娱乐",
+    "medical": "医疗",
+    "health": "健康",
+    "education": "教育",
+    "housing": "住房",
+    "utilities": "水电气网",
     "travel": "旅行",
-    "utilities": "水电网"
+    "gifts": "礼物",
+    "transfer": "转账",
+    "other": "其他"
   },
+
   "incomeCategories": {
+    "salary": "工资",
     "freelance": "自由职业",
-    "gift": "礼金",
     "investment": "投资",
-    "salary": "工资"
+    "gift": "礼金",
+    "transfer": "转账",
+    "other": "其他"
   },
+
   "warm": {
-    "warm_1": "愿你被世界温柔以待",
-    "warm_2": "今天也要元气满满",
-    "warm_3": "记账是和未来的自己打招呼",
-    "warm_4": "花钱有度，生活有光",
-    "warm_5": "小目标，一点点实现"
+    "warm_1": "小步慢走，改变发生",
+    "warm_2": "理性花钱，自在生活",
+    "warm_3": "你的情绪很重要",
+    "warm_4": "平衡是旅程",
+    "warm_5": "请善待自己"
   },
-  "accountCreated": "账户创建成功",
-  "accountManagement": "账户管理",
-  "accountReset": "账户已重置",
-  "accountUpdated": "账户更新成功",
-  "accounts.accountName": "账户名称",
-  "accounts.accountNameExists": "账户名已存在",
-  "accounts.accountType": "账户类型",
-  "accounts.addAccount": "添加账户",
-  "accounts.creditLimit": "授信额度",
-  "accounts.creditLimitMustBeNumber": "授信额度必须大于 0 的数字",
-  "accounts.currency": "货币",
-  "accounts.egSavingsAccount": "例如 储蓄账户",
-  "accounts.initialBalance": "初始余额",
-  "accounts.initialBalanceMustBeNumber": "初始余额必须为数字",
-  "accounts.initialBalanceNonNegative": "初始余额不能为负",
-  "accounts.operationFailed": "操作失败，请稍后重试",
-  "accounts.pleaseEnterName": "请输入名称",
-  "addEmotionTag": "添加情绪标签",
-  "adviceBudgetCap": "建议：设定本周预算上限，接近上限时提醒（例如 {cap}）",
-  "adviceHighAvg": "建议：为“{emotion}”相关交易设置 >{threshold} 的提醒/二次确认",
-  "all": "全部",
-  "allTime": "所有时间",
-  "analysisTip": "当你处于 {emotion} 时，你的平均交易金额更高。建议设置预算提醒，保持理性。",
-  "appDescription": "简单易用的个人财务管理工具",
-  "appVersion": "v1.1.1",
-  "areYouSureYouWantToRemoveThisTag": "确定要移除此标签吗？",
-  "assets": "资产",
-  "auth.backToLogin": "返回登录",
-  "auth.confirmPasswordLabel": "确认密码",
-  "auth.confirmPasswordPlaceholder": "再次输入密码",
-  "auth.createAccount": "创建你的账号",
-  "auth.emailLabel": "邮箱",
-  "auth.emailPlaceholder": "输入你的邮箱",
-  "auth.featureAnalytics": "数据分析",
-  "auth.featureAnalyticsSub": "支出分布与趋势",
-  "auth.featureInsights": "智能洞察",
-  "auth.featureInsightsSub": "发现情绪模式",
-  "auth.featurePrivacy": "隐私保护",
-  "auth.featurePrivacySub": "本地与云端同步",
-  "auth.forgotPassword": "忘记密码",
-  "auth.goRegister": "去注册",
-  "auth.login": "登录",
-  "auth.loginFailed": "登录失败",
-  "auth.passwordLabel": "密码",
-  "auth.passwordMismatch": "两次输入的密码不一致",
-  "auth.passwordPlaceholder": "输入你的密码",
-  "auth.quickTryDesc": "无需注册，立即体验所有功能",
-  "auth.quickTryTitle": "快速体验",
-  "auth.register": "注册",
-  "auth.registerFailed": "注册失败",
-  "auth.registerSuccessCheckEmail": "注册成功。请到邮箱确认或直接登录",
-  "auth.registerSuccessLocal": "注册成功。您现在可以使用您的凭据登录。",
-  "auth.resetEmailFailed": "重置邮件发送失败",
-  "auth.resetEmailSent": "已发送重置邮件，请查收",
-  "auth.resetPassword": "重置密码",
-  "auth.sendResetEmail": "发送重置邮件",
-  "auth.skipForNow": "暂时跳过",
-  "auth.welcomeBack": "欢迎回来",
-  "authSubtitle": "记录消费，理解情绪，改善生活",
-  "authTitle": "MoodLedger",
-  "balance": "余额",
-  "cannotDeleteLastAccount": "不能删除最后一个账户",
-  "cannotTransferDifferentCurrency": "不能在不同币种账户之间转账",
-  "cannotTransferSameAccount": "不能向同一账户转账",
-  "cash": "现金",
-  "categories.areYouSureYouWantToRemoveThisCategory": "确认删除该类别？",
-  "categories.areYouSureYouWantToResetExpenseCategories": "确定恢复默认支出类别吗？",
-  "categories.areYouSureYouWantToResetIncomeCategories": "确定恢复默认收入类别吗？",
-  "categories.categoryManagement": "类别管理",
-  "categories.emoji": "表情符号",
-  "categories.expenseCategoryManagement": "支出类别定义",
-  "categories.incomeCategoryManagement": "收入类别定义",
-  "categories.name": "名称",
-  "checkJson": "请检查 JSON 内容",
 
-  "clear": "清空",
-  "cloudSyncNotConfigured": "未配置云同步。请在配置中填写 Supabase URL 与匿名密钥后再试",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  "confirmPassword": "确认密码",
-  "continue": "继续",
-  "createFirstAccount": "创建您的第一个账户",
-  "credit_card": "信用卡",
+  "login": "登录",
+  "theme": "主题",
+  "systemTheme": "跟随系统",
+  "lightTheme": "浅色",
   "darkTheme": "深色",
-  "date": "日期",
-  "daysUnit": "天",
-  "debit_card": "借记卡",
-  "deleteAccountConfirm": "确定要删除此账户吗？",
-  "e-wallet": "电子钱包",
-  "editAccount": "编辑账户",
-  "egEmoji": "例如 😊",
-  "egHappy": "例如 开心",
-  "emotionRanking": "情绪排行",
-  "emotionTags": "情绪标签",
-  "emotions.anxious": "焦虑",
-  "emotions.bored": "无聊",
-  "emotions.excited": "兴奋",
-  "emotions.happy": "开心",
-  "emotions.lonely": "孤独",
-  "emotions.reward": "奖励自己",
-  "emotions.sad": "难过",
-  "emotions.stress": "压力大",
-  "emotionsPage.duplicateName": "名称已存在",
-  "emotionsPage.emojiRequired": "请填写表情",
-  "emotionsPage.emotionTagManagement": "情绪标签管理",
-  "emotionsPage.nameRequired": "请填写名称",
-  "endDate": "结束日期",
-
-  "enterInitialBalance": "输入您的初始余额",
-  "enterPassword": "请输入密码",
-  "expenseCategories.education": "教育",
-  "expenseCategories.entertainment": "娱乐",
-  "expenseCategories.food": "餐饮",
-  "expenseCategories.gifts": "礼物",
-  "expenseCategories.health": "医疗",
-  "expenseCategories.housing": "住房",
-  "expenseCategories.medical": "医疗",
-  "expenseCategories.other": "其他",
-  "expenseCategories.shopping": "购物",
-  "expenseCategories.transfer": "转账",
-  "expenseCategories.transport": "交通",
-  "expenseCategories.travel": "旅行",
-  "expenseCategories.utilities": "水电网",
-  "expenseTopCategories": "支出热门分类",
-  "exportDataJSON": "导出数据（JSON）",
-  "exportFailed": "导出失败",
-  "exportJSONFile": "导出为 JSON 文件",
-  "exportSuccess": "导出成功",
-  "fee": "手续费",
-  "fillAllFields": "请填写完整",
-
-  "fromAccount": "转出账户",
-
-  "greetTitle": "开心生活每一天",
-  "importData": "导入数据",
-  "importDataPasteJSON": "导入数据（粘贴 JSON）",
-  "importExport": "导入 / 导出",
-  "importFailed": "导入失败",
-  "importJSONFile": "从 JSON 文件导入",
-  "importSuccess": "导入成功",
-  "importedPrefix": "共导入 ",
-  "importedSuffix": " 条记录",
-  "incomeCategories.freelance": "自由职业",
-  "incomeCategories.gift": "礼金",
-  "incomeCategories.investment": "投资",
-  "incomeCategories.other": "其他",
-  "incomeCategories.salary": "工资",
-  "incomeCategories.transfer": "转账",
-  "incomeTopCategories": "收入热门分类",
-  "budgetSettings": "预算设置",
-  "budgetSetupComingSoon": "预算设置即将上线，敬请期待",
-  "initialBalanceDescription": "这是您在开始使用本应用前已有的金额。",
-  "initialBalanceIncluded": "包含初始余额",
-  "initialBalanceQuestion": "在使用本应用前您的账户余额是多少？",
-  "insightsSubtitle": "AI分析你的情绪与收支关系",
-  "swipeForMore": "左右滑动查看更多分析模块",
-  "dataHint": {
-    "thisMonthRequired": "本月暂无交易，建议先记录收入/支出以获得更准确评估。",
-    "debtSetup": "未识别到负债账户或月收入为空，建议添加信用卡/分期等负债账户并补全收入。",
-    "historyFew": "历史数据不足（少于3个月），预测可信度较低。",
-    "savingSetup": "未识别到可动用储蓄或月均支出，建议完善账户余额与近期支出。"
-  },
-
-  "invalidJSON": "JSON 内容不合法",
-
-  "keepRecordingTip": "坚持记录能更好理解你的情绪与收支关系。",
-
-  "lang.zh": "中文",
-  "lang.en": "English",
-  "lang.es": "Español",
-  "lang.fr": "Français",
-  "lang.de": "Deutsch",
-  "lang.ja": "日本語",
-  "lang.ko": "한국어",
   "language": "语言",
   "defaultAccountName": "默认账户",
-  "lightTheme": "浅色",
-  "loggedInAccount": "已登录账号",
-  "loginOrRegister": "登录 / 注册",
-  "logoutFailed": "退出失败",
-  "mainEmotion": "主导情绪",
-  "metricByAmount": "按金额",
-  "metricByCount": "按笔数",
-  "netWorth": "净资产",
-  "noAccounts": "暂无有效账户",
-  "noAccountsFound": "未找到账户",
-  "noSharingAvailable": "当前环境不支持保存文件",
-  "operationLogs": "操作记录",
-  "operationSuccess": "已完成",
-  "passwordIncorrect": "密码不正确",
-  "passwordNotMatch": "两次密码不一致",
-  "passwordRecovery": "密码恢复",
-  "passwordSet": "已设置密码",
-  "passwordTooShort": "密码至少 4 位",
-  "pasteJsonBelow": "将导出的 JSON 内容粘贴到下方：",
-  "pasteJsonPlaceholder": "粘贴 JSON",
-  "patternAnalysis": "收支模式分析",
-  "patternTopShareLine": "{emotion}占比 {share}%，平均单笔 {avg}（总体均值 {overallAvg}）",
-  "patternWeekCompareLine": "本周支出 {amount}，较上周 {delta}%",
-  "pieChart": "分类占比",
-  "pleaseLoginToReset": "未登录，无法使用邮箱找回。请重置账户",
-  "pleaseRetry": "请重试",
-  "prepaid_card": "预充卡",
-  "recordMoreToSee": "记录几笔后即可看到洞察",
-  "recordsSubtitle": "你的收支记录",
-  "resetAccount": "重置账户",
-  "resetAccountWarning": "这将删除您所有的账户和交易数据，并移除密码。此操作无法撤销。",
-  "resetEmotionTagsRestored": "已恢复默认情绪",
-  "resetEmotionTagsToDefault": "恢复默认情绪",
-  "sendEmail": "发送邮件",
-  "setInitialBalance": "设置初始余额",
-  "setPassword": "设置密码",
-  "settingsSubtitle": "定制化你的个性",
-  "skip": "跳过",
-  "smartAdvice": "智能建议",
 
-  "startDate": "开始日期",
-  "startImport": "开始导入",
-  "statsSubtitle": "全局数据分析",
-  "success": "成功",
-  "budget": "预算",
-  "budgetName": "预算名称",
-  "tomorrow": "明天",
-  "in7Days": "七天后",
-  "loading": "加载中…",
-  "budgetPeriod": "预算周期",
-  "defaultBudget": "默认预算",
-  "selectCurrency": "选择货币",
-  "budgetExactOverlapNotAllowed": "不允许完全重合的预算周期（同币种且起止日期相同）",
-  "systemTheme": "跟随系统",
-  "theme": "主题",
-  "timeRange": "时间范围",
-  "toAccount": "转入账户",
-  "selectAccount": "选择账户",
-  "noAccountAvailableTitle": "无可用账户",
-  "noAccountAvailableMessage": "请先在设置中添加一个账户",
-  "topCategories": "热门分类",
-  "totalExpense": "总支出",
-  "totalIncome": "总收入"
-
+  "insight": {
+    "emotion": {
+      "sectionTitle": "情绪洞察",
+      "distributionTitle": "情绪分布",
+      "byCount": "按次数",
+      "byAmount": "按金额",
+      "timeTitle": "情绪-时间热点",
+      "timeTip": "发现一天/一周的高峰期与相关支出",
+      "amountTitle": "不同情绪的金额",
+      "amountTip": "比较不同情绪下的平均金额",
+      "categoryTitle": "情绪-类别亲和度",
+      "categoryTip": "发现高频情绪-类别组合",
+      "incomeTitle": "收入来源与情绪",
+      "incomeTip": "了解收入到账时的情绪",
+      "detailWip": "详细可视化即将到来",
+      "empty": "暂无相关数据",
+      "viewDetail": "查看详情"
+    },
+    "health": {
+      "sectionTitle": "财务健康评估",
+      "ratio": {
+        "title": "收支比",
+        "ratio": "比例",
+        "excellent": "优秀",
+        "good": "良好",
+        "pass": "及格",
+        "poor": "待提升",
+        "advice": {
+          "keep": "结构健康，可以设定更高储蓄目标。",
+          "savingGoal": "表现不错，建议将月结余自动转入储蓄/投资。",
+          "reduceExpense": "达到基线，优化高频支出并设置预算提醒。",
+          "raiseIncome": "收入偏弱或支出偏高，考虑增加收入或削减开销。"
+        }
+      },
+      "debt": {
+        "title": "负债风险",
+        "ratio": "负债/收入",
+        "safe": "安全",
+        "warn": "注意",
+        "danger": "警惕",
+        "advice": {
+          "safe": "负债压力可控，保持良好还款记录。",
+          "warn": "控制新增分期，优先偿还高息负债。",
+          "danger": "负债率高，制定还款计划并立即缩减不必要消费。"
+        }
+      },
+      "flow": {
+        "title": "现金流预测",
+        "monthN": "{n} 月",
+        "advice": {
+          "risk": "未来可能现金流为负，准备应急金或削减支出。",
+          "ok": "现金流稳定，可考虑增加储蓄或投资。"
+        }
+      },
+      "saving": {
+        "title": "储蓄健康",
+        "months": "应急金可覆盖约 {n} 个月支出",
+        "advice": {
+          "strong": "储蓄很扎实，可考虑长期配置。",
+          "keep": "达到基本安全垫，继续保持。",
+          "increase": "储蓄不足，设定每月固定转入应急账户。"
+        }
+      }
+    },
+    "sectionFinancialInsight": "财务洞察",
+    "sectionBudgetAnalysis": "预算分析",
+    "sectionSmartAdvice": "智能建议",
+    "expenseTitle": "在 {emName} 情绪下的支出",
+    "incomeTitle": "在 {emName} 情绪下的收入",
+    "expenseTip": "你在 {emName} 时更易支出，考虑设置提醒或预算上限。",
+    "incomeTip": "你在 {emName} 时更易有收入，合理分配以提高稳定性。",
+    "share": "分享",
+    "helpful": "有帮助",
+    "noData": "暂无洞察数据",
+    "amountDiffIncrease": "较上周增加 {value}",
+    "amountDiffDecrease": "较上周减少 {value}"
+  }
 }
