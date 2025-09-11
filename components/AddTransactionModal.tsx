@@ -47,6 +47,11 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
   const { triggerEmojiRain } = useEmojiRain();
   const { tagsMap, ready } = useEmotionTags();
   const tagNames = useMemo(() => Object.keys(tagsMap || {}), [tagsMap]);
+  // 调试日志：对比设置页(tagsMap)与此处(effectiveEmotions)数量和键
+  useEffect(() => {
+    if (!visible) return;
+    console.log('[EmotionPicker] ready=%s tagNames(%d)=%o', ready, tagNames.length, tagNames);
+  }, [ready, tagNames, visible]);
 
   const expenseCategoryNames = useMemo(
     () => ((ctxExpenseCategories && ctxExpenseCategories.length)
@@ -404,6 +409,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
                 {effectiveEmotions.map((e) => (
                   <EmotionTag key={e.id} id={e.id} name={e.name} emoji={e.emoji} />
                 ))}
+                {(() => { try { console.log('[EmotionPicker] effectiveEmotions(%d)=%o', effectiveEmotions.length, effectiveEmotions.map(x=>x.name)); } catch {} return null; })()}
               </View>
             )}
           </View>
