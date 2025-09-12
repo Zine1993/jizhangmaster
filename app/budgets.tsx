@@ -319,11 +319,11 @@ export default function BudgetsScreen() {
               {editingId ? t('edit') : t('add')} {t('budget')}
             </Text>
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('budgetName') || '预算名称'}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('budget.name') || 'Budget Name'}</Text>
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder={t?.('defaultBudget') || '默认预算'}
+              placeholder={t?.('budget.namePlaceholder') || 'e.g. My Budget'}
               placeholderTextColor={colors.textSecondary}
               style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
             />

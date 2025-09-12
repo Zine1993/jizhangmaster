@@ -23,7 +23,7 @@ import {
   Check,
   Lock,
   Unlock,
-  PiggyBank,
+  Calculator,
   ChevronRight,
 } from 'lucide-react-native';
 import GradientHeader from '@/components/ui/GradientHeader';
@@ -275,7 +275,7 @@ export default function SettingsScreen() {
         {/* 外观与数据 */}
         <Card padding={0} style={{ marginBottom: 8 }}>
           <SettingRow
-            icon={<PiggyBank size={20} color={colors.primary} />}
+            icon={<Calculator size={20} color={colors.primary} />}
             title={t('budgetSettings')}
             onPress={() => router.push('/budgets')}
           />
