@@ -1,19 +1,14 @@
 {
   "tapToSeeValues": "点击柱状查看数值",
   "tapToViewValues": "点击柱状查看数值",
-  "timeRange": "时间范围",
-  "periodOverview": "期间概览",
-  "summaryByCurrency": "按货币汇总",
-  "pieChart": "类别占比",
   "incomeTopCategories": "收入前三类别",
   "expenseTopCategories": "支出前三类别",
-
   "common": {
     "appName": "心晴账本",
     "insightsSubtitle": "用 AI 理解情绪与财务",
     "usedDaysPrefix": "已使用天数：",
     "keepRecordingTip": "坚持记录，帮助你更好理解情绪与财务。",
-    "slogan": "钱包在写，情绪在说。",
+    "slogan": "细水长流，财源广进",
     "guestSubtitle": "游客模式 · 数据仅存本地",
     "logout": "退出登录",
     "home": "首页",
@@ -57,7 +52,6 @@
     "thisYear": "本年",
     "customRange": "自定义",
     "tip": "提示",
-
     "emotionCloudTitle": "情绪云",
     "noEmotionData": "该周期暂无情绪数据",
     "emotionCloudSummary": "本期云图主导情绪：“{{dominant}}”，整体倾向：{{tone}}。同时较常见：“{{top2}}{{sep}}{{top3}}”。",
@@ -65,7 +59,6 @@
     "needAttention": "需关注",
     "steady": "平稳"
   },
-
   "auth": {
     "login": "登录",
     "register": "注册",
@@ -88,9 +81,17 @@
     "registerFailed": "注册失败",
     "registerSuccessCheckEmail": "注册成功，请查看邮箱或直接登录",
     "resetEmailSent": "重置邮件已发送，请查收",
-    "resetEmailFailed": "发送失败"
+    "resetEmailFailed": "发送失败",
+    "quickTryTitle": "Quick Try",
+    "quickTryDesc": "No signup needed, try all features now",
+    "skipForNow": "Skip for now",
+    "featureAnalytics": "Data Analytics",
+    "featureAnalyticsSub": "Spending distribution & trends",
+    "featureInsights": "Smart Insights",
+    "featureInsightsSub": "Discover emotion patterns",
+    "featurePrivacy": "Privacy Protection",
+    "featurePrivacySub": "Local & cloud sync"
   },
-
   "transactionsPage": {
     "addTransaction": "新增账单",
     "editTransaction": "编辑账单",
@@ -113,7 +114,6 @@
     "insufficientFunds": "余额不足",
     "operationFailed": "操作失败"
   },
-
   "accounts": {
     "addAccount": "添加账户",
     "accountName": "账户名称",
@@ -129,7 +129,6 @@
     "creditLimitMustBeNumber": "授信额度必须大于 0",
     "operationFailed": "操作失败，请稍后重试"
   },
-
   "categories": {
     "categoryManagement": "类别管理",
     "expenseCategoryManagement": "支出类别管理",
@@ -140,14 +139,12 @@
     "areYouSureYouWantToResetIncomeCategories": "确定恢复收入类别为默认吗？",
     "areYouSureYouWantToRemoveThisCategory": "确定要删除该类别吗？"
   },
-
   "emotionsPage": {
     "emotionTagManagement": "情绪标签管理",
     "nameRequired": "请输入名称",
     "emojiRequired": "请输入表情",
     "duplicateName": "名称已存在"
   },
-
   "emotions": {
     "happy": "开心",
     "anxious": "焦虑",
@@ -158,7 +155,6 @@
     "excited": "兴奋",
     "sad": "难过"
   },
-
   "expenseCategories": {
     "food": "餐饮",
     "transport": "交通",
@@ -174,7 +170,6 @@
     "transfer": "转账",
     "other": "其他"
   },
-
   "incomeCategories": {
     "salary": "工资",
     "freelance": "自由职业",
@@ -183,7 +178,6 @@
     "transfer": "转账",
     "other": "其他"
   },
-
   "warm": {
     "warm_1": "小步慢走，改变发生",
     "warm_2": "理性花钱，自在生活",
@@ -191,116 +185,137 @@
     "warm_4": "平衡是旅程",
     "warm_5": "请善待自己"
   },
-
-  "login": "登录",
   "theme": "主题",
   "systemTheme": "跟随系统",
   "lightTheme": "浅色",
   "darkTheme": "深色",
   "language": "语言",
-  "defaultAccountName": "默认账户",
-  "budgetSettings": "预算设置",
-  "noDataThisMonth": "本月暂无数据，请先添加记录。",
   "swipeForMore": "下滑查看更多数据",
-  "healthAssessmentTitle": "财务健康评估",
-  "healthAssessmentSubtitle": "基于数据与习惯的智能分析",
-  "advice.savingGoal": "设定储蓄目标，例如每周存入 {amount}",
-  "advice.reduceExpense": "在 {category} 类别减少 {percent}%",
-  "advice.raiseIncome": "尝试拓展额外收入来源",
-  "advice.budgetCap": "设置预算上限，接近 {cap} 时提醒",
   "analysisTip": "当你处于 {emotion} 时平均金额更高，建议设置预算提醒保持理性。",
-  "insight.health.ratio.title": "收支比",
-  "insight.health.ratio.ratio": "比值",
-  "insight.health.ratio.excellent": "优秀",
-  "insight.health.ratio.good": "良好",
-  "insight.health.ratio.pass": "及格",
-  "insight.health.ratio.poor": "偏弱",
-  "insight.health.ratio.advice.keep": "保持当前的良好财务习惯",
-  "insight.health.ratio.advice.savingGoal": "设定储蓄目标，例如每周存入 {amount}",
-  "insight.health.ratio.advice.reduceExpense": "在 {category} 类别减少 {percent}%",
-  "insight.health.ratio.advice.raiseIncome": "尝试拓展额外收入来源",
-
   "dataHint": {
     "thisMonthRequired": "本月暂无交易，添加收入/支出以获得更准确的评估。",
     "debtSetup": "未检测到负债账户或月收入，请添加信用/贷款账户并填写收入。",
     "historyFew": "历史数据不足（少于 3 个月），预测置信度较低。",
     "savingSetup": "未检测到流动储蓄或月支出，请完善账户余额与近期支出。"
   },
-  "insight": {
-    "emotion": {
-      "sectionTitle": "情绪洞察",
-      "distributionTitle": "情绪分布",
-      "byCount": "按次数",
-      "byAmount": "按金额",
-      "timeTitle": "情绪-时间热点",
-      "timeTip": "发现一天/一周的高峰期与相关支出",
-      "amountTitle": "不同情绪的金额",
-      "amountTip": "比较不同情绪下的平均金额",
-      "categoryTitle": "情绪-类别亲和度",
-      "categoryTip": "发现高频情绪-类别组合",
-      "incomeTitle": "收入来源与情绪",
-      "incomeTip": "了解收入到账时的情绪",
-      "detailWip": "详细可视化即将到来",
-      "empty": "暂无相关数据",
-      "viewDetail": "查看详情"
-    },
-    "health": {
-      "sectionTitle": "财务健康评估",
-      "ratio": {
-        "title": "收支比",
-        "ratio": "比例",
-        "excellent": "优秀",
-        "good": "良好",
-        "pass": "及格",
-        "poor": "待提升",
-        "advice": {
-          "keep": "结构健康，可以设定更高储蓄目标。",
-          "savingGoal": "表现不错，建议将月结余自动转入储蓄/投资。",
-          "reduceExpense": "达到基线，优化高频支出并设置预算提醒。",
-          "raiseIncome": "收入偏弱或支出偏高，考虑增加收入或削减开销。"
-        }
-      },
-      "debt": {
-        "title": "负债风险",
-        "ratio": "负债/收入",
-        "safe": "安全",
-        "warn": "注意",
-        "danger": "警惕",
-        "advice": {
-          "safe": "负债压力可控，保持良好还款记录。",
-          "warn": "控制新增分期，优先偿还高息负债。",
-          "danger": "负债率高，制定还款计划并立即缩减不必要消费。"
-        }
-      },
-      "flow": {
-        "title": "现金流预测",
-        "monthN": "{n} 月",
-        "advice": {
-          "risk": "未来可能现金流为负，准备应急金或削减支出。",
-          "ok": "现金流稳定，可考虑增加储蓄或投资。"
-        }
-      },
-      "saving": {
-        "title": "储蓄健康",
-        "months": "应急金可覆盖约 {n} 个月支出",
-        "advice": {
-          "strong": "储蓄很扎实，可考虑长期配置。",
-          "keep": "达到基本安全垫，继续保持。",
-          "increase": "储蓄不足，设定每月固定转入应急账户。"
-        }
-      }
-    },
-    "sectionFinancialInsight": "财务洞察",
-    "sectionBudgetAnalysis": "预算分析",
-    "sectionSmartAdvice": "智能建议",
-    "expenseTitle": "在 {emName} 情绪下的支出",
-    "incomeTitle": "在 {emName} 情绪下的收入",
-    "expenseTip": "你在 {emName} 时更易支出，考虑设置提醒或预算上限。",
-    "incomeTip": "你在 {emName} 时更易有收入，合理分配以提高稳定性。",
-    "share": "分享",
-    "helpful": "有帮助",
-    "noData": "暂无洞察数据",
-    "amountDiffIncrease": "较上周增加 {value}",
-    "amountDiffDecrease": "较上周减少 {value}"
-  }
-}
+  "accountCreated": "Account created successfully",
+  "accountManagement": "Account Management",
+  "accountReset": "Account has been reset",
+  "accountUpdated": "Account updated successfully",
+  "addEmotionTag": "Add Emotion Tag",
+  "adviceBudgetCap": "Tip: Set a weekly spending cap and get an alert when you're close (e.g., {cap})",
+  "adviceHighAvg": "Tip: Set an alert/confirmation for '{emotion}' transactions >{threshold}",
+  "all": "All",
+  "allTime": "All Time",
+  "appDescription": "A simple and easy personal finance management tool",
+  "appVersion": "v1.1.1",
+  "areYouSureYouWantToRemoveThisTag": "Are you sure you want to remove this tag?",
+  "assets": "Assets",
+  "authSubtitle": "Track spending, understand feelings, improve your life",
+  "authTitle": "MoodLedger",
+  "balance": "Balance",
+  "cannotDeleteLastAccount": "Cannot delete the last account",
+  "cannotTransferDifferentCurrency": "Cannot transfer between accounts with different currencies",
+  "cannotTransferSameAccount": "Cannot transfer to the same account",
+  "cash": "Cash",
+  "checkJson": "Please check JSON content",
+  "chinese": "Chinese",
+  "clear": "Clear",
+  "cloudSyncNotConfigured": "Cloud sync not configured. Please enter your Supabase URL and anonymous key in Settings.",
+  "confirmPassword": "Confirm password",
+  "continue": "Continue",
+  "createFirstAccount": "Create your first account",
+  "credit_card": "Credit card",
+  "date": "Date",
+  "daysUnit": "days",
+  "debit_card": "Debit card",
+  "deleteAccountConfirm": "Are you sure you want to delete this account?",
+  "e-wallet": "E-wallet",
+  "editAccount": "Edit account",
+  "egEmoji": "e.g. 😊",
+  "egHappy": "e.g. Happy",
+  "emotionRanking": "Emotion Ranking",
+  "emotionTags": "Emotion Tags",
+  "endDate": "End Date",
+  "english": "English",
+  "enterInitialBalance": "Enter your initial balance",
+  "enterPassword": "Enter password",
+  "exportDataJSON": "Export data (JSON)",
+  "exportFailed": "Export failed",
+  "exportJSONFile": "Export as JSON file",
+  "exportSuccess": "Export successful",
+  "fee": "Fee",
+  "fillAllFields": "Please fill in all fields",
+  "french": "French",
+  "fromAccount": "From account",
+  "german": "German",
+  "greetTitle": "Happy living, every day",
+  "importData": "Import data",
+  "importDataPasteJSON": "Import data (paste JSON)",
+  "importExport": "Import / Export",
+  "importFailed": "Import failed",
+  "importJSONFile": "Import from JSON file",
+  "importSuccess": "Import successful",
+  "importedPrefix": "Imported ",
+  "importedSuffix": " records",
+  "initialBalanceDescription": "This is the amount you had before using the app.",
+  "initialBalanceIncluded": "Includes initial balance",
+  "initialBalanceQuestion": "What was your account balance before using the app?",
+  "insightsSubtitle": "AI analysis of your spending and emotional patterns",
+  "invalidJSON": "Invalid JSON content",
+  "japanese": "Japanese",
+  "keepRecordingTip": "Consistent recording helps you better understand the link between your emotions and finances.",
+  "korean": "Korean",
+  "loggedInAccount": "Logged in account",
+  "loginOrRegister": "Login / Sign up",
+  "logoutFailed": "Logout failed",
+  "mainEmotion": "Main Emotion",
+  "metricByAmount": "By amount",
+  "metricByCount": "By count",
+  "netWorth": "Net worth",
+  "noAccounts": "No accounts yet",
+  "noAccountsFound": "No accounts found",
+  "noSharingAvailable": "File saving is not supported in the current environment",
+  "operationLogs": "Operation logs",
+  "operationSuccess": "Completed",
+  "passwordIncorrect": "Incorrect password",
+  "passwordNotMatch": "Passwords do not match",
+  "passwordRecovery": "Password recovery",
+  "passwordSet": "Password set",
+  "passwordTooShort": "Password is too short",
+  "pasteJsonBelow": "Paste the exported JSON content below:",
+  "pasteJsonPlaceholder": "Paste JSON",
+  "patternAnalysis": "Spending Pattern Analysis",
+  "patternTopShareLine": "{emotion} accounts for {share}%, with an average transaction of {avg} (Overall average: {overallAvg})",
+  "patternWeekCompareLine": "This week's spending is {amount}, a {delta}% change from last week",
+  "pleaseLoginToReset": "Not logged in. Cannot use email recovery. Please reset your account.",
+  "pleaseRetry": "Please retry",
+  "prepaid_card": "Prepaid card",
+  "recordMoreToSee": "Record a few more transactions to see insights",
+  "recordsSubtitle": "Your spending records",
+  "resetAccount": "Reset account",
+  "resetAccountWarning": "This will delete all your accounts and transaction data, and remove your password. This action cannot be undone.",
+  "resetEmotionTagsRestored": "Default emotions have been restored",
+  "resetEmotionTagsToDefault": "Restore default emotions",
+  "sendEmail": "Send email",
+  "setInitialBalance": "Set initial balance",
+  "setPassword": "Set password",
+  "settingsSubtitle": "Customize your experience",
+  "skip": "Skip",
+  "smartAdvice": "Smart suggestions",
+  "spanish": "Spanish",
+  "startDate": "Start date",
+  "startImport": "Start import",
+  "statsSubtitle": "Global data analysis",
+  "success": "Success",
+  "toAccount": "To account",
+  "selectAccount": "Select account",
+  "noAccountAvailableTitle": "No accounts available",
+  "noAccountAvailableMessage": "Please add an account in Settings first.",
+  "topCategories": "Top categories",
+  "totalExpense": "Total expense",
+  "totalIncome": "Total income",
+  "myAccount": "My account",
+  "editNickname": "Edit nickname",
+  "enterNickname": "Enter nickname"
+}\n
