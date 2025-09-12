@@ -20,7 +20,7 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import Fab from '@/components/ui/Fab';
 import IconButton from '@/components/ui/IconButton';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import AmountText from '@/components/ui/AmountText';
 
 

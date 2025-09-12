@@ -9,6 +9,7 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import { ChevronLeft, ChevronDown, Check, Wallet, Banknote, CreditCard, BadgeDollarSign, Smartphone, DollarSign, Euro, JapaneseYen, PoundSterling } from 'lucide-react-native';
+import formatCurrency from '@/lib/formatCurrency';
 
 const accountTypes = ['cash', 'debit_card', 'credit_card', 'prepaid_card', 'virtual_card'];
 
@@ -251,7 +252,7 @@ export default function AddAccountScreen() {
             style={[styles.input, { color: colors.text, borderColor: colors.border }]}
             value={initialBalance}
             onChangeText={(txt) => setInitialBalance(sanitizeDecimal(txt))}
-            placeholder={currency ? require('@/lib/i18n').formatCurrency(0, currency as any) : '0.00'}
+            placeholder={currency ? formatCurrency(0, currency as any) : '0.00'}
             placeholderTextColor={colors.textTertiary}
             keyboardType="decimal-pad"
           />
@@ -262,7 +263,7 @@ export default function AddAccountScreen() {
                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
                 value={creditLimit}
                 onChangeText={(txt) => setCreditLimit(sanitizeDecimal(txt))}
-                placeholder={currency ? require('@/lib/i18n').formatCurrency(0, currency as any) : '0.00'}
+                placeholder={currency ? formatCurrency(0, currency as any) : '0.00'}
                 placeholderTextColor={colors.textTertiary}
                 keyboardType="decimal-pad"
               />

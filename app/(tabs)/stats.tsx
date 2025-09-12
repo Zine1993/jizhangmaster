@@ -22,7 +22,7 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import Chip from '@/components/ui/Chip';
 import IconButton from '@/components/ui/IconButton';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import { displayNameFor } from '@/lib/i18n';
 
 

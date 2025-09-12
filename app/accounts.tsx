@@ -8,7 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions, Account } from '@/contexts/TransactionContext';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import AmountText from '@/components/ui/AmountText';
 
 import { ChevronLeft, Plus, ArrowLeftRight, ChevronDown, Check, Wallet, Banknote, CreditCard, BadgeDollarSign, Smartphone, DollarSign, Euro, JapaneseYen, PoundSterling } from 'lucide-react-native';
@@ -18,6 +18,7 @@ export default function AccountsScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const { accounts, getAccountBalance, archiveAccount } = useTransactions();
+  const activeAccounts = useMemo(() => accounts.filter(a => !a.archived), [accounts]);
 
   const [selectedCurrency, setSelectedCurrency] = useState<string>('ALL');
   const currencyOptions = ['ALL','USD','EUR','JPY','GBP','CNY','AUD','CAD'] as const;
@@ -49,6 +50,14 @@ export default function AccountsScreen() {
           <Text style={[styles.accountName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
           <TouchableOpacity
             onPress={async () => {
+              // 唯一未归档账户禁止归档
+              if (!item.archived && activeAccounts.length === 1) {
+                Alert.alert(
+                  t('operationFailed'),
+                  (t('atLeastOneActiveAccountRequired') as any) || (t('noAccountAvailableMessage') as any) || ''
+                );
+                return;
+              }
               if (Math.abs(balance) > 1e-8 || archivingId === item.id) return;
               try {
                 setArchivingId(item.id);

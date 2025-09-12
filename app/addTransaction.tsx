@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,21 +13,33 @@ export default function AddTransactionScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const { accounts, addTransaction } = useTransactions();
+  const filteredAccounts = React.useMemo(() => (accounts || []).filter(a => !a.archived), [accounts]);
 
   const [type, setType] = React.useState<'expense' | 'income'>('expense');
   const [amount, setAmount] = React.useState('');
   const [category, setCategory] = React.useState('');
   const [description, setDescription] = React.useState('');
-  const [selectedAccountId, setSelectedAccountId] = React.useState<string | undefined>(accounts[0]?.id);
+  const [selectedAccountId, setSelectedAccountId] = React.useState<string | undefined>(filteredAccounts[0]?.id);
   const [showAccountModal, setShowAccountModal] = React.useState(false);
 
   const handleSave = () => {
-    if (!amount || !category || !selectedAccountId) {
+    if (!amount || !category) {
       // Basic validation
       return;
     }
+    // 兜底：若当前选中为空或已无效，回退到第一个未归档账户
+    const effectiveAccountId = (selectedAccountId && filteredAccounts.some(a => a.id === selectedAccountId))
+      ? selectedAccountId
+      : filteredAccounts[0]?.id;
+
+    if (!effectiveAccountId) {
+      // 无可用账户时阻止保存并提示
+      Alert.alert(t('noAccountAvailableTitle') || t('operationFailed'), t('noAccountAvailableMessage') || '');
+      return;
+    }
+
     // 推断币种：优先账户币种，其次全局默认（由 context 内部处理）；并做规范化
-    const accountCurrency = accounts.find(a => a.id === selectedAccountId)?.currency;
+    const accountCurrency = accounts.find(a => a.id === effectiveAccountId)?.currency;
     const cur = accountCurrency ? (normalizeCurrency(String(accountCurrency)) || accountCurrency) : undefined;
     addTransaction({
       type,
@@ -35,7 +47,7 @@ export default function AddTransactionScreen() {
       category,
       description,
       date: new Date(),
-      accountId: selectedAccountId,
+      accountId: effectiveAccountId,
       ...(cur ? { currency: cur as any } : {}),
     });
     router.back();
@@ -108,7 +120,7 @@ export default function AddTransactionScreen() {
         <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowAccountModal(false)} activeOpacity={1}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectAccount')}</Text>
-            {accounts.map(account => (
+            {filteredAccounts.map(account => (
               <TouchableOpacity
                 key={account.id}
                 style={styles.modalOption}

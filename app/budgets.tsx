@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, Modal, TextInput, StyleSheet, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import GradientHeader from '@/components/ui/GradientHeader';
 import { ChevronLeft, Plus, Trash2, Pencil, ChevronDown, Check } from 'lucide-react-native';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import DateRangePicker from '@/components/ui/DateRangePicker';
 const getSymbol = (code?: string) => {
   switch (code) {

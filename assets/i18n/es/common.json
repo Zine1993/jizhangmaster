@@ -166,6 +166,7 @@
     "operationFailed": "Operación fallida"
   },
   "accounts": {
+    "atLeastOneActiveAccountRequired": "Se requiere al menos una cuenta no archivada",
     "defaultName": "Mi billetera",
     "addAccount": "Añadir cuenta",
     "accountName": "Nombre de cuenta",

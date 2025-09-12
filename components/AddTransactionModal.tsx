@@ -326,7 +326,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('account')}</Text>
             <View style={styles.emotionContainer}>
-              {(accounts || []).map((a) => (
+              {(accounts || []).filter(a => !a.archived).map((a) => (
                 <TouchableOpacity
                   activeOpacity={0.8}
                   key={a.id}

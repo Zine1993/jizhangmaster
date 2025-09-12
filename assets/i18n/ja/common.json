@@ -166,6 +166,7 @@
     "operationFailed": "操作失敗"
   },
   "accounts": {
+    "atLeastOneActiveAccountRequired": "少なくとも1つの未アーカイブの口座が必要です",
     "defaultName": "私の財布",
     "addAccount": "アカウント追加",
     "accountName": "アカウント名",

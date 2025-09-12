@@ -21,11 +21,11 @@ import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import IconButton from '@/components/ui/IconButton';
 
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import { displayNameFor } from '@/lib/i18n';
 
 export default function InsightsScreen() {
-  const { transactions, accounts, getEmotionStatsForRange, getUsageDaysCount, currency } = useTransactions();
+  const { transactions, accounts, getUsageDaysCount, currency } = useTransactions();
   const { colors } = useTheme();
   const { t, language } = useLanguage();
   const router = useRouter();

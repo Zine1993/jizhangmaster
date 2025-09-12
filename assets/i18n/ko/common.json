@@ -166,6 +166,7 @@
     "operationFailed": "작업 실패"
   },
   "accounts": {
+    "atLeastOneActiveAccountRequired": "최소 하나의 보관되지 않은 계정이 필요합니다",
     "defaultName": "내 지갑",
     "addAccount": "계정 추가",
     "accountName": "계정 이름",

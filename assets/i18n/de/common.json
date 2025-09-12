@@ -166,6 +166,7 @@
     "operationFailed": "Vorgang fehlgeschlagen"
   },
   "accounts": {
+    "atLeastOneActiveAccountRequired": "Mindestens ein nicht archiviertes Konto ist erforderlich",
     "defaultName": "Mein Geldbeutel",
     "addAccount": "Konto hinzufügen",
     "accountName": "Kontoname",

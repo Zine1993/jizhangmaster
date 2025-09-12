@@ -166,6 +166,7 @@
     "operationFailed": "Operation failed"
   },
   "accounts": {
+    "atLeastOneActiveAccountRequired": "At least one active (non-archived) account is required",
     "defaultName": "My Wallet",
     "addAccount": "Add account",
     "accountName": "Account name",

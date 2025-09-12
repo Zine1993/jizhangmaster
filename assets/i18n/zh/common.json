@@ -166,6 +166,7 @@
     "operationFailed": "操作失败"
   },
   "accounts": {
+    "atLeastOneActiveAccountRequired": "至少需要保留一个未归档账户",
     "defaultName": "我的钱包",
     "addAccount": "添加账户",
     "accountName": "账户名称",

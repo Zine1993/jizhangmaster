@@ -166,6 +166,7 @@
     "operationFailed": "Opération échouée"
   },
   "accounts": {
+    "atLeastOneActiveAccountRequired": "Au moins un compte non archivé est requis",
     "defaultName": "Mon portefeuille",
     "addAccount": "Ajouter un compte",
     "accountName": "Nom du compte",

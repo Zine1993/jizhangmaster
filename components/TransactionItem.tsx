@@ -6,7 +6,7 @@ import { Transaction, useTransactions } from '@/contexts/TransactionContext';
 import { useEmotionTags } from '@/contexts/EmotionTagContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Check } from 'lucide-react-native';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import AmountText from '@/components/ui/AmountText';
 import { displayNameFor } from '@/lib/i18n';
 

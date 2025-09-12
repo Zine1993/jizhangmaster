@@ -9,7 +9,8 @@ import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import { ChevronLeft, ChevronDown, Check, Wallet } from 'lucide-react-native';
-import { getCurrencySymbol, formatCurrency } from '@/lib/i18n';
+import { getCurrencySymbol } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 
 export default function TransferScreen() {
   const router = useRouter();

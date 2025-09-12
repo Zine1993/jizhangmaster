@@ -10,7 +10,7 @@ import { Trash2, ArrowLeft, Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import AmountText from '@/components/ui/AmountText';
 
 type Budget = {
