@@ -199,7 +199,33 @@
   "darkTheme": "深色",
   "language": "语言",
   "defaultAccountName": "默认账户",
+  "budgetSettings": "预算设置",
+  "noDataThisMonth": "本月暂无数据，请先添加记录。",
+  "swipeForMore": "下滑查看更多数据",
+  "healthAssessmentTitle": "财务健康评估",
+  "healthAssessmentSubtitle": "基于数据与习惯的智能分析",
+  "advice.savingGoal": "设定储蓄目标，例如每周存入 {amount}",
+  "advice.reduceExpense": "在 {category} 类别减少 {percent}%",
+  "advice.raiseIncome": "尝试拓展额外收入来源",
+  "advice.budgetCap": "设置预算上限，接近 {cap} 时提醒",
+  "analysisTip": "当你处于 {emotion} 时平均金额更高，建议设置预算提醒保持理性。",
+  "insight.health.ratio.title": "收支比",
+  "insight.health.ratio.ratio": "比值",
+  "insight.health.ratio.excellent": "优秀",
+  "insight.health.ratio.good": "良好",
+  "insight.health.ratio.pass": "及格",
+  "insight.health.ratio.poor": "偏弱",
+  "insight.health.ratio.advice.keep": "保持当前的良好财务习惯",
+  "insight.health.ratio.advice.savingGoal": "设定储蓄目标，例如每周存入 {amount}",
+  "insight.health.ratio.advice.reduceExpense": "在 {category} 类别减少 {percent}%",
+  "insight.health.ratio.advice.raiseIncome": "尝试拓展额外收入来源",
 
+  "dataHint": {
+    "thisMonthRequired": "本月暂无交易，添加收入/支出以获得更准确的评估。",
+    "debtSetup": "未检测到负债账户或月收入，请添加信用/贷款账户并填写收入。",
+    "historyFew": "历史数据不足（少于 3 个月），预测置信度较低。",
+    "savingSetup": "未检测到流动储蓄或月支出，请完善账户余额与近期支出。"
+  },
   "insight": {
     "emotion": {
       "sectionTitle": "情绪洞察",
