@@ -377,6 +377,22 @@
   "language": "언어",
   "defaultAccountName": "기본 계정",
   "lightTheme": "라이트",
+  "budgetSettings": "예산 설정",
+  "noDataThisMonth": "이번 달 데이터가 없습니다. 기록을 추가해 주세요.",
+  "swipeForMore": "아래로 스와이프하여 더 많은 데이터를 확인하세요",
+  "healthAssessmentTitle": "재무 건강 평가",
+  "healthAssessmentSubtitle": "지출·수입 습관에 대한 AI 기반 분석",
+  "advice.savingGoal": "저축 목표 설정, 예: 주 {amount}",
+  "advice.reduceExpense": "{category} 지출을 {percent}% 줄이기",
+  "advice.raiseIncome": "추가 수입원을 검토하세요",
+  "advice.budgetCap": "예산 상한을 설정하고 {cap}에 근접하면 알림",
+
+  "dataHint": {
+    "thisMonthRequired": "이번 달 거래가 없습니다. 더 정확한 평가를 위해 수입/지출을 추가하세요.",
+    "debtSetup": "부채 계정이나 월 수입이 감지되지 않았습니다. 신용/대출 계정을 추가하고 수입을 입력하세요.",
+    "historyFew": "이력 데이터가 부족합니다(3개월 미만). 예측 신뢰도가 낮습니다.",
+    "savingSetup": "유동성 저축 또는 월 지출이 감지되지 않았습니다. 계정 잔액과 최근 지출을 보완하세요."
+  },
   "loggedInAccount": "로그인된 계정",
   "loginOrRegister": "로그인 / 등록",
   "logoutFailed": "로그아웃 실패",
