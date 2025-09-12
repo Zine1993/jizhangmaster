@@ -1,7 +1,6 @@
 {
   "tapToSeeValues": "Tap bars to see values",
   "tapToViewValues": "Tap bars to see values",
-
   "common": {
     "appName": "MoodLedger",
     "insightsSubtitle": "AI analyzes your mood and finances",
@@ -51,7 +50,6 @@
     "thisYear": "This year",
     "customRange": "Custom range",
     "tip": "Tip",
-
     "emotionCloudTitle": "Emotion Cloud",
     "noEmotionData": "No emotion data for this period",
     "emotionCloudSummary": "This period's cloud shows dominant: \"{{dominant}}\", overall tone: {{tone}}. Also common: \"{{top2}}{{sep}}{{top3}}\".",
@@ -59,7 +57,6 @@
     "needAttention": "Needs attention",
     "steady": "Steady"
   },
-
   "auth": {
     "login": "Login",
     "register": "Sign up",
@@ -93,7 +90,6 @@
     "featurePrivacy": "Privacy Protection",
     "featurePrivacySub": "Local and cloud sync"
   },
-
   "transactionsPage": {
     "addTransaction": "Add transaction",
     "editTransaction": "Edit transaction",
@@ -116,7 +112,6 @@
     "insufficientFunds": "Insufficient funds",
     "operationFailed": "Operation failed"
   },
-
   "accounts": {
     "addAccount": "Add account",
     "accountName": "Account name",
@@ -132,7 +127,6 @@
     "creditLimitMustBeNumber": "Credit limit must be a number greater than 0",
     "operationFailed": "Operation failed, please try again later"
   },
-
   "categories": {
     "categoryManagement": "Category management",
     "expenseCategoryManagement": "Expense categories",
@@ -143,14 +137,12 @@
     "areYouSureYouWantToResetIncomeCategories": "Are you sure you want to restore default income categories?",
     "areYouSureYouWantToRemoveThisCategory": "Are you sure you want to remove this category?"
   },
-
   "emotionsPage": {
     "emotionTagManagement": "Emotion tag management",
     "nameRequired": "Please enter a name",
     "emojiRequired": "Please enter an emoji",
     "duplicateName": "Name already exists"
   },
-
   "emotions": {
     "happy": "Happy",
     "anxious": "Anxious",
@@ -161,7 +153,6 @@
     "excited": "Excited",
     "sad": "Sad"
   },
-
   "expenseCategories": {
     "food": "Food",
     "transport": "Transport",
@@ -177,7 +168,6 @@
     "transfer": "Transfer",
     "other": "Other"
   },
-
   "incomeCategories": {
     "salary": "Salary",
     "freelance": "Freelance",
@@ -186,7 +176,6 @@
     "transfer": "Transfer",
     "other": "Other"
   },
-
   "warm": {
     "warm_1": "May the world be kind to you.",
     "warm_2": "Go get 'em today!",
@@ -194,7 +183,6 @@
     "warm_4": "Spend wisely, live brightly.",
     "warm_5": "Small goals, big progress."
   },
-
   "accountCreated": "Account created successfully",
   "accountManagement": "Account Management",
   "accountReset": "Account has been reset",
@@ -417,7 +405,6 @@
   "patternAnalysis": "Spending Pattern Analysis",
   "patternTopShareLine": "{emotion} accounts for {share}%, with an average transaction of {avg} (Overall average: {overallAvg})",
   "patternWeekCompareLine": "This week's spending is {amount}, a {delta}% change from last week",
-
   "pleaseLoginToReset": "Not logged in. Cannot use email recovery. Please reset your account.",
   "pleaseRetry": "Please retry",
   "prepaid_card": "Prepaid card",
@@ -440,7 +427,6 @@
   "success": "Success",
   "systemTheme": "System",
   "theme": "Theme",
-
   "toAccount": "To account",
   "selectAccount": "Select account",
   "noAccountAvailableTitle": "No accounts available",
@@ -448,26 +434,6 @@
   "topCategories": "Top categories",
   "totalExpense": "Total expense",
   "totalIncome": "Total income",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   "myAccount": "My account",
   "editNickname": "Edit nickname",
   "enterNickname": "Enter nickname",
