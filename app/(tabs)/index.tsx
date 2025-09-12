@@ -29,7 +29,7 @@ import AmountText from '@/components/ui/AmountText';
 
 export default function HomeScreen() {
   const { t } = useLanguage();
-  const { transactions, getMonthlyStatsByCurrency, getTopEmotionToday } = useTransactions();
+  const { transactions, getMonthlyStatsByCurrency } = useTransactions();
   const { colors } = useTheme();
   const [showAddModal, setShowAddModal] = useState(false);
   const params = useLocalSearchParams();
@@ -40,10 +40,6 @@ export default function HomeScreen() {
 
   const monthlyStatsByCurrency = getMonthlyStatsByCurrency().sort((a, b) => a.firstAccountDate.getTime() - b.firstAccountDate.getTime());
   const recentTransactions = transactions.slice(0, 5);
-  const topEmotion = getTopEmotionToday();
-
-
-
   const { width } = useWindowDimensions();
   const pageWidth = Math.max(100, (width || 0) - 32);
 
@@ -163,21 +159,6 @@ export default function HomeScreen() {
             </View>
           </View>
         )}
-
-        <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('todayTopEmotion')}</Text>
-          {topEmotion ? (
-            <View style={{flexDirection:'row', alignItems:'center', gap:8, marginTop:8}}>
-              <Text style={{fontSize:18}}>{topEmotion.emoji}</Text>
-              <Text style={{fontSize:16, color: colors.text}}>
-                {(() => { const s = t(topEmotion.name); return s && s !== '...' ? s : topEmotion.name; })()}
-              </Text>
-              <Text style={{marginLeft:'auto', fontWeight:'700', color: colors.textSecondary}}>{topEmotion.count} {t('spendTimes')}</Text>
-            </View>
-          ) : (
-            <Text style={{ color: colors.textSecondary, marginTop: 8 }}>{t('noData')}</Text>
-          )}
-        </Card>
 
         <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('recentTransactions')}</Text>

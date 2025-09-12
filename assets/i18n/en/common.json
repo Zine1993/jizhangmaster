@@ -1,15 +1,13 @@
 {
-
   "tapToViewValues": "Tap bars to see values",
-
   "common": {
     "appName": "MoodLedger",
     "insightsSubtitle": "AI analyzes your mood and finances",
     "usedDaysPrefix": "Used days: ",
-    "keepRecordingTip": "Keep recording to better understand the link between your mood and finances.",
-    "slogan": "A smooth stream of spending, a flood of income",
+    "keepRecordingTip": "Keep tracking to better understand the link between your mood and finances.",
+    "slogan": "Smooth spending, abundant income",
     "guestSubtitle": "Guest mode · Data stored locally",
-    "logout": "Logout",
+    "logout": "Log out",
     "home": "Home",
     "homeSubtitle": "Dashboard",
     "transactions": "Transactions",
@@ -51,8 +49,8 @@
     "thisYear": "This year",
     "customRange": "Custom Range",
     "tip": "Tip",
-  "budgetExactOverlapNotAllowed": "Exact overlapping budget periods are not allowed. Please adjust dates or period.",
-  "budgetOverlapDetected": "Budget period overlap detected. Please review and adjust.",
+    "budgetExactOverlapNotAllowed": "Exact overlapping budget periods are not allowed. Please adjust dates or period.",
+    "budgetOverlapDetected": "Budget period overlap detected. Please review and adjust.",
     "emotionCloudTitle": "Emotion Cloud",
     "noEmotionData": "No emotion data for this period",
     "emotionCloudSummary": "This period's dominant emotion is \"{{dominant}}\", with an overall tone of: {{tone}}. Also common: \"{{top2}}{{sep}}{{top3}}\".",
@@ -113,12 +111,12 @@
     "insight.health.saving.advice.weak": "Savings are low. Build an emergency fund."
   },
   "auth": {
-    "login": "Log_in",
+    "login": "Log in",
     "register": "Sign up",
     "sendResetEmail": "Send reset email",
     "backToLogin": "Back to login",
     "goRegister": "Go to Sign up",
-    "forgotPassword": "Forgot password",
+    "forgotPassword": "Forgot password?",
     "welcomeBack": "Welcome back",
     "createAccount": "Create an account",
     "resetPassword": "Reset password",
@@ -168,6 +166,7 @@
     "operationFailed": "Operation failed"
   },
   "accounts": {
+    "defaultName": "My Wallet",
     "addAccount": "Add account",
     "accountName": "Account name",
     "egSavingsAccount": "e.g. Savings account",
@@ -193,28 +192,36 @@
     "areYouSureYouWantToRemoveThisCategory": "Are you sure you want to delete this category?"
   },
   "emotionsPage": {
-    "emotionTagManagement": "Emotion tag management",
+    "emotionTagManagement": "Emotion tags",
     "nameRequired": "Please enter a name",
     "emojiRequired": "Please enter an emoji",
-    "duplicateName": "Name already exists"
+    "duplicateName": "Name already exists",
+    "areYouSureYouWantToReset": "Are you sure you want to restore default emotion tags?"
   },
   "emotions": {
     "happy": "Happy",
+    "sad": "Sad",
     "anxious": "Anxious",
-    "lonely": "Lonely",
-    "bored": "Bored",
-    "reward": "Treat Yourself",
-    "stress": "Stressed",
     "excited": "Excited",
-    "sad": "Sad"
+    "content": "Content",
+    "stressed": "Stressed",
+    "bored": "Bored",
+    "grateful": "Grateful",
+    "angry": "Angry",
+    "lonely": "Lonely",
+    "reward": "Reward",
+    "confident": "Confident",
+    "guilty": "Guilty",
+    "disappointed": "Disappointed",
+    "relieved": "Relieved"
   },
   "expenseCategories": {
-    "food": "Food",
-    "transport": "Transport",
+    "food": "Food & Dining",
+    "transport": "Transportation",
     "shopping": "Shopping",
     "entertainment": "Entertainment",
     "medical": "Medical",
-    "health": "Health",
+    "health": "Health & Wellness",
     "education": "Education",
     "housing": "Housing",
     "utilities": "Utilities",
@@ -238,7 +245,6 @@
     "warm_4": "Balance is a journey.",
     "warm_5": "Be kind to yourself."
   },
-
   "swipeForMore": "Swipe for more analysis",
   "analysisTip": "When you're feeling {emotion}, your average transaction amount is higher. Consider setting a budget alert to stay mindful.",
   "dataHint": {
@@ -326,15 +332,15 @@
   "enterPassword": "Enter password",
   "expenseCategories.education": "Education",
   "expenseCategories.entertainment": "Entertainment",
-  "expenseCategories.food": "Food",
+  "expenseCategories.food": "Food & Dining",
   "expenseCategories.gifts": "Gifts",
-  "expenseCategories.health": "Health",
+  "expenseCategories.health": "Health & Wellness",
   "expenseCategories.housing": "Housing",
   "expenseCategories.medical": "Medical",
   "expenseCategories.other": "Other",
   "expenseCategories.shopping": "Shopping",
   "expenseCategories.transfer": "Transfer",
-  "expenseCategories.transport": "Transport",
+  "expenseCategories.transport": "Transportation",
   "expenseCategories.travel": "Travel",
   "expenseCategories.utilities": "Utilities",
   "expenseTopCategories": "Top Expense Categories",
@@ -369,7 +375,7 @@
   "insightsSubtitle": "AI analysis of your spending and emotional patterns",
   "invalidJSON": "Invalid JSON content",
   "japanese": "Japanese",
-  "keepRecordingTip": "Consistent recording helps you better understand the link between your emotions and finances.",
+  "keepRecordingTip": "Consistent tracking helps you better understand the link between your emotions and finances.",
   "korean": "Korean",
   "language": "Language",
   "lightTheme": "Light",
@@ -420,11 +426,13 @@
   "theme": "Theme",
   "timeRange": "Time range",
   "toAccount": "To account",
-
   "topCategories": "Top categories",
   "totalExpense": "Total expense",
   "totalIncome": "Total income",
   "myAccount": "My account",
   "editNickname": "Edit nickname",
-  "enterNickname": "Enter nickname"
+  "enterNickname": "Enter nickname",
+  "archive": "Archive",
+  "verify": "Verify",
+  "validate": "Validate"
 }

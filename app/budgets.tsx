@@ -316,7 +316,7 @@ export default function BudgetsScreen() {
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>
-              {editingId ? t('edit') : t('add')} {t('budget')}
+              {t(editingId ? 'budget.editTitle' : 'budget.addTitle')}
             </Text>
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>{t('budget.name') || 'Budget Name'}</Text>
@@ -351,7 +351,7 @@ export default function BudgetsScreen() {
               style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
             />
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('budgetPeriod') || '预算周期'}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('budget.period')}</Text>
             <TouchableOpacity
               onPress={() => setShowPeriodPicker(true)}
               style={[styles.datePickerTrigger, { borderColor: colors.border, backgroundColor: colors.background }]}

@@ -2,7 +2,7 @@
   "expo": {
     "name": "MoodLedger",
     "slug": "moodledger",
-    "version": "1.1.2",
+    "version": "1.1.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "splash": {

@@ -285,9 +285,16 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
                 borderRadius: 999,
                 backgroundColor: active ? colors.primary + '20' : 'transparent',
                 opacity: pressed ? 0.8 : 1,
+                maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.38),
               })}
             >
-              <Text style={{ color: active ? colors.primary : colors.textSecondary, fontSize: 12 }}>
+              <Text
+                style={{ color: active ? colors.primary : colors.textSecondary, fontSize: 12 }}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                allowFontScaling
+              >
                 {opt.label}
               </Text>
             </Pressable>

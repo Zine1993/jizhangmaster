@@ -185,7 +185,7 @@ export default function CategoriesScreen() {
           onPress={handleAdd}
           icon={<Plus size={16} color={colors.primary} />}
           label={t('add') as string}
-          style={{ marginTop: 18 }}
+          style={{ marginTop: 18, maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
         />
       </View>
 

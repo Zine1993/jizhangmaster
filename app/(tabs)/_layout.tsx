@@ -81,18 +81,19 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
               style={styles.tabItem}
             >
               <View style={styles.iconContainer}>
-                {options.tabBarIcon && options.tabBarIcon({
-                  focused: isFocused,
-                  color: isFocused ? colors.primary : colors.textSecondary,
-                  size: 24
-                })}
+                <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+                  {options.tabBarIcon && options.tabBarIcon({
+                    focused: isFocused,
+                    color: isFocused ? colors.primary : colors.textSecondary,
+                    size: 24
+                  })}
+                  {/* badge removed as per design: use sliding dot under icon instead */}
+                </View>
               </View>
-              <Text style={[styles.tabLabel, { color: isFocused ? colors.primary : colors.textSecondary }]}>
-                {options.title}
-              </Text>
             </Pressable>
           );
         })}
+
         <Animated.View style={[styles.indicator, {
           transform: [{ translateX: slideAnim }],
           opacity: indicatorOpacity,
@@ -175,11 +176,11 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   iconContainer: {
-    // No specific styles needed now
+    position: 'relative',
+    overflow: 'visible',
   },
   tabLabel: {
-    fontSize: 12,
-    marginTop: 4,
+    display: 'none',
   },
   addButtonContainer: {
     flex: 1,
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
   },
   indicator: {
     position: 'absolute',
-    bottom: 5, // Positioned below the text
+    bottom: 16,
     height: 6,
     width: 6,
     borderRadius: 3,

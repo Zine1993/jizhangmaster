@@ -158,10 +158,21 @@ export default function TransactionsScreen() {
                 setPickerVisible(true);
               }}
               android_ripple={{ color: '#00000014' }}
-              style={[styles.filterPill, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}
+              style={[
+                styles.filterPill,
+                { flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }
+              ]}
             >
               <Text style={styles.filterPillText}>🗓</Text>
-              <Text style={styles.filterPillText}>{t('customRange') || '选择日期'}</Text>
+              <Text
+                style={styles.filterPillText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                allowFontScaling
+              >
+                {t('customRange') || '选择日期'}
+              </Text>
             </Pressable>
           </View>
 

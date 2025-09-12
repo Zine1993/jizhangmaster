@@ -4,6 +4,7 @@
     "strict": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
+    "types": ["babel__core"],
     "paths": {
       "@/*": ["./*"]
     }

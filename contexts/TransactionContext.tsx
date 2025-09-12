@@ -17,17 +17,12 @@ export interface Transaction {
   category: string;
   description: string;
   date: Date;
-  emotion?: string; // 新增：情绪标签名称
+  emotion_tag_id?: string; // 新增：情绪标签ID
+  emotion?: string; // 兼容旧的文本情绪
   accountId?: string; // 账户ID
   currency?: string; // 交易币种（显示优先）
   transferGroupId?: string; // 转账分组ID
   isTransfer?: boolean; // 是否为转账生成的记录
-}
-
-export interface EmotionTag {
-  id: string;
-  name: string;   // 例如 "开心"
-  emoji: string;  // 例如 "😊"
 }
 
 export interface ExpenseCategory {
@@ -67,18 +62,7 @@ interface TransactionContextType {
   getCurrencySymbolFor: (tx?: Partial<Transaction> | null) => string;
   exportData: () => string;
   importData: (json: string) => { ok: boolean; imported: number; error?: string };
-  // 情绪扩展
-  emotions: EmotionTag[];
-  addEmotionTag: (name: string, emoji: string) => void;
-  removeEmotionTag: (id: string) => void;
-  getEmotionStats: () => { name: string; emoji: string; count: number; amount: number }[];
-  getEmotionStatsForRange: (start?: Date, end?: Date) => { name: string; emoji: string; count: number; amount: number }[];
-  getTopEmotion: () => { name: string; emoji: string; count: number } | null;
-  // 今日维度
-  getEmotionStatsForDay: (day?: Date) => { name: string; emoji: string; count: number; amount: number }[];
-  getTopEmotionToday: () => { name: string; emoji: string; count: number } | null;
   getUsageDaysCount: () => number;
-  resetEmotionTagsToDefault: () => void;
 
   // 支出类别扩展
   expenseCategories: ExpenseCategory[];
@@ -112,7 +96,6 @@ const TransactionContext = createContext<TransactionContextType | undefined>(und
 
 const STORAGE_KEY = '@expense_tracker_transactions';
 const CURRENCY_STORAGE_KEY = '@expense_tracker_currency';
-const EMOTION_STORAGE_KEY = '@expense_tracker_emotions';
 const EXPENSE_CATEGORY_STORAGE_KEY = '@expense_tracker_expense_categories';
 const INCOME_CATEGORY_STORAGE_KEY = '@expense_tracker_income_categories';
 const ACCOUNT_STORAGE_KEY = '@expense_tracker_accounts';
@@ -138,17 +121,6 @@ function genUUIDv4(): string {
 function isUUIDv4(id: string): boolean {
   return UUID_V4_REGEX.test(String(id));
 }
-
-const defaultEmotions: EmotionTag[] = [
-  { id: 'happy', name: '开心', emoji: '😊' },
-  { id: 'anxious', name: '焦虑', emoji: '😰' },
-  { id: 'lonely', name: '孤独', emoji: '😔' },
-  { id: 'bored', name: '无聊', emoji: '😑' },
-  { id: 'reward', name: '奖励自己', emoji: '🎉' },
-  { id: 'stress', name: '压力大', emoji: '😣' },
-  { id: 'excited', name: '兴奋', emoji: '😄' },
-  { id: 'sad', name: '难过', emoji: '😢' },
-];
 
 const defaultExpenseCategories: ExpenseCategory[] = [
   { id: 'food', name: '餐饮', emoji: '🍜' },
@@ -180,7 +152,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currency, setCurrencyState] = useState<Currency>('CNY');
-  const [emotions, setEmotions] = useState<EmotionTag[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<IncomeCategory[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -196,7 +167,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
         await loadCurrency();
         // 并发加载其余数据
         await Promise.all([
-          loadEmotions(),
           loadExpenseCategories(),
           loadIncomeCategories(),
           loadTransactions(),
@@ -217,10 +187,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
   useEffect(() => {
     saveCurrency();
   }, [currency]);
-
-  useEffect(() => {
-    saveEmotions();
-  }, [emotions]);
 
   useEffect(() => {
     saveExpenseCategories();
@@ -404,24 +370,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     }
   };
 
-  const loadEmotions = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(EMOTION_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setEmotions(parsed);
-        } else {
-          setEmotions(defaultEmotions);
-        }
-      } else {
-        setEmotions(defaultEmotions);
-      }
-    } catch {
-      setEmotions(defaultEmotions);
-    }
-  };
-
+  // 一次性迁移：将可能存在的中文ID的内置情绪修正为英文标准ID（幂等）
   const saveTransactions = async () => {
     try {
       await AsyncStorage.setItem(
@@ -441,12 +390,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     } catch (error) {
       console.error('Failed to save currency:', error);
     }
-  };
-
-  const saveEmotions = async () => {
-    try {
-      await AsyncStorage.setItem(EMOTION_STORAGE_KEY, JSON.stringify(emotions));
-    } catch {}
   };
 
   const loadExpenseCategories = async () => {
@@ -889,7 +832,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       version: 2,
       exportedAt: new Date().toISOString(),
       currency,
-      emotions,
       expenseCategories,
       incomeCategories,
       transactions: transactions.map(t => ({
@@ -925,15 +867,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       if (data.currency && isValidCurrency(String(data.currency))) {
         setCurrencyState(String(data.currency) as Currency);
       }
-      if (Array.isArray(data.emotions) && data.emotions.length) {
-        setEmotions(
-          data.emotions.map((e: any, i: number) => ({
-            id: String(e.id ?? i + '_' + Date.now()),
-            name: String(e.name ?? '自定义'),
-            emoji: String(e.emoji ?? '🙂'),
-          }))
-        );
-      }
       if (Array.isArray(data.expenseCategories) && data.expenseCategories.length) {
         setExpenseCategories(
           data.expenseCategories.map((e: any, i: number) => ({
@@ -959,18 +892,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     }
   };
 
-  const addEmotionTag = (name: string, emoji: string) => {
-    setEmotions(prev => [...prev, { id: (globalThis as any)?.crypto?.randomUUID?.() ?? Date.now().toString(), name, emoji }]);
-  };
-
-  const removeEmotionTag = (id: string) => {
-    setEmotions(prev => prev.filter(e => e.id !== id));
-  };
-
-  const resetEmotionTagsToDefault = () => {
-    setEmotions(defaultEmotions);
-  };
-
   const addExpenseCategory = (name: string, emoji: string) => {
     setExpenseCategories(prev => [...prev, { id: (globalThis as any)?.crypto?.randomUUID?.() ?? Date.now().toString(), name, emoji }]);
   };
@@ -993,70 +914,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
 
   const resetIncomeCategoriesToDefault = () => {
     setIncomeCategories(defaultIncomeCategories);
-  };
-
-  const getEmotionStats = () => {
-    const map = new Map<string, { name: string; emoji: string; count: number; amount: number }>();
-    const nameToEmoji = new Map<string, string>(emotions.map(e => [e.name, e.emoji]));
-    transactions.forEach(t => {
-      const name = t.emotion || '';
-      if (!name) return;
-      const emoji = nameToEmoji.get(name) || '🙂';
-      const hit = map.get(name) || { name, emoji, count: 0, amount: 0 };
-      hit.count += 1;
-      hit.amount += t.amount;
-      map.set(name, hit);
-    });
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
-  };
-
-  const getEmotionStatsForRange = (start?: Date, end?: Date) => {
-    const map = new Map<string, { name: string; emoji: string; count: number; amount: number }>();
-    const nameToEmoji = new Map<string, string>(emotions.map(e => [e.name, e.emoji]));
-    transactions.forEach(t => {
-      if (!t.emotion) return;
-      const d = new Date(t.date);
-      if (start && d < start) return;
-      if (end && d > end) return;
-      const emoji = nameToEmoji.get(t.emotion) || '🙂';
-      const hit = map.get(t.emotion) || { name: t.emotion, emoji, count: 0, amount: 0 };
-      hit.count += 1;
-      hit.amount += t.amount;
-      map.set(t.emotion, hit);
-    });
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
-  };
-
-  const getTopEmotion = () => {
-    const stats = getEmotionStats();
-    return stats.length ? { name: stats[0].name, emoji: stats[0].emoji, count: stats[0].count } : null;
-  };
-
-  const isSameLocalDay = (a: Date, b: Date) => {
-    return a.getFullYear() === b.getFullYear()
-      && a.getMonth() === b.getMonth()
-      && a.getDate() === b.getDate();
-  };
-
-  const getEmotionStatsForDay = (day: Date = new Date()) => {
-    const map = new Map<string, { name: string; emoji: string; count: number; amount: number }>();
-    const nameToEmoji = new Map<string, string>(emotions.map(e => [e.name, e.emoji]));
-    transactions.forEach(t => {
-      if (!t.emotion) return;
-      const td = new Date(t.date);
-      if (!isSameLocalDay(td, day)) return;
-      const emoji = nameToEmoji.get(t.emotion) || '🙂';
-      const hit = map.get(t.emotion) || { name: t.emotion, emoji, count: 0, amount: 0 };
-      hit.count += 1;
-      hit.amount += t.amount;
-      map.set(t.emotion, hit);
-    });
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
-  };
-
-  const getTopEmotionToday = () => {
-    const stats = getEmotionStatsForDay(new Date());
-    return stats.length ? { name: stats[0].name, emoji: stats[0].emoji, count: stats[0].count } : null;
   };
 
   const getUsageDaysCount = () => {
@@ -1200,14 +1057,12 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       await AsyncStorage.multiRemove([
         STORAGE_KEY,
         ACCOUNT_STORAGE_KEY,
-        EMOTION_STORAGE_KEY,
         EXPENSE_CATEGORY_STORAGE_KEY,
         INCOME_CATEGORY_STORAGE_KEY,
         CURRENCY_STORAGE_KEY,
       ]);
       setTransactions([]);
       setAccounts([]);
-      setEmotions(defaultEmotions);
       setExpenseCategories(defaultExpenseCategories);
       setIncomeCategories(defaultIncomeCategories);
       setCurrencyState('CNY');
@@ -1293,10 +1148,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       getCurrencySymbolFor,
       exportData,
       importData,
-      emotions,
-      addEmotionTag,
-      removeEmotionTag,
-      resetEmotionTagsToDefault,
       expenseCategories,
       addExpenseCategory,
       removeExpenseCategory,
@@ -1306,11 +1157,6 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       addIncomeCategory,
       removeIncomeCategory,
       resetIncomeCategoriesToDefault,
-      getEmotionStats,
-      getEmotionStatsForRange,
-      getTopEmotion,
-      getEmotionStatsForDay,
-      getTopEmotionToday,
       getUsageDaysCount,
 
       // accounts & assets
@@ -1326,7 +1172,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       addTransfer,
       clearAllData,
     }),
-    [transactions, currency, emotions, expenseCategories, incomeCategories, accounts]
+    [transactions, currency, expenseCategories, incomeCategories, accounts]
   );
 
   return (

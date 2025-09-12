@@ -42,11 +42,11 @@ const defaultExpenseCategoryNames = [
 
 export default function AddTransactionModal({ visible, onClose, editTransaction, autoFocusAmount }: AddTransactionModalProps) {
   const { t, language } = useLanguage();
-  const { addTransaction, updateTransaction, getCurrencySymbolFor, /* emotions, */ accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
+  const { addTransaction, updateTransaction, getCurrencySymbolFor, accounts, getAccountBalance, expenseCategories: ctxExpenseCategories, incomeCategories: ctxIncomeCategories } = useTransactions();
   const { colors } = useTheme();
   const { triggerEmojiRain } = useEmojiRain();
-  const { tagsMap, ready } = useEmotionTags();
-  const tagNames = useMemo(() => Object.keys(tagsMap || {}), [tagsMap]);
+  const { tagsMap, orderedNames, ready } = useEmotionTags();
+  const tagNames = useMemo(() => orderedNames || [], [orderedNames]);
   // 调试日志移除
   useEffect(() => {
     if (!visible) return;
@@ -71,15 +71,6 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
     [expenseCategoryNames, incomeCategoryNames]
   );
 
-  // 仅使用 EmotionTagContext.tagsMap，不再提供兜底，确保与设置页完全一致
-  const effectiveEmotions = useMemo(() => {
-    const entries = Object.entries(tagsMap || {});
-    return entries.map(([name, res]) => {
-      const emoji = res?.type === 'emoji' ? String(res.value) : '🙂';
-      return { id: name, name, emoji };
-    });
-  }, [tagsMap]);
-  
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('food');
@@ -201,14 +192,15 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
       }
       // 触发表情雨：优先从 tagsMap 找资源
       const res = (tagsMap || {})[emotion || ''];
-      const emojiChar = res && res.type === 'emoji' ? String(res.value) : (effectiveEmotions.find(e => e.name === (emotion || ''))?.emoji) || '🙂';
-      triggerEmojiRain(emojiChar, { count: 16, duration: 3000, size: 28 });
+      if (res && res.type === 'emoji') {
+        triggerEmojiRain(String(res.value), { count: 16, duration: 3000, size: 28 });
+      }
     }
     setType('expense');
     setAmount('');
     setCategory(getListForType('expense')[0]);
     setDescription('');
-    setEmotion(effectiveEmotions[0]?.name || '');
+    setEmotion((orderedNames && orderedNames[0]) || '');
     onClose();
   };
 
@@ -397,10 +389,12 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
               </Text>
             ) : (
               <View style={styles.emotionContainer}>
-                {effectiveEmotions.map((e) => (
-                  <EmotionTag key={e.id} id={e.id} name={e.name} emoji={e.emoji} />
-                ))}
-                {null}
+                {(orderedNames || []).map((name) => {
+                  const tag = (tagsMap || {})[name];
+                  if (!tag) return null;
+                  const emoji = tag.type === 'emoji' ? String(tag.value) : '🙂';
+                  return <EmotionTag key={name} id={name} name={name} emoji={emoji} />;
+                })}
               </View>
             )}
           </View>

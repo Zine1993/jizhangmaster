@@ -98,6 +98,10 @@ export default function Button({
                     textStyle,
                   ]}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                  allowFontScaling
+                  ellipsizeMode="tail"
                 >
                   {label}
                 </Text>

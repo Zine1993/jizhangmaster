@@ -88,14 +88,16 @@ export function displayNameFor(
   const id = String(item?.id || '');
   if (!id) return item?.name || '';
 
-  const key = scope + '.' + id;
+  const lookupId = id.toLowerCase();
+
+  const key = scope === 'emotions' ? lookupId : scope + '.' + lookupId;
   const viaT = tryT(key);
   if (viaT) return viaT;
 
   const lang = language || 'en';
   const choose = <T extends Record<string, any>>(dict: T): string | undefined => {
     const pack = (dict as any)[lang] ?? (dict as any).en;
-    return pack?.[id];
+    return pack?.[lookupId];
   };
 
   let label: string | undefined;

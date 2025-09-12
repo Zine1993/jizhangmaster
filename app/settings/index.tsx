@@ -297,13 +297,13 @@ export default function SettingsScreen() {
             icon={<Languages size={20} color={colors.primary} />}
             title={t('language')}
             value={
-              language === 'zh' ? t('lang.zh')
-              : language === 'en' ? t('lang.en')
-              : language === 'es' ? t('lang.es')
-              : language === 'fr' ? t('lang.fr')
-              : language === 'de' ? t('lang.de')
-              : language === 'ja' ? t('lang.ja')
-              : t('lang.ko')
+              language === 'zh' ? '中文'
+              : language === 'en' ? 'English'
+              : language === 'es' ? 'Español'
+              : language === 'fr' ? 'Français'
+              : language === 'de' ? 'Deutsch'
+              : language === 'ja' ? '日本語'
+              : '한국어'
             }
             onPress={() => setShowLanguageModal(true)}
           />
@@ -311,7 +311,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon={<Smile size={20} color={colors.primary} />}
             title={t('emotionTagManagement')}
-            onPress={() => router.push('/settings/emotion-tags')}
+            onPress={() => router.push('/emotions')}
           />
           <View style={[styles.separator, { backgroundColor: colors.border }]} />
           <SettingRow
@@ -379,7 +379,7 @@ export default function SettingsScreen() {
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('language')}</Text>
-            {[{code:'zh',label:(t('lang.zh'))},{code:'en',label:(t('lang.en'))},{code:'es',label:(t('lang.es'))},{code:'fr',label:(t('lang.fr'))},{code:'de',label:(t('lang.de'))},{code:'ja',label:(t('lang.ja'))},{code:'ko',label:(t('lang.ko'))}].map(opt => {
+            {[{code:'zh',label:'中文'},{code:'en',label:'English'},{code:'es',label:'Español'},{code:'fr',label:'Français'},{code:'de',label:'Deutsch'},{code:'ja',label:'日本語'},{code:'ko',label:'한국어'}].map(opt => {
               const selected = language === opt.code;
               return (
                 <TouchableOpacity
@@ -691,7 +691,7 @@ export default function SettingsScreen() {
               }}
               style={[styles.modalOption, { borderColor: colors.expense, marginTop: 12 }]}
             >
-              <Text style={{ color: colors.expense, fontWeight: '600' }}>{t('resetAccount')}</Text>
+              <Text style={{ color: colors.expense, fontWeight: '600' }}>{t('reset')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.modalCancel} onPress={() => setShowPwdManage(false)}>

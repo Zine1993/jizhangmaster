@@ -233,15 +233,33 @@ export default function StatsScreen() {
             </Text>
             <Pressable
               onPress={() => setShowRangePicker(true)}
-              style={[styles.chip, { borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 6 }]}
+              style={[
+                styles.chip,
+                {
+                  borderColor: colors.border,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42),
+                }
+              ]}
             >
-              <Text style={[styles.chipText, { color: colors.text }]} > { `${formatDate(startDate)} ~ ${formatDate(endDate)}` } </Text>
+              <Text
+                style={[styles.chipText, { color: colors.text }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                allowFontScaling
+              >
+                { `${formatDate(startDate)} ~ ${formatDate(endDate)}` }
+              </Text>
               <Text style={[styles.chipText, { color: colors.text }]} > {'▾'} </Text>
             </Pressable>
           </View>
           {/* 快速预设区间 */}
           <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'wrap', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 2 }]} >
             <Chip
+              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('last7Days') as string}
               selected={activePreset === 'last7'}
               onPress={() => {
@@ -258,6 +276,7 @@ export default function StatsScreen() {
 
 
             <Chip
+              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('thisMonth') as string}
               selected={activePreset === 'thisMonth'}
               onPress={() => {
@@ -273,6 +292,7 @@ export default function StatsScreen() {
             />
 
             <Chip
+              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('lastMonth') as string}
               selected={activePreset === 'lastMonth'}
               onPress={() => {
@@ -288,6 +308,7 @@ export default function StatsScreen() {
             />
 
             <Chip
+              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('thisYear') as string}
               selected={activePreset === 'thisYear'}
               onPress={() => {

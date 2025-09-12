@@ -5,9 +5,10 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
-import { ChevronLeft, Trash2, Plus } from 'lucide-react-native';
+import { ChevronLeft, Trash2, Plus, RotateCcw } from 'lucide-react-native';
 import GradientHeader from '@/components/ui/GradientHeader';
 import Card from '@/components/ui/Card';
+import IconButton from '@/components/ui/IconButton';
 import { displayNameFor } from '@/lib/i18n';
 
 export default function IncomeCategoriesScreen() {
@@ -89,25 +90,44 @@ export default function IncomeCategoriesScreen() {
         height={61}
         centered={true}
         centerTitle={true}
-        right={null}
+        right={
+          <IconButton onPress={handleResetDefault} size={32}>
+            <RotateCcw size={20} color="#fff" />
+          </IconButton>
+        }
       />
       <ScrollView contentContainerStyle={styles.content}>
         <Card padding={16}>
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('incomeCategoryManagement') as string}</Text>
-            <TouchableOpacity onPress={handleResetDefault}>
-              <Text style={[styles.link, { color: colors.primary }]}>{t('resetToDefaultPack') as string}</Text>
-            </TouchableOpacity>
+            <IconButton onPress={handleResetDefault} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <RotateCcw size={20} color={colors.primary} />
+            </IconButton>
           </View>
           <View style={styles.list}>
-            <TouchableOpacity
-              onPress={() => { setNewEmoji(''); setNewName(''); setAddModalVisible(true); }}
-              style={{ paddingVertical: 10, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
-              activeOpacity={0.8}
-            >
-              <Plus size={16} color={colors.text} />
-              <Text style={{ color: colors.text, marginLeft: 6 }}>{t('customIncomeCategory') as string}</Text>
-            </TouchableOpacity>
+            {/* 输入行：左 Emoji、右 名称、最右 +添加，与标签行对齐 */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <TouchableOpacity
+                onPress={() => { setNewEmoji(''); setNewName(''); setAddModalVisible(true); }}
+                style={{ paddingVertical: 10, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+                activeOpacity={0.8}
+              >
+                <Plus size={16} color={colors.text} />
+                <Text style={{ color: colors.text, marginLeft: 6 }}>{t('customIncomeCategory') as string}</Text>
+              </TouchableOpacity>
+
+              {/* 右侧 +添加，与上方标签对齐：占位16再放按钮 */}
+              <View style={{ justifyContent: 'center' }}>
+                <TouchableOpacity
+                  onPress={() => { setNewEmoji(''); setNewName(''); setAddModalVisible(true); }}
+                  style={{ paddingVertical: 10, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+                  activeOpacity={0.8}
+                >
+                  <Plus size={16} color={colors.text} />
+                  <Text style={{ color: colors.text, marginLeft: 6 }}>{t('add') as string}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
             {incomeCategories.length === 0 ? (
               <Text style={{ color: colors.textSecondary, marginTop: 8 }}>{t('noData') as string}</Text>

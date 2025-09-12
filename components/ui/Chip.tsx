@@ -68,6 +68,9 @@ export default function Chip(props: ChipProps) {
                 textStyle,
               ]}
               numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              allowFontScaling
             >
               {label}
             </Text>
