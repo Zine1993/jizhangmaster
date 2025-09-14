@@ -464,10 +464,10 @@ export default function InsightsScreen() {
 
               return (
                 <>
-                  <IncomeExpenseRatioCard agg={{ income: monthIncome, expense: monthExpense, currency: currencyCode }} hint={ratioHint || undefined} />
-                  <DebtRiskCard monthlyIncome={Math.max(monthIncome, 0)} currency={currencyCode} debts={debts} hint={debtHint || undefined} />
-                  <CashflowForecastCard currency={currencyCode} history={history} hint={flowHint || undefined} />
-                  <SavingsHealthCard liquidSavings={Math.max(liquid,0)} monthlyExpenseAvg={Math.max(monthExpenseAvg,0)} currency={currencyCode} hint={savingHint || undefined} />
+                  <IncomeExpenseRatioCard agg={{ income: monthIncome, expense: monthExpense }} hint={ratioHint || undefined} />
+                  <DebtRiskCard monthlyIncome={Math.max(monthIncome, 0)} debts={debts} hint={debtHint || undefined} />
+                  <CashflowForecastCard history={history} hint={flowHint || undefined} />
+                  <SavingsHealthCard liquidSavings={Math.max(liquid,0)} monthlyExpenseAvg={Math.max(monthExpenseAvg,0)} hint={savingHint || undefined} />
                 </>
               );
             })()}

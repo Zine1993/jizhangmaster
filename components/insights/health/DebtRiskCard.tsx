@@ -1,20 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTransactions } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import AmountText from '@/components/ui/AmountText';
 
 type DebtItem = { name: string; amount: number }; // 总负债本金或近一期账单总额
 type Props = {
   monthlyIncome: number;
-  currency: string;
   debts: DebtItem[];
 };
 type DebtProps = Props & { hint?: string };
 
-export default function DebtRiskCard({ monthlyIncome, currency, debts, hint }: DebtProps) {
+export default function DebtRiskCard({ monthlyIncome, debts, hint }: DebtProps) {
   const { t } = useLanguage();
+  const { currency } = useTransactions();
   const { colors } = useTheme();
 
   const totalDebt = debts.reduce((s, d) => s + Math.max(0, d.amount || 0), 0);
@@ -58,7 +59,7 @@ export default function DebtRiskCard({ monthlyIncome, currency, debts, hint }: D
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ color: colors.textSecondary }}>{t('income')}: </Text>
           <AmountText
-            value={formatCurrency(monthlyIncome, currency as any)}
+            value={formatCurrency(monthlyIncome, currency)}
             color={colors.textSecondary}
             style={{}}
             align="left"
@@ -67,7 +68,7 @@ export default function DebtRiskCard({ monthlyIncome, currency, debts, hint }: D
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ color: colors.textSecondary }}>{t('debt')}: </Text>
           <AmountText
-            value={formatCurrency(totalDebt, currency as any)}
+            value={formatCurrency(totalDebt, currency)}
             color={colors.textSecondary}
             style={{}}
             align="left"
@@ -85,7 +86,7 @@ export default function DebtRiskCard({ monthlyIncome, currency, debts, hint }: D
             <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ color: colors.textSecondary }} numberOfLines={1}>• {d.name}: </Text>
               <AmountText
-                value={formatCurrency(d.amount, currency as any)}
+                value={formatCurrency(d.amount, currency)}
                 color={colors.textSecondary}
                 style={{}}
                 align="left"

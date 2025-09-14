@@ -2,17 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatCurrency } from '@/lib/i18n';
+import { useTransactions } from '@/contexts/TransactionContext';
 
 type SeriesPoint = { label: string; value: number };
 type Props = {
-  currency: string;
   history: SeriesPoint[]; // 最近3-6个月净流入
 };
 type FlowProps = Props & { hint?: string };
 
-export default function CashflowForecastCard({ currency, history, hint }: FlowProps) {
+export default function CashflowForecastCard({ history, hint }: FlowProps) {
   const { t } = useLanguage();
+  const { currency } = useTransactions();
   const { colors } = useTheme();
 
   // 简单移动平均预测未来3期
