@@ -350,7 +350,7 @@ export default function StatsScreen() {
           <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
             <View style={styles.sectionHeader}>
               <Coins size={20} color={colors.textSecondary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('periodOverview') || 'Period Overview'}</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('periodOverview')}</Text>
             </View>
             {(() => {
               // 按币种聚合（普通收支 + 转账手续费；排除转账本金）
@@ -556,7 +556,7 @@ export default function StatsScreen() {
                   </View>
                   {/* 提示：点击查看数值（本地化） */}
                   <Text style={{ marginTop: 6, textAlign: 'center', fontSize: 12, color: colors.textSecondary }}>
-                    {t('tapToSeeValues') || t('tapToViewValues') || '点击柱状图查看数值'}
+                    {t('tapToViewValues')}
                   </Text>
                 </View>
               );
@@ -572,7 +572,7 @@ export default function StatsScreen() {
           <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
             <View style={styles.sectionHeader}>
               <PieChart size={20} color={colors.textSecondary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pieChart') || 'Category Share'}</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('pieChart')}</Text>
             </View>
 
             {incomeChartData.length > 0 && (
@@ -595,7 +595,7 @@ export default function StatsScreen() {
           <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
             <View style={styles.sectionHeader}>
               <TrendingUp size={20} color={colors.textSecondary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('incomeTopCategories') || 'Top Income Categories'}</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('incomeTopCategories')}</Text>
             </View>
             {incomeTop.map(item => (
               <View key={item.category} style={styles.categoryItem}>
@@ -627,7 +627,7 @@ export default function StatsScreen() {
           <Card padding={16} style={{ marginHorizontal: 16, marginTop: 16 }}>
             <View style={styles.sectionHeader}>
               <TrendingDown size={20} color={colors.textSecondary} />
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('expenseTopCategories') || 'Top Expense Categories'}</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('expenseTopCategories')}</Text>
             </View>
             {expenseTop.map(item => (
               <View key={item.category} style={styles.categoryItem}>

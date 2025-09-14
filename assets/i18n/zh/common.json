@@ -1,4 +1,6 @@
 {
+  "periodOverview": "时段总览",
+  "tapToSeeValues": "点击柱状图查看数值",
   "tapToViewValues": "点击柱状图查看数值",
   "common": {
     "appName": "心情账本",

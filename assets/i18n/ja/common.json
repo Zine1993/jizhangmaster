@@ -1,4 +1,6 @@
 {
+  "periodOverview": "期間概要",
+  "tapToSeeValues": "棒グラフをタップして値を確認",
   "tapToViewValues": "棒グラフをタップして値を確認",
   "common": {
     "appName": "ムード帳簿",

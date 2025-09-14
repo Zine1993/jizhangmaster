@@ -1,4 +1,6 @@
 {
+  "periodOverview": "Resumen del período",
+  "tapToSeeValues": "Toca las barras para ver valores",
   "tapToViewValues": "Toca las barras para ver valores",
   "common": {
     "appName": "BalanceEmocional",

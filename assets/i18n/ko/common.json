@@ -1,4 +1,6 @@
 {
+  "periodOverview": "기간 개요",
+  "tapToSeeValues": "막대를 눌러 값 확인",
   "tapToViewValues": "막대를 눌러 값 확인",
   "common": {
     "appName": "기분 장부",

@@ -1,4 +1,6 @@
 {
+  "periodOverview": "Periodenübersicht",
+  "tapToSeeValues": "Balken antippen für Werte",
   "tapToViewValues": "Balken antippen für Werte",
   "common": {
     "appName": "Stimmungsbilanz",

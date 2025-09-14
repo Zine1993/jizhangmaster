@@ -1,4 +1,6 @@
 {
+  "periodOverview": "Period Overview",
+  "tapToSeeValues": "Tap bars to see values",
   "tapToViewValues": "Tap bars to see values",
   "common": {
     "appName": "MoodLedger",
