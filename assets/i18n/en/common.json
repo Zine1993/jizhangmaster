@@ -435,5 +435,8 @@
   "enterNickname": "Enter nickname",
   "archive": "Archive",
   "verify": "Verify",
-  "validate": "Validate"
+  "validate": "Validate",
+  "active": "Active",
+  "archived": "Archived",
+  "unarchiveToProceed": "This will unarchive the account and revert the balance impact. Continue?"
 }

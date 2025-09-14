@@ -451,5 +451,8 @@
   "editNickname": "Nickname bearbeiten",
   "enterNickname": "Nickname eingeben",
   "verify": "Überprüfen",
-  "validate": "Validieren"
+  "validate": "Validieren",
+  "active": "Aktiv",
+  "archived": "Archiviert",
+  "unarchiveToProceed": "Dies hebt die Archivierung des Kontos auf und macht die Saldenwirkung rückgängig. Fortfahren?"
 }

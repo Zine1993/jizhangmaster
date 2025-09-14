@@ -452,5 +452,8 @@
   "enterNickname": "닉네임 입력",
   "archive": "아카이브",
   "verify": "검증",
-  "validate": "유효성 검사"
+  "validate": "유효성 검사",
+  "active": "보관 해제",
+  "archived": "보관됨",
+  "unarchiveToProceed": "이 작업은 계정을 보관 해제하고 잔액 영향을 되돌립니다. 계속할까요?"
 }

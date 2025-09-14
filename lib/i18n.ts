@@ -5,82 +5,19 @@
 
 export type Scope = 'emotions' | 'expenseCategories' | 'incomeCategories';
 
-const EMOTION_LABELS = {
-  zh: {
-    happy: '开心',
-    anxious: '焦虑',
-    lonely: '孤独',
-    bored: '无聊',
-    reward: '奖励自己',
-    stress: '压力大',
-    excited: '兴奋',
-    sad: '难过',
-  },
-  en: {
-    happy: 'Happy',
-    anxious: 'Anxious',
-    lonely: 'Lonely',
-    bored: 'Bored',
-    reward: 'Treat myself',
-    stress: 'Stressed',
-    excited: 'Excited',
-    sad: 'Sad',
-  },
-} as const;
-
-const EXPENSE_LABELS = {
-  zh: {
-    food: '餐饮',
-    transport: '交通',
-    shopping: '购物',
-    housing: '住房',
-    entertainment: '娱乐',
-    medical: '医疗',
-    education: '教育',
-    travel: '旅行',
-    transfer: '转账',
-  },
-  en: {
-    food: 'Food',
-    transport: 'Transport',
-    shopping: 'Shopping',
-    housing: 'Housing',
-    entertainment: 'Entertainment',
-    medical: 'Medical',
-    education: 'Education',
-    travel: 'Travel',
-    transfer: 'Transfer',
-  },
-} as const;
-
-const INCOME_LABELS = {
-  zh: {
-    salary: '工资',
-    freelance: '兼职',
-    investment: '投资',
-    other: '其他',
-    transfer: '转账',
-  },
-  en: {
-    salary: 'Salary',
-    freelance: 'Freelance',
-    investment: 'Investment',
-    other: 'Other',
-    transfer: 'Transfer',
-  },
-} as const;
-
 export function displayNameFor(
   item: { id: string; name: string },
   scope: Scope,
   t?: (k: string, vars?: Record<string, any>) => string,
-  language?: 'zh' | 'en' | 'es' | 'fr' | 'de' | 'ja' | 'ko'
+  language?: 'zh' | 'en' | 'es' | 'fr' | 'de' | 'ja' | 'ko' // language is kept for signature compatibility but not used
 ): string {
+  // Helper to safely call the t-function and check if a translation was found.
   const tryT = (key: string) => {
     if (!t) return null;
     try {
       const val = t(key);
-      if (val && val !== key && val !== '...') return val;
+      // A successful translation should not return the key itself or a placeholder.
+      if (val && val !== key && !key.endsWith(val) && val !== '...') return val;
     } catch {}
     return null;
   };
@@ -90,22 +27,14 @@ export function displayNameFor(
 
   const lookupId = id.toLowerCase();
 
-  const key = scope === 'emotions' ? lookupId : scope + '.' + lookupId;
-  const viaT = tryT(key);
-  if (viaT) return viaT;
+  // Correctly construct the key for all scopes, e.g., "incomeCategories.salary" or "emotions.happy"
+  const key = `${scope}.${lookupId}`;
+  const translatedLabel = tryT(key);
 
-  const lang = language || 'en';
-  const choose = <T extends Record<string, any>>(dict: T): string | undefined => {
-    const pack = (dict as any)[lang] ?? (dict as any).en;
-    return pack?.[lookupId];
-  };
-
-  let label: string | undefined;
-  if (scope === 'emotions') label = choose(EMOTION_LABELS);
-  else if (scope === 'expenseCategories') label = choose(EXPENSE_LABELS);
-  else label = choose(INCOME_LABELS);
-
-  return label ?? (item?.name || id);
+  // If a translation is found, use it.
+  // Otherwise, fall back to the name stored on the item (for user-defined categories),
+  // or the ID itself as a last resort.
+  return translatedLabel ?? (item?.name || id);
 }
 
 const SYMBOLS: Record<string, string> = {

@@ -5,7 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PieChartData {
-  category: string;
+  category: string; // category id or already-localized label depending on props
   amount: number;
   color: string;
 }
@@ -13,11 +13,16 @@ interface PieChartData {
 interface PieChartProps {
   data: PieChartData[];
   size?: number;
+  // Optional: provide namespace for i18n lookup using category id
+  categoryNamespace?: 'expenseCategories' | 'incomeCategories';
+  // Optional: custom label resolver; when provided, takes precedence
+  getLabel?: (categoryId: string) => string;
 }
 
-export default function PieChart({ data, size = 200 }: PieChartProps) {
+export default function PieChart({ data, size = 200, categoryNamespace, getLabel }: PieChartProps) {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { displayNameFor } = require('@/lib/i18n');
 
   if (!data || data.length === 0) {
     return (
@@ -96,7 +101,26 @@ export default function PieChart({ data, size = 200 }: PieChartProps) {
             <View key={index} style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: slice.color }]} />
               <Text style={[styles.legendText, { color: colors.text }]}>
-                {t(slice.category)} ({slice.percentage.toFixed(1)}%)
+                {(() => {
+                  // 1) custom label resolver has highest priority
+                  if (typeof getLabel === 'function') {
+                    try { return `${getLabel(slice.category)} (${slice.percentage.toFixed(1)}%)`; } catch {}
+                  }
+                  // 2) if namespace provided, use i18n via displayNameFor by id
+                  if (categoryNamespace) {
+                    try {
+                      const label = displayNameFor(
+                        { id: String(slice.category), name: String(slice.category) },
+                        categoryNamespace,
+                        t as any,
+                        language as any
+                      );
+                      return `${label} (${slice.percentage.toFixed(1)}%)`;
+                    } catch {}
+                  }
+                  // 3) fallback to t(key) for backward compatibility
+                  return `${t(slice.category)} (${slice.percentage.toFixed(1)}%)`;
+                })()}
               </Text>
             </View>
           ))}

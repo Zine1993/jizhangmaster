@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/contexts/TransactionContext';
 import { useRouter } from 'expo-router';
+import { displayNameFor } from '@/lib/i18n';
 
 type Tx = {
   id: string;
@@ -24,7 +25,7 @@ function pctDelta(a: number, b: number) {
 }
 
 export default function EmotionTopDriversCard({ weekTx }: Props) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const data = useMemo(() => {
     const items = weekTx.filter(x => x.type === 'expense' && x.emotion?.name && x.category && x.amount > 0);
@@ -88,15 +89,24 @@ export default function EmotionTopDriversCard({ weekTx }: Props) {
 
       {data.top.length === 0 ? (
         <Text style={{ color: '#666' }}>{t('insight.emotion.empty') || 'No data yet'}</Text>
-      ) : data.top.map((r) => (
-        <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
-          <Text style={{ width: 28, textAlign: 'center' }}>{r.emoji || '🙂'}</Text>
-          <Text style={{ flex: 1 }} numberOfLines={1}>{r.emotion} · {r.category}</Text>
-          <Text style={{ color: r.deltaPct >= 0 ? '#ef4444' : '#22c55e', fontWeight: '700' }}>
-            {r.deltaPct >= 0 ? '+' : ''}{Math.round(r.deltaPct)}%
-          </Text>
-        </View>
-      ))}
+      ) : data.top.map((r) => {
+        // 本卡片只统计 expense，因此命名空间固定为 'expenseCategories'
+        const label = displayNameFor(
+          { id: String(r.category), name: String(r.category) },
+          'expenseCategories',
+          t as any,
+          language as any
+        );
+        return (
+          <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
+            <Text style={{ width: 28, textAlign: 'center' }}>{r.emoji || '🙂'}</Text>
+            <Text style={{ flex: 1 }} numberOfLines={1}>{r.emotion} · {label}</Text>
+            <Text style={{ color: r.deltaPct >= 0 ? '#ef4444' : '#22c55e', fontWeight: '700' }}>
+              {r.deltaPct >= 0 ? '+' : ''}{Math.round(r.deltaPct)}%
+            </Text>
+          </View>
+        );
+      })}
 
       <View style={{ marginTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}>
         <TouchableOpacity onPress={() => router.push('/emotion-insight/top-drivers')}>

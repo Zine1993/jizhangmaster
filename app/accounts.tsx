@@ -17,7 +17,7 @@ export default function AccountsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { accounts, getAccountBalance, archiveAccount } = useTransactions();
+  const { accounts, getAccountBalance, archiveAccount, updateAccount } = useTransactions();
   const activeAccounts = useMemo(() => accounts.filter(a => !a.archived), [accounts]);
 
   const [selectedCurrency, setSelectedCurrency] = useState<string>('ALL');
@@ -26,18 +26,29 @@ export default function AccountsScreen() {
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const typeOptions = ['ALL','cash','debit_card','credit_card','prepaid_card','virtual_card'] as const;
 
+  // 新增：状态筛选（默认“未归档”）
+  const [selectedStatus, setSelectedStatus] = useState<'ACTIVE' | 'ARCHIVED' | 'ALL'>('ACTIVE');
+  const statusOptions = ['ACTIVE','ARCHIVED','ALL'] as const;
+
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showTypeModal, setShowTypeModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [archivingId, setArchivingId] = useState<string | null>(null);
 
   // 缓存筛选结果，避免每次渲染重复 filter
   const filteredAccounts = useMemo(() => {
-    return accounts.filter(a =>
-      !a.archived &&
-      (selectedCurrency === 'ALL' || a.currency === selectedCurrency) &&
-      (selectedType === 'ALL' || a.type === selectedType)
-    );
-  }, [accounts, selectedCurrency, selectedType]);
+    return accounts.filter(a => {
+      const meetCurrency = (selectedCurrency === 'ALL' || a.currency === selectedCurrency);
+      const meetType = (selectedType === 'ALL' || a.type === selectedType);
+      const meetStatus =
+        selectedStatus === 'ALL'
+          ? true
+          : selectedStatus === 'ACTIVE'
+            ? !a.archived
+            : !!a.archived; // ARCHIVED
+      return meetCurrency && meetType && meetStatus;
+    });
+  }, [accounts, selectedCurrency, selectedType, selectedStatus]);
 
 
 
@@ -45,10 +56,22 @@ export default function AccountsScreen() {
     const balance = getAccountBalance(item.id);
     return (
       <Card style={styles.accountCard}>
-        {/* 行1：左侧账户名，右侧归档按钮 */}
+        {/* 行1：左侧账户名，右侧归档/取消归档按钮 */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={[styles.accountName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
-          <TouchableOpacity
+          {item.archived ? (
+            <TouchableOpacity
+              onPress={() => {
+                try {
+                  updateAccount(item.id, { archived: false });
+                } catch {}
+              }}
+              style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: colors.primary + '20' }}
+            >
+              <Text style={{ color: colors.primary, fontSize: 12 }}>{t('unarchiveAccount') as string}</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
             onPress={async () => {
               // 唯一未归档账户禁止归档
               if (!item.archived && activeAccounts.length === 1) {
@@ -82,6 +105,7 @@ export default function AccountsScreen() {
               </Text>
             )}
           </TouchableOpacity>
+          )}
         </View>
 
         {/* 行2：账户类型右缩进两字符；信用卡显示额度 */}
@@ -170,6 +194,25 @@ export default function AccountsScreen() {
           </View>
           <ChevronDown size={16} color={colors.textSecondary} />
         </TouchableOpacity>
+
+        {/* 新增：状态筛选 */}
+        <TouchableOpacity
+          onPress={() => setShowStatusModal(true)}
+          style={[styles.dropdownBtn, { borderColor: colors.border }]}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            {/* 复用图标样式，使用 CreditCard 作为占位，也可替换为更合适的图标 */}
+            <CreditCard size={18} color={colors.textSecondary} />
+            <Text style={{ color: colors.text }} numberOfLines={1} ellipsizeMode="tail">
+              {selectedStatus === 'ALL'
+                ? (t('all') as string)
+                : selectedStatus === 'ACTIVE'
+                  ? (t('active') as string) || '未归档'
+                  : (t('archived') as string) || '已归档'}
+            </Text>
+          </View>
+          <ChevronDown size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <View style={{ paddingHorizontal: 16, marginBottom: 8, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
@@ -203,6 +246,33 @@ export default function AccountsScreen() {
                 >
                   <Text style={{ color: colors.text }}>
                     {code === 'ALL' ? (t('all') as string) : code}
+                  </Text>
+                  {selected && <Check size={18} color={colors.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Status Modal */}
+      <Modal visible={showStatusModal} transparent animationType="fade" onRequestClose={() => setShowStatusModal(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowStatusModal(false)}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
+            {statusOptions.map(st => {
+              const selected = selectedStatus === st;
+              return (
+                <TouchableOpacity
+                  key={st}
+                  style={styles.optionRow}
+                  onPress={() => { setSelectedStatus(st); setShowStatusModal(false); }}
+                >
+                  <Text style={{ color: colors.text }}>
+                    {st === 'ALL'
+                      ? (t('all') as string)
+                      : st === 'ACTIVE'
+                        ? (t('active') as string) || '未归档'
+                        : (t('archived') as string) || '已归档'}
                   </Text>
                   {selected && <Check size={18} color={colors.primary} />}
                 </TouchableOpacity>

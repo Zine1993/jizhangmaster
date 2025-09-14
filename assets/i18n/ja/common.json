@@ -452,5 +452,8 @@
   "enterNickname": "ニックネームを入力",
   "archive": "アーカイブ",
   "verify": "検証",
-  "validate": "検証する"
+  "validate": "検証する",
+  "active": "未アーカイブ",
+  "archived": "アーカイブ済み",
+  "unarchiveToProceed": "この操作で口座のアーカイブを解除し、残高影響を元に戻します。続行しますか？"
 }

@@ -433,5 +433,8 @@
   "myAccount": "我的账户",
   "editNickname": "编辑昵称",
   "enterNickname": "输入昵称",
-  "archive": "归档"
+  "archive": "归档",
+  "active": "未归档",
+  "archived": "已归档",
+  "unarchiveToProceed": "此操作将取消归档账户并回滚余额，是否继续？"
 }

@@ -451,5 +451,8 @@
   "editNickname": "Editar apodo",
   "enterNickname": "Ingresa apodo",
   "verify": "Verificar",
-  "validate": "Validar"
+  "validate": "Validar",
+  "active": "Activo",
+  "archived": "Archivado",
+  "unarchiveToProceed": "Esta acción desarchivará la cuenta y revertirá el impacto en el saldo. ¿Continuar?"
 }

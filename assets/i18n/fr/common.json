@@ -452,5 +452,8 @@
     "enterNickname": "Entrez le pseudo",
     "archive": "Archivé",
     "verify": "Vérifier",
-    "validate": "Valider"
+    "validate": "Valider",
+    "active": "Actif",
+    "archived": "Archivé",
+    "unarchiveToProceed": "Cette action désarchivera le compte et annulera l'impact sur le solde. Continuer ?"
   }
