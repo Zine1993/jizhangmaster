@@ -116,7 +116,8 @@
     "insight.emotion.summary.others": "Also common: {{others}}.",
     "insight.emotion.summary.guidance.positive": "Your mood has been predominantly positive. Keep up the great work!",
     "insight.emotion.summary.guidance.negative": "Your mood has been predominantly negative. It might be helpful to reflect on what's been happening.",
-    "insight.emotion.summary.guidance.mixed": "You've experienced a mix of emotions. This is normal, and tracking helps you understand the patterns."
+    "insight.emotion.summary.guidance.mixed": "You've experienced a mix of emotions. This is normal, and tracking helps you understand the patterns.",
+    "longPressToDeleteHint": "Tap to delete"
   },
   "auth": {
     "login": "Log in",

@@ -257,9 +257,8 @@ export default function StatsScreen() {
             </Pressable>
           </View>
           {/* 快速预设区间 */}
-          <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'wrap', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 2 }]} >
+          <View style={[styles.filterRow, { marginTop: 8, flexWrap: 'nowrap', borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, padding: 2, justifyContent: 'space-around' }]} >
             <Chip
-              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('last7Days') as string}
               selected={activePreset === 'last7'}
               onPress={() => {
@@ -276,7 +275,6 @@ export default function StatsScreen() {
 
 
             <Chip
-              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('thisMonth') as string}
               selected={activePreset === 'thisMonth'}
               onPress={() => {
@@ -292,7 +290,6 @@ export default function StatsScreen() {
             />
 
             <Chip
-              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('lastMonth') as string}
               selected={activePreset === 'lastMonth'}
               onPress={() => {
@@ -308,7 +305,6 @@ export default function StatsScreen() {
             />
 
             <Chip
-              style={{ maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.42) }}
               label={t('thisYear') as string}
               selected={activePreset === 'thisYear'}
               onPress={() => {

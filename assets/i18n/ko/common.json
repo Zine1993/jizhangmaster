@@ -116,7 +116,8 @@
     "insight.emotion.summary.others": "또한, {{others}} 감정도 자주 나타났습니다.",
     "insight.emotion.summary.guidance.positive": "기분이 대체로 긍정적이었습니다. 계속해서 좋은 상태를 유지하세요!",
     "insight.emotion.summary.guidance.negative": "기분이 대체로 부정적이었습니다. 무슨 일이 있었는지 되돌아보는 것이 도움이 될 수 있습니다.",
-    "insight.emotion.summary.guidance.mixed": "다양한 감정을 경험하셨습니다. 이는 정상이며, 추적을 통해 패턴을 이해하는 데 도움이 됩니다."
+    "insight.emotion.summary.guidance.mixed": "다양한 감정을 경험하셨습니다. 이는 정상이며, 추적을 통해 패턴을 이해하는 데 도움이 됩니다.",
+    "longPressToDeleteHint": "탭하여 삭제"
   },
   "auth": {
     "login": "로그인",

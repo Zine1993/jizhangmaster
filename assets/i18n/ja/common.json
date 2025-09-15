@@ -116,7 +116,8 @@
     "insight.emotion.summary.others": "その他、{{others}}もよく見られます。",
     "insight.emotion.summary.guidance.positive": "あなたの気分は主にポジティブでした。素晴らしい仕事を続けてください！",
     "insight.emotion.summary.guidance.negative": "あなたの気分は主にネガティブでした。何が起こっているのかを振り返ると役立つかもしれません。",
-    "insight.emotion.summary.guidance.mixed": "あなたは様々な感情を経験しました。これは正常であり、追跡はパターンを理解するのに役立ちます。"
+    "insight.emotion.summary.guidance.mixed": "あなたは様々な感情を経験しました。これは正常であり、追跡はパターンを理解するのに役立ちます。",
+    "longPressToDeleteHint": "タップで削除"
   },
   "auth": {
     "login": "ログイン",

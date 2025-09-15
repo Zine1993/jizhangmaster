@@ -10,10 +10,10 @@ import jaPack from '@/assets/i18n/ja/common.json';
 import koPack from '@/assets/i18n/ko/common.json';
 
 const LANGUAGE_STORAGE_KEY = '@expense_tracker_language';
-const SUPPORTED_LANGUAGES = ['en','zh','es','fr','de','ja','ko'] as const;
-type Language = typeof SUPPORTED_LANGUAGES[number];
+export const SUPPORTED_LANGUAGES = ['en','zh','es','fr','de','ja','ko'] as const;
+export type LangCode = typeof SUPPORTED_LANGUAGES[number];
 
-const RES_PACKS: Record<Language, any> = {
+const RES_PACKS: Record<LangCode, any> = {
   en: enPack,
   zh: zhPack,
   es: esPack,
@@ -67,7 +67,7 @@ const inferRegion = (locs: Localization.Locale[]): string => {
   return r;
 };
 
-const inferLanguageCode = (locs: Localization.Locale[]): Language => {
+const inferLanguageCode = (locs: Localization.Locale[]): LangCode => {
   const loc = locs?.[0];
   let code = '';
   if (loc) {
@@ -77,14 +77,14 @@ const inferLanguageCode = (locs: Localization.Locale[]): Language => {
     }
   }
   code = (code || '').toLowerCase();
-  const fallback: Language = 'en';
+  const fallback: LangCode = 'en';
   const supported = new Set(SUPPORTED_LANGUAGES as readonly string[]);
-  return (supported.has(code) ? (code as Language) : fallback);
+  return (supported.has(code) ? (code as LangCode) : fallback);
 };
 
 interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
+  language: LangCode;
+  setLanguage: (lang: LangCode) => void;
   /** @deprecated Please use currency from a more appropriate context (e.g., useTransactions) */
   currency: string;
   /** @deprecated Please use a centralized currency setter (e.g., useTransactions().setCurrency) */
@@ -95,7 +95,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('en');
+  const [language, setLanguageState] = useState<LangCode>('en');
   const [currency, setCurrencyState] = useState<string>('USD');
 
   useEffect(() => {
@@ -106,8 +106,8 @@ export const LanguageProvider: React.FC<{children: ReactNode}> = ({ children }) 
         const locales = Localization.getLocales();
 
         // Set language
-        if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage as Language)) {
-          setLanguageState(savedLanguage as Language);
+        if (savedLanguage && (SUPPORTED_LANGUAGES as readonly string[]).includes(savedLanguage)) {
+          setLanguageState(savedLanguage as LangCode);
         } else {
           const inferredLang = inferLanguageCode(locales);
           setLanguageState(inferredLang);
@@ -129,7 +129,7 @@ export const LanguageProvider: React.FC<{children: ReactNode}> = ({ children }) 
     })();
   }, []);
 
-  const setLanguage = useCallback(async (lang: Language) => {
+  const setLanguage = useCallback(async (lang: LangCode) => {
     try {
       if (SUPPORTED_LANGUAGES.includes(lang)) {
         await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, lang);

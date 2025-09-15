@@ -116,7 +116,8 @@
     "insight.emotion.summary.others": "Aussi fréquents : {{others}}.",
     "insight.emotion.summary.guidance.positive": "Votre humeur a été principalement positive. Continuez votre excellent travail !",
     "insight.emotion.summary.guidance.negative": "Votre humeur a été principalement négative. Il pourrait être utile de réfléchir à ce qui s'est passé.",
-    "insight.emotion.summary.guidance.mixed": "Vous avez ressenti un mélange d'émotions. C'est normal, et le suivi vous aide à comprendre les schémas."
+    "insight.emotion.summary.guidance.mixed": "Vous avez ressenti un mélange d'émotions. C'est normal, et le suivi vous aide à comprendre les schémas.",
+    "longPressToDeleteHint": "Touchez pour supprimer"
   },
   "auth": {
     "login": "Connexion",

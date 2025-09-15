@@ -320,19 +320,23 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
               key={opt.k}
               onPress={() => setPeriod(opt.k)}
               style={({ pressed }) => ({
-                paddingHorizontal: 10,
+                paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRadius: 999,
                 backgroundColor: active ? colors.primary + '20' : 'transparent',
                 opacity: pressed ? 0.8 : 1,
-                maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.38),
+                flexShrink: 1, // Allow button to shrink
               })}
             >
               <Text
-                style={{ color: active ? colors.primary : colors.textSecondary, fontSize: 12 }}
+                style={{
+                  color: active ? colors.primary : colors.textSecondary,
+                  fontSize: 12,
+                  textAlign: 'center',
+                }}
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.8}
+                minimumFontScale={0.7}
                 allowFontScaling
               >
                 {opt.label}

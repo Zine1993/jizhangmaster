@@ -1,6 +1,8 @@
 import React, { useMemo, useState, ReactNode, useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, ScrollView, Platform, Dimensions } from 'react-native';
+import { Redirect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@/contexts/UserContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LogIn, UserPlus, KeyRound, ArrowLeft, Heart, BarChart3, Brain, Shield } from 'lucide-react-native';
@@ -16,7 +18,8 @@ type Mode = 'login' | 'register' | 'reset';
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
-  const { user, loading, skipped, signInWithPassword, signUpWithPassword, resetPassword, skipLogin } = useAuth();
+  const { user, loading: authLoading, skipped, signInWithPassword, signUpWithPassword, resetPassword, skipLogin } = useAuth();
+  const { onboarded, loading: userLoading } = useUser();
   const { colors } = useTheme();
   const { t } = useLanguage();
   useEffect(() => {
@@ -109,12 +112,16 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     }
   };
 
-  if (loading) {
+  if (authLoading || userLoading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator color={colors.primary} />
       </View>
     );
+  }
+
+  if (user && !onboarded) {
+    return <Redirect href="/onboarding" />;
   }
 
   if (user || skipped) {

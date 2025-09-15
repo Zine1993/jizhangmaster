@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { useSupabaseSync, type ServerTransaction } from '@/hooks/useSupabaseSync';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useEmotionTags } from './EmotionTagContext';
 
 export type Currency =
   | 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'KRW' | 'HKD' | 'TWD' | 'SGD'
@@ -88,6 +89,7 @@ interface TransactionContextType {
   getNetWorthByCurrency: () => { currency: Currency; amount: number }[];
   addTransfer: (fromId: string, toId: string, amount: number, fee?: number, date?: Date, description?: string) => void;
   clearAllData: () => void;
+  getEmotionStats: () => Array<{ id: string; count: number; emoji: string }>;
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
@@ -149,6 +151,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
   const { t, language, setLanguage } = useLanguage();
   const { themeMode, setThemeMode } = useTheme();
   const { getUserSettings, upsertUserSettings, upsertTransactions, fetchTransactions, deleteTransactions, upsertAccounts, fetchAccounts, deleteAccounts } = useSupabaseSync();
+  const { tagsMap } = useEmotionTags();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currency, setCurrencyState] = useState<Currency>('CNY');
@@ -1152,6 +1155,28 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     });
   };
 
+  const getEmotionStats = () => {
+    const freq = new Map<string, number>();
+    transactions.forEach(t => {
+      const tag = t.emotion || t.emotion_tag_id;
+      if (tag) {
+        freq.set(tag, (freq.get(tag) || 0) + 1);
+      }
+    });
+
+    const sorted = Array.from(freq.entries()).sort((a, b) => b[1] - a[1]);
+
+    if (!tagsMap) {
+      return [];
+    }
+    
+    return sorted.map(([id, count]) => {
+      const tagInfo = tagsMap[id];
+      const emoji = (tagInfo && tagInfo.type === 'emoji') ? tagInfo.value : '❓';
+      return { id, count, emoji };
+    });
+  };
+
   const value = useMemo<TransactionContextType>(
     () => ({
       transactions,
@@ -1190,8 +1215,9 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       getNetWorthByCurrency,
       addTransfer,
       clearAllData,
+      getEmotionStats,
     }),
-    [transactions, currency, expenseCategories, incomeCategories, accounts]
+    [transactions, currency, expenseCategories, incomeCategories, accounts, tagsMap]
   );
 
   return (

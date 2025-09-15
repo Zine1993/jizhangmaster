@@ -117,7 +117,8 @@
     "insight.emotion.summary.others": "此外，{{others}}等情绪也较为常见。",
     "insight.emotion.summary.guidance.positive": "积极情绪主导了你的生活，真棒！",
     "insight.emotion.summary.guidance.negative": "负面情绪占比较高，请多关注自己的感受，善待自己。",
-    "insight.emotion.summary.guidance.mixed": "这是一个情绪丰富的时期，请继续记录，更好地了解自己。"
+    "insight.emotion.summary.guidance.mixed": "这是一个情绪丰富的时期，请继续记录，更好地了解自己。",
+    "longPressToDeleteHint": "点按可以删除"
   },
   "auth": {
     "login": "登录",

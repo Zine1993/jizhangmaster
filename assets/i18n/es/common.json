@@ -116,7 +116,8 @@
     "insight.emotion.summary.others": "También comunes: {{others}}.",
     "insight.emotion.summary.guidance.positive": "Tu estado de ánimo ha sido predominantemente positivo. ¡Sigue así!",
     "insight.emotion.summary.guidance.negative": "Tu estado de ánimo ha sido predominantemente negativo. Podría ser útil reflexionar sobre lo que ha estado sucediendo.",
-    "insight.emotion.summary.guidance.mixed": "Has experimentado una mezcla de emociones. Esto es normal, y el seguimiento te ayuda a comprender los patrones."
+    "insight.emotion.summary.guidance.mixed": "Has experimentado una mezcla de emociones. Esto es normal, y el seguimiento te ayuda a comprender los patrones.",
+    "longPressToDeleteHint": "Toca para eliminar"
   },
   "auth": {
     "login": "Iniciar sesión",

@@ -116,7 +116,8 @@
     "insight.emotion.summary.others": "Auch häufig: {{others}}.",
     "insight.emotion.summary.guidance.positive": "Ihre Stimmung war überwiegend positiv. Machen Sie weiter so!",
     "insight.emotion.summary.guidance.negative": "Ihre Stimmung war überwiegend negativ. Es könnte hilfreich sein, darüber nachzudenken, was passiert ist.",
-    "insight.emotion.summary.guidance.mixed": "Sie haben eine Mischung von Emotionen erlebt. Das ist normal, und das Verfolgen hilft Ihnen, die Muster zu verstehen."
+    "insight.emotion.summary.guidance.mixed": "Sie haben eine Mischung von Emotionen erlebt. Das ist normal, und das Verfolgen hilft Ihnen, die Muster zu verstehen.",
+    "longPressToDeleteHint": "Zum Löschen tippen"
   },
   "auth": {
     "login": "Anmelden",
