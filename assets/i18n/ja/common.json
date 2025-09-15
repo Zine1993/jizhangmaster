@@ -56,7 +56,6 @@
     "budgetOverlapDetected": "予算期間の重複を検出。確認して調整。",
     "emotionCloudTitle": "感情クラウド",
     "noEmotionData": "この期間の感情データなし",
-    "emotionCloudSummary": "主な感情：「{{dominant}}」、全体のトーン：{{tone}}。他に多い：「{{top2}}{{sep}}{{top3}}」。",
     "good": "良好",
     "needAttention": "注意が必要",
     "steady": "安定",
@@ -111,7 +110,13 @@
     "insight.health.flow.advice.ok": "キャッシュフロー健全。現状を維持。",
     "insight.health.saving.advice.strong": "貯蓄が強く、リスク耐性が高い。",
     "insight.health.saving.advice.keep": "貯蓄が安定。引き続き蓄積。",
-    "insight.health.saving.advice.weak": "貯蓄が低い。緊急資金を構築。"
+    "insight.health.saving.advice.weak": "貯蓄が低い。緊急資金を構築。",
+    "listSeparator": "、",
+    "insight.emotion.summary.main": "主な感情：{{dominant}}、全体のトーン：{{tone}}。",
+    "insight.emotion.summary.others": "その他、{{others}}もよく見られます。",
+    "insight.emotion.summary.guidance.positive": "あなたの気分は主にポジティブでした。素晴らしい仕事を続けてください！",
+    "insight.emotion.summary.guidance.negative": "あなたの気分は主にネガティブでした。何が起こっているのかを振り返ると役立つかもしれません。",
+    "insight.emotion.summary.guidance.mixed": "あなたは様々な感情を経験しました。これは正常であり、追跡はパターンを理解するのに役立ちます。"
   },
   "auth": {
     "login": "ログイン",

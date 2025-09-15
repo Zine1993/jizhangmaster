@@ -56,7 +56,6 @@
     "budgetOverlapDetected": "예산 기간 중복 감지. 확인 후 조정.",
     "emotionCloudTitle": "감정 클라우드",
     "noEmotionData": "이 기간 감정 데이터 없음",
-    "emotionCloudSummary": "주요 감정: \"{{dominant}}\", 전체 톤: {{tone}}. 자주 나타남: \"{{top2}}{{sep}}{{top3}}\".",
     "good": "좋음",
     "needAttention": "주의 필요",
     "steady": "안정",
@@ -111,7 +110,13 @@
     "insight.health.flow.advice.ok": "현금흐름 건강. 현재 상태 유지.",
     "insight.health.saving.advice.strong": "저축 강력. 높은 회복력.",
     "insight.health.saving.advice.keep": "저축 안정. 계속 축적.",
-    "insight.health.saving.advice.weak": "저축 낮음. 비상 자금 구축."
+    "insight.health.saving.advice.weak": "저축 낮음. 비상 자금 구축.",
+    "listSeparator": ", ",
+    "insight.emotion.summary.main": "주요 감정: {{dominant}}, 전체적인 톤: {{tone}}.",
+    "insight.emotion.summary.others": "또한, {{others}} 감정도 자주 나타났습니다.",
+    "insight.emotion.summary.guidance.positive": "기분이 대체로 긍정적이었습니다. 계속해서 좋은 상태를 유지하세요!",
+    "insight.emotion.summary.guidance.negative": "기분이 대체로 부정적이었습니다. 무슨 일이 있었는지 되돌아보는 것이 도움이 될 수 있습니다.",
+    "insight.emotion.summary.guidance.mixed": "다양한 감정을 경험하셨습니다. 이는 정상이며, 추적을 통해 패턴을 이해하는 데 도움이 됩니다."
   },
   "auth": {
     "login": "로그인",

@@ -56,7 +56,6 @@
     "budgetOverlapDetected": "Detectada superposición de presupuesto. Revisa y ajusta.",
     "emotionCloudTitle": "Nube de emociones",
     "noEmotionData": "Sin datos de emociones en este período",
-    "emotionCloudSummary": "Emoción dominante: \"{{dominant}}\", tono general: {{tone}}. También comunes: \"{{top2}}{{sep}}{{top3}}\".",
     "good": "Bueno",
     "needAttention": "Necesita atención",
     "steady": "Estable",
@@ -111,7 +110,13 @@
     "insight.health.flow.advice.ok": "Flujo de caja sano. Sigue así.",
     "insight.health.saving.advice.strong": "Ahorros fuertes. Gran resiliencia.",
     "insight.health.saving.advice.keep": "Ahorros estables. Sigue creciendo.",
-    "insight.health.saving.advice.weak": "Ahorros bajos. Crea un fondo de emergencia."
+    "insight.health.saving.advice.weak": "Ahorros bajos. Crea un fondo de emergencia.",
+    "listSeparator": ", ",
+    "insight.emotion.summary.main": "Emoción dominante: {{dominant}}, con un tono general de {{tone}}.",
+    "insight.emotion.summary.others": "También comunes: {{others}}.",
+    "insight.emotion.summary.guidance.positive": "Tu estado de ánimo ha sido predominantemente positivo. ¡Sigue así!",
+    "insight.emotion.summary.guidance.negative": "Tu estado de ánimo ha sido predominantemente negativo. Podría ser útil reflexionar sobre lo que ha estado sucediendo.",
+    "insight.emotion.summary.guidance.mixed": "Has experimentado una mezcla de emociones. Esto es normal, y el seguimiento te ayuda a comprender los patrones."
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -400,6 +405,7 @@
   "korean": "Coreano",
   "language": "Idioma",
   "lightTheme": "Claro",
+  "darkTheme": "Oscuro",
   "loggedInAccount": "Cuenta iniciada",
   "loginOrRegister": "Iniciar sesión/Registrarse",
   "logoutFailed": "Cierre de sesión fallido",

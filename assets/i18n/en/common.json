@@ -56,7 +56,6 @@
     "budgetOverlapDetected": "Budget period overlap detected. Please review and adjust.",
     "emotionCloudTitle": "Emotion Cloud",
     "noEmotionData": "No emotion data for this period",
-    "emotionCloudSummary": "This period's dominant emotion is \"{{dominant}}\", with an overall tone of: {{tone}}. Also common: \"{{top2}}{{sep}}{{top3}}\".",
     "good": "Good",
     "needAttention": "Needs attention",
     "steady": "Steady",
@@ -111,7 +110,13 @@
     "insight.health.flow.advice.ok": "Cashflow looks healthy. Keep it up.",
     "insight.health.saving.advice.strong": "Savings are strong. Great resilience.",
     "insight.health.saving.advice.keep": "Savings are steady. Keep building.",
-    "insight.health.saving.advice.weak": "Savings are low. Build an emergency fund."
+    "insight.health.saving.advice.weak": "Savings are low. Build an emergency fund.",
+    "listSeparator": ", ",
+    "insight.emotion.summary.main": "Dominant emotion: {{dominant}}, with an overall tone of {{tone}}.",
+    "insight.emotion.summary.others": "Also common: {{others}}.",
+    "insight.emotion.summary.guidance.positive": "Your mood has been predominantly positive. Keep up the great work!",
+    "insight.emotion.summary.guidance.negative": "Your mood has been predominantly negative. It might be helpful to reflect on what's been happening.",
+    "insight.emotion.summary.guidance.mixed": "You've experienced a mix of emotions. This is normal, and tracking helps you understand the patterns."
   },
   "auth": {
     "login": "Log in",
@@ -383,6 +388,7 @@
   "korean": "Korean",
   "language": "Language",
   "lightTheme": "Light",
+  "darkTheme": "Dark",
   "loggedInAccount": "Logged in account",
   "loginOrRegister": "Login / Sign up",
   "logoutFailed": "Logout failed",
