@@ -8,6 +8,7 @@ import { TransactionProvider } from '@/contexts/TransactionContext';
 import { EmojiRainProvider } from '@/contexts/EmojiRainContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { UserProvider } from '@/contexts/UserContext';
 import AuthGate from '@/components/AuthGate';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { EmotionTagProvider } from '@/contexts/EmotionTagContext';
@@ -18,27 +19,29 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-      <SafeAreaProvider>
-      <ThemeProvider>
-        <LanguageProvider>
-          <EmotionTagProvider>
-            <TransactionProvider>
-              <EmojiRainProvider>
-                <AuthGate>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(tabs)" />
-  
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <StatusBar style="auto" />
-                </AuthGate>
-              </EmojiRainProvider>
-            </TransactionProvider>
-          </EmotionTagProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-      </SafeAreaProvider>
-    </AuthProvider>
+        <UserProvider>
+          <SafeAreaProvider>
+            <ThemeProvider>
+              <LanguageProvider>
+                <EmotionTagProvider>
+                  <TransactionProvider>
+                    <EmojiRainProvider>
+                      <AuthGate>
+                        <Stack screenOptions={{ headerShown: false }}>
+                          <Stack.Screen name="(tabs)" />
+                          <Stack.Screen name="onboarding" />
+                          <Stack.Screen name="+not-found" />
+                        </Stack>
+                        <StatusBar style="auto" />
+                      </AuthGate>
+                    </EmojiRainProvider>
+                  </TransactionProvider>
+                </EmotionTagProvider>
+              </LanguageProvider>
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </UserProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

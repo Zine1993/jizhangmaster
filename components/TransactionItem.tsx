@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Animated, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Transaction, useTransactions } from '@/contexts/TransactionContext';
@@ -27,7 +27,7 @@ function formatDateYYYYMMDD(date: Date) {
 
 export default function TransactionItem({ transaction, onDelete }: TransactionItemProps) {
   const { t, language } = useLanguage();
-  const { deleteTransaction, /* emotions, */ currency } = useTransactions();
+  const { deleteTransaction, /* emotions, */ currency, updateAccount, accounts } = useTransactions();
   const { colors } = useTheme();
   const { tagsMap } = useEmotionTags();
 
@@ -92,17 +92,42 @@ export default function TransactionItem({ transaction, onDelete }: TransactionIt
       toValue: 1,
       duration: 1400,
       useNativeDriver: false,
-    }).start((result) => {
+    }).start(async (result) => {
       // Check if the animation completed without being interrupted by cancelCountdown
       if (result.finished) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setIsDeleted(true);
-        
-        // Use a minimal timeout to allow the checkmark to render before deleting
-        setTimeout(() => {
+
+        const accId = (transaction as any)?.accountId as string | undefined;
+        const acc = accId ? (accounts || []).find(a => a.id === accId) : undefined;
+
+        const proceedDelete = async () => {
           deleteTransaction(transaction.id);
           onDelete?.();
-        }, 50);
+        };
+
+        if (acc?.archived) {
+          // 归档账户：提示是否自动取消归档并继续删除
+          Alert.alert(
+            String(t('confirm') || '确认'),
+            String(t('unarchiveToProceed') || '此操作将取消归档该账户并回滚余额，是否继续？'),
+            [
+              { text: String(t('cancel') || '取消'), style: 'cancel', onPress: () => {
+                setIsDeleted(false);
+                cancelCountdown();
+              }},
+              { text: String(t('confirm') || '确认'), style: 'default', onPress: async () => {
+                try {
+                  updateAccount(acc.id, { archived: false });
+                } catch {}
+                setTimeout(proceedDelete, 10);
+              }},
+            ]
+          );
+        } else {
+          // 非归档账户，直接删除
+          setTimeout(proceedDelete, 50);
+        }
       }
     });
   }, [cancelCountdown, progress, deleteTransaction, transaction.id, onDelete]);

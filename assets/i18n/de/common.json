@@ -1,4 +1,6 @@
 {
+  "periodOverview": "Periodenübersicht",
+  "tapToSeeValues": "Balken antippen für Werte",
   "tapToViewValues": "Balken antippen für Werte",
   "common": {
     "appName": "Stimmungsbilanz",
@@ -21,6 +23,7 @@
     "noData": "Keine Daten",
     "others": "Sonstiges",
     "overspent": "Überschritten",
+    "debt": "Schulden",
     "recentTransactions": "Letzte Transaktionen",
     "noTransactions": "Keine Transaktionen",
     "addFirst": "Erste Transaktion hinzufügen!",
@@ -53,7 +56,6 @@
     "budgetOverlapDetected": "Budgetüberlappung erkannt. Bitte prüfen und anpassen.",
     "emotionCloudTitle": "Emotionswolke",
     "noEmotionData": "Keine Emotionsdaten für diesen Zeitraum",
-    "emotionCloudSummary": "Dominante Emotion: „{{dominant}}“, Gesamtton: {{tone}}. Häufig: „{{top2}}{{sep}}{{top3}}“.",
     "good": "Gut",
     "needAttention": "Achtung erforderlich",
     "steady": "Stabil",
@@ -108,7 +110,14 @@
     "insight.health.flow.advice.ok": "Cashflow gesund. Weiter so.",
     "insight.health.saving.advice.strong": "Starke Ersparnisse. Gute Widerstandsfähigkeit.",
     "insight.health.saving.advice.keep": "Ersparnisse stabil. Weiter aufbauen.",
-    "insight.health.saving.advice.weak": "Ersparnisse niedrig. Notfallfonds aufbauen."
+    "insight.health.saving.advice.weak": "Ersparnisse niedrig. Notfallfonds aufbauen.",
+    "listSeparator": ", ",
+    "insight.emotion.summary.main": "Dominante Emotion: {{dominant}}, mit einem allgemeinen Ton von {{tone}}.",
+    "insight.emotion.summary.others": "Auch häufig: {{others}}.",
+    "insight.emotion.summary.guidance.positive": "Ihre Stimmung war überwiegend positiv. Machen Sie weiter so!",
+    "insight.emotion.summary.guidance.negative": "Ihre Stimmung war überwiegend negativ. Es könnte hilfreich sein, darüber nachzudenken, was passiert ist.",
+    "insight.emotion.summary.guidance.mixed": "Sie haben eine Mischung von Emotionen erlebt. Das ist normal, und das Verfolgen hilft Ihnen, die Muster zu verstehen.",
+    "longPressToDeleteHint": "Zum Löschen tippen"
   },
   "auth": {
     "login": "Anmelden",
@@ -397,6 +406,7 @@
   "korean": "Koreanisch",
   "language": "Sprache",
   "lightTheme": "Hell",
+  "darkTheme": "Dunkel",
   "loggedInAccount": "Angemeldetes Konto",
   "loginOrRegister": "Anmelden/Registrieren",
   "logoutFailed": "Abmeldung fehlgeschlagen",
@@ -451,5 +461,8 @@
   "editNickname": "Nickname bearbeiten",
   "enterNickname": "Nickname eingeben",
   "verify": "Überprüfen",
-  "validate": "Validieren"
+  "validate": "Validieren",
+  "active": "Aktiv",
+  "archived": "Archiviert",
+  "unarchiveToProceed": "Dies hebt die Archivierung des Kontos auf und macht die Saldenwirkung rückgängig. Fortfahren?"
 }

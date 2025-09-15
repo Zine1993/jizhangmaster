@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { useSupabaseSync, type ServerTransaction } from '@/hooks/useSupabaseSync';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useEmotionTags } from './EmotionTagContext';
 
 export type Currency =
   | 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'KRW' | 'HKD' | 'TWD' | 'SGD'
@@ -88,6 +89,7 @@ interface TransactionContextType {
   getNetWorthByCurrency: () => { currency: Currency; amount: number }[];
   addTransfer: (fromId: string, toId: string, amount: number, fee?: number, date?: Date, description?: string) => void;
   clearAllData: () => void;
+  getEmotionStats: () => Array<{ id: string; count: number; emoji: string }>;
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
@@ -123,21 +125,21 @@ function isUUIDv4(id: string): boolean {
 }
 
 const defaultExpenseCategories: ExpenseCategory[] = [
-  { id: 'food', name: '餐饮', emoji: '🍜' },
-  { id: 'transport', name: '交通', emoji: '🚌' },
-  { id: 'shopping', name: '购物', emoji: '🛍️' },
-  { id: 'housing', name: '住房', emoji: '🏠' },
-  { id: 'entertainment', name: '娱乐', emoji: '🎮' },
-  { id: 'medical', name: '医疗', emoji: '💊' },
-  { id: 'education', name: '教育', emoji: '📚' },
-  { id: 'travel', name: '旅行', emoji: '✈️' },
+  { id: 'food', name: 'food', emoji: '🍜' },
+  { id: 'transport', name: 'transport', emoji: '🚌' },
+  { id: 'shopping', name: 'shopping', emoji: '🛍️' },
+  { id: 'housing', name: 'housing', emoji: '🏠' },
+  { id: 'entertainment', name: 'entertainment', emoji: '🎮' },
+  { id: 'medical', name: 'medical', emoji: '💊' },
+  { id: 'education', name: 'education', emoji: '📚' },
+  { id: 'travel', name: 'travel', emoji: '✈️' },
 ];
 
 const defaultIncomeCategories: IncomeCategory[] = [
-  { id: 'salary', name: '工资', emoji: '💼' },
-  { id: 'freelance', name: '兼职', emoji: '🧑‍💻' },
-  { id: 'investment', name: '投资', emoji: '📈' },
-  { id: 'other', name: '其他', emoji: '🔖' },
+  { id: 'salary', name: 'salary', emoji: '💼' },
+  { id: 'freelance', name: 'freelance', emoji: '🧑‍💻' },
+  { id: 'investment', name: 'investment', emoji: '📈' },
+  { id: 'other', name: 'other', emoji: '🔖' },
 ];
 
 interface TransactionProviderProps {
@@ -149,6 +151,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
   const { t, language, setLanguage } = useLanguage();
   const { themeMode, setThemeMode } = useTheme();
   const { getUserSettings, upsertUserSettings, upsertTransactions, fetchTransactions, deleteTransactions, upsertAccounts, fetchAccounts, deleteAccounts } = useSupabaseSync();
+  const { tagsMap } = useEmotionTags();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currency, setCurrencyState] = useState<Currency>('CNY');
@@ -398,7 +401,14 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setExpenseCategories(parsed);
+          const defaultIds = new Set(defaultExpenseCategories.map(c => c.id));
+          const migrated = parsed.map(cat => {
+            if (defaultIds.has(cat.id)) {
+              return { ...cat, name: cat.id };
+            }
+            return cat;
+          });
+          setExpenseCategories(migrated);
         } else {
           setExpenseCategories(defaultExpenseCategories);
         }
@@ -422,7 +432,14 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setIncomeCategories(parsed);
+          const defaultIds = new Set(defaultIncomeCategories.map(c => c.id));
+          const migrated = parsed.map(cat => {
+            if (defaultIds.has(cat.id)) {
+              return { ...cat, name: cat.id };
+            }
+            return cat;
+          });
+          setIncomeCategories(migrated);
         } else {
           setIncomeCategories(defaultIncomeCategories);
         }
@@ -445,17 +462,22 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       const stored = await AsyncStorage.getItem(ACCOUNT_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        const list: Account[] = (Array.isArray(parsed) ? parsed : []).map((a: any) => ({
-          id: String(a.id),
-          name: String(a.name ?? t('defaultAccountName')),
-          type: a.type as AccountType ?? 'cash',
-          currency: isValidCurrency(String(a.currency)) ? String(a.currency) as Currency : currency,
-          initialBalance: Number(a.initialBalance ?? 0),
-          creditLimit: (typeof a.creditLimit === 'number') ? Number(a.creditLimit) : undefined,
-
-          createdAt: new Date(a.createdAt ?? Date.now()),
-          archived: !!a.archived,
-        }));
+        const list: Account[] = (Array.isArray(parsed) ? parsed : []).map((a: any) => {
+          const rawName = (a && a.name != null) ? String(a.name) : '';
+          const localizedDefault = t('accounts.defaultName');
+          // 仅空名兜底：已有名称一律保留（不随语言切换）
+          const fixedName = rawName && rawName.trim().length > 0 ? rawName : localizedDefault;
+          return {
+            id: String(a.id),
+            name: fixedName,
+            type: (a?.type as AccountType) ?? 'cash',
+            currency: isValidCurrency(String(a?.currency)) ? String(a.currency) as Currency : currency,
+            initialBalance: Number(a?.initialBalance ?? 0),
+            creditLimit: (typeof a?.creditLimit === 'number') ? Number(a.creditLimit) : undefined,
+            createdAt: new Date(a?.createdAt ?? Date.now()),
+            archived: !!a?.archived,
+          } as Account;
+        });
         if (list.length) {
           setAccounts(list);
           return;
@@ -464,7 +486,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       // 无账户则创建默认现金钱包
       setAccounts([{
         id: genUUIDv4(),
-        name: t('defaultAccountName'),
+        name: t('accounts.defaultName'),
         type: 'cash',
         currency,
         initialBalance: 0,
@@ -476,7 +498,7 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     } catch {
       setAccounts([{
         id: genUUIDv4(),
-        name: t('defaultAccountName'),
+        name: t('accounts.defaultName'),
         type: 'cash',
         currency,
         initialBalance: 0,
@@ -1133,6 +1155,28 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     });
   };
 
+  const getEmotionStats = () => {
+    const freq = new Map<string, number>();
+    transactions.forEach(t => {
+      const tag = t.emotion || t.emotion_tag_id;
+      if (tag) {
+        freq.set(tag, (freq.get(tag) || 0) + 1);
+      }
+    });
+
+    const sorted = Array.from(freq.entries()).sort((a, b) => b[1] - a[1]);
+
+    if (!tagsMap) {
+      return [];
+    }
+    
+    return sorted.map(([id, count]) => {
+      const tagInfo = tagsMap[id];
+      const emoji = (tagInfo && tagInfo.type === 'emoji') ? tagInfo.value : '❓';
+      return { id, count, emoji };
+    });
+  };
+
   const value = useMemo<TransactionContextType>(
     () => ({
       transactions,
@@ -1171,8 +1215,9 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       getNetWorthByCurrency,
       addTransfer,
       clearAllData,
+      getEmotionStats,
     }),
-    [transactions, currency, expenseCategories, incomeCategories, accounts]
+    [transactions, currency, expenseCategories, incomeCategories, accounts, tagsMap]
   );
 
   return (

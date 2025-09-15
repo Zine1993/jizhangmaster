@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, LayoutChangeEvent, Animated } from 'react-native';
 import Card from '@/components/ui/Card';
+import { displayNameFor } from '@/lib/i18n';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTransactions } from '@/contexts/TransactionContext';
@@ -8,19 +9,20 @@ import { useEmotionTags } from '@/contexts/EmotionTagContext';
 
 type TimePeriod = 'last_7_days' | 'this_month' | 'last_month' | 'this_year';
 
+// Emotion IDs mapped to colors.
 const EMOTION_COLORS: Record<string, string> = {
-  '开心': '#FFB300',
-  '满足': '#FF4081',
-  '期待': '#2196F3',
-  '平静': '#4CAF50',
-  '焦虑': '#757575',
-  '沮丧': '#212121',
+  'happy': '#FFB300',
+  'content': '#FF4081',
+  'excited': '#2196F3',
+  'calm': '#4CAF50',
+  'anxious': '#757575',
+  'sad': '#212121',
 };
 
-
-const POSITIVE = new Set(['开心','满足','期待']);
-const NEGATIVE = new Set(['焦虑','沮丧']);
-const NEUTRAL  = new Set(['平静']);
+// Sets of emotion IDs for categorization.
+const POSITIVE = new Set(['happy', 'content', 'excited']);
+const NEGATIVE = new Set(['anxious', 'sad']);
+const NEUTRAL = new Set(['calm']);
 
 interface CloudItem {
   tag: string;
@@ -228,28 +230,66 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
 
   // 摘要文本
   const summary = useMemo(() => {
-    const top = [...data.freq.entries()].sort((a,b) => b[1]-a[1]).slice(0, 3);
-    if (top.length === 0) return t('noData') || '暂无数据';
-    const names = top.map(([k]) => k);
-    const dom = names[0];
+    const top = [...data.freq.entries()].sort((a, b) => b[1] - a[1]);
+    if (top.length === 0) return t('noData');
 
-    let tone = t('good') || '良好';
-    if (NEGATIVE.has(dom)) tone = t('needAttention') || '需关注';
-    if (NEUTRAL.has(dom))  tone = t('steady') || '平稳';
+    const domId = top[0][0];
+    const domName = displayNameFor({ id: domId, name: domId }, 'emotions', t);
 
-    const top2 = names[1] ?? '';
-    const top3 = names[2] ?? '';
-    const sep = top2 && top3 ? '、' : '';
+    let toneKey = 'good';
+    if (NEGATIVE.has(domId)) toneKey = 'needAttention';
+    if (NEUTRAL.has(domId)) toneKey = 'steady';
+    const tone = t(toneKey);
 
-    // 优先本地化插值；若 i18n 未配置对应键，则回退中文组装
-    const localized = t('emotionCloudSummary', { dominant: dom, tone, top2, top3, sep });
-    if (localized && typeof localized === 'string' && localized !== 'emotionCloudSummary') return localized;
+    const otherNames = top.slice(1, 3).map(([id]) => displayNameFor({ id, name: id }, 'emotions', t)).filter(Boolean);
 
-    // 回退：无 top2/top3 时省略“同时较常见”
-    if (!top2 && !top3) {
-      return `本期情绪云显示，最常感受的是「${dom}」，整体情绪${tone}。`;
+    // Use a single, interpolatable string.
+    const mainSummary = t('insight.emotion.summary.main', {
+      dominant: domName,
+      tone: tone,
+    });
+    
+    let sentences = [mainSummary];
+
+    if (otherNames.length > 0) {
+      const othersStr = otherNames.join(t('listSeparator', { defaultValue: '、' }));
+      sentences.push(t('insight.emotion.summary.others', {
+        others: othersStr,
+      }));
     }
-    return `本期情绪云显示，最常感受的是「${dom}」，整体情绪${tone}。也经常出现「${top2}${sep}${top3}」等情绪。`;
+
+    // Insight sentence
+    const totalEntries = [...data.freq.entries()];
+    const totalCount = totalEntries.reduce((acc, [, count]) => acc + count, 0);
+    if (totalCount > 1 && totalEntries.length > 1) {
+      const posSum = totalEntries.reduce((acc, [id, count]) => POSITIVE.has(id) ? acc + count : acc, 0);
+      const negSum = totalEntries.reduce((acc, [id, count]) => NEGATIVE.has(id) ? acc + count : acc, 0);
+
+      let guidanceKey = '';
+      if (posSum > 0 && negSum > 0) {
+        guidanceKey = 'insight.emotion.summary.guidance.mixed';
+      } else if (negSum / totalCount > 0.5) {
+        guidanceKey = 'insight.emotion.summary.guidance.negative';
+      } else if (posSum / totalCount > 0.6) {
+        guidanceKey = 'insight.emotion.summary.guidance.positive';
+      }
+
+      if (guidanceKey) {
+        const guidance = t(guidanceKey);
+        if (guidance && guidance !== guidanceKey) {
+          sentences.push(guidance);
+        }
+      }
+    }
+
+    const finalSummary = sentences.join(' ');
+
+    // Fallback if translation fails and returns keys
+    if (finalSummary.includes('insight.emotion.summary')) {
+      return t('noEmotionData');
+    }
+
+    return finalSummary;
   }, [data.freq, t]);
 
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -280,19 +320,23 @@ export default function EmotionCloudCard({ onEmotionClick }: { onEmotionClick?: 
               key={opt.k}
               onPress={() => setPeriod(opt.k)}
               style={({ pressed }) => ({
-                paddingHorizontal: 10,
+                paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRadius: 999,
                 backgroundColor: active ? colors.primary + '20' : 'transparent',
                 opacity: pressed ? 0.8 : 1,
-                maxWidth: Math.round(require('react-native').Dimensions.get('window').width * 0.38),
+                flexShrink: 1, // Allow button to shrink
               })}
             >
               <Text
-                style={{ color: active ? colors.primary : colors.textSecondary, fontSize: 12 }}
+                style={{
+                  color: active ? colors.primary : colors.textSecondary,
+                  fontSize: 12,
+                  textAlign: 'center',
+                }}
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.8}
+                minimumFontScale={0.7}
                 allowFontScaling
               >
                 {opt.label}

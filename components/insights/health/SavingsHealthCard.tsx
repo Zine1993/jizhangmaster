@@ -3,16 +3,18 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import AmountText from '@/components/ui/AmountText';
+import { useTransactions } from '@/contexts/TransactionContext';
+import formatCurrency from '@/lib/formatCurrency';
 
 type Props = {
   liquidSavings: number; // 可动用储蓄
   monthlyExpenseAvg: number;
-  currency: string;
 };
 type SavingProps = Props & { hint?: string };
 
-export default function SavingsHealthCard({ liquidSavings, monthlyExpenseAvg, currency, hint }: SavingProps) {
+export default function SavingsHealthCard({ liquidSavings, monthlyExpenseAvg, hint }: SavingProps) {
   const { t } = useLanguage();
+  const { currency } = useTransactions();
   const { colors } = useTheme();
 
   const months = monthlyExpenseAvg > 0 ? liquidSavings / monthlyExpenseAvg : 0;
@@ -35,9 +37,17 @@ export default function SavingsHealthCard({ liquidSavings, monthlyExpenseAvg, cu
       <View style={{ height: 12, borderRadius: 999, backgroundColor: colors.border, overflow: 'hidden', marginTop: 8 }}>
         <View style={{ width: `${Math.round(pct*100)}%`, height: '100%', backgroundColor: colors.primary }} />
       </View>
-      <Text style={{ color: colors.textSecondary, marginTop: 6 }}>
-        {t('insight.health.saving.months', { n: months.toFixed(1) })}
-      </Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+        <Text style={{ color: colors.textSecondary }}>
+          {t('insight.health.saving.months', { n: months.toFixed(1) })}
+        </Text>
+        <AmountText
+          value={formatCurrency(liquidSavings, currency)}
+          color={colors.textSecondary}
+          style={{}}
+          align="right"
+        />
+      </View>
       <Text style={{ color: colors.textSecondary, marginTop: 4 }} numberOfLines={2}>{advice}</Text>
     </View>
   );

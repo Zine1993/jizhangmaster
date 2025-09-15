@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTransactions } from '@/contexts/TransactionContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatCurrency } from '@/lib/i18n';
+import formatCurrency from '@/lib/formatCurrency';
 import AmountText from '@/components/ui/AmountText';
 
-type MonthAgg = { income: number; expense: number; currency: string };
+type MonthAgg = { income: number; expense: number };
 type RatioProps = { agg: MonthAgg; hint?: string };
 
 export default function IncomeExpenseRatioCard({ agg, hint }: RatioProps) {
   const { t } = useLanguage();
+  const { currency } = useTransactions();
   const { colors } = useTheme();
 
   const income = Math.max(0, agg.income || 0);
@@ -45,7 +47,7 @@ export default function IncomeExpenseRatioCard({ agg, hint }: RatioProps) {
           <View style={[styles.bar, { height: hIncome, backgroundColor: colors.income }]} />
           <Text style={[styles.barLabel, { color: colors.textSecondary }]} numberOfLines={1}>{t('income')}</Text>
           <AmountText
-            value={formatCurrency(income, agg.currency as any)}
+            value={formatCurrency(income, currency)}
             color={colors.text}
             style={{ fontWeight: '700' }}
             align="center"
@@ -55,7 +57,7 @@ export default function IncomeExpenseRatioCard({ agg, hint }: RatioProps) {
           <View style={[styles.bar, { height: hExpense, backgroundColor: colors.expense }]} />
           <Text style={[styles.barLabel, { color: colors.textSecondary }]} numberOfLines={1}>{t('expense')}</Text>
           <AmountText
-            value={formatCurrency(expense, agg.currency as any)}
+            value={formatCurrency(expense, currency)}
             color={colors.text}
             style={{ fontWeight: '700' }}
             align="center"

@@ -1,4 +1,6 @@
 {
+  "periodOverview": "时段总览",
+  "tapToSeeValues": "点击柱状图查看数值",
   "tapToViewValues": "点击柱状图查看数值",
   "common": {
     "appName": "心情账本",
@@ -21,6 +23,7 @@
     "noData": "暂无数据",
     "others": "其他",
     "overspent": "超支",
+    "debt": "债务",
     "recentTransactions": "近期交易",
     "noTransactions": "暂无交易记录",
     "addFirst": "添加你的第一笔交易！",
@@ -53,7 +56,6 @@
     "budgetOverlapDetected": "检测到预算周期重叠，请检查并调整。",
     "emotionCloudTitle": "情绪云",
     "noEmotionData": "此周期暂无情绪数据",
-    "emotionCloudSummary": "此周期的主要情绪是“{{dominant}}”，整体情绪基调为：{{tone}}。其他常见情绪：“{{top2}}{{sep}}{{top3}}”。",
     "good": "良好",
     "needAttention": "需关注",
     "steady": "稳定",
@@ -100,6 +102,7 @@
     "insight.health.debt.advice.warn": "注意债务比率，避免进一步增加",
     "insight.health.debt.advice.danger": "立即制定债务削减计划，优先处理高息债务",
     "insight.health.saving.title": "储蓄健康",
+    "insight.health.saving.months": "储蓄月数",
     "insight.health.saving.advice.increase": "增加储蓄，建立紧急备用金",
     "insight.emotion.incomeTitle": "收入来源与情绪",
     "insight.emotion.incomeTip": "查看收入时的常见情绪",
@@ -108,7 +111,14 @@
     "insight.health.flow.advice.ok": "现金流健康，保持现状。",
     "insight.health.saving.advice.strong": "储蓄稳健，抗风险能力强。",
     "insight.health.saving.advice.keep": "储蓄稳定，继续积累。",
-    "insight.health.saving.advice.weak": "储蓄较低，建议建立紧急备用金。"
+    "insight.health.saving.advice.weak": "储蓄较低，建议建立紧急备用金。",
+    "listSeparator": "、",
+    "insight.emotion.summary.main": "主要情绪：{{dominant}}，整体基调：{{tone}}。",
+    "insight.emotion.summary.others": "此外，{{others}}等情绪也较为常见。",
+    "insight.emotion.summary.guidance.positive": "积极情绪主导了你的生活，真棒！",
+    "insight.emotion.summary.guidance.negative": "负面情绪占比较高，请多关注自己的感受，善待自己。",
+    "insight.emotion.summary.guidance.mixed": "这是一个情绪丰富的时期，请继续记录，更好地了解自己。",
+    "longPressToDeleteHint": "点按可以删除"
   },
   "auth": {
     "login": "登录",
@@ -380,6 +390,7 @@
   "korean": "韩语",
   "language": "语言",
   "lightTheme": "浅色模式",
+  "darkTheme": "深色模式",
   "loggedInAccount": "已登录账户",
   "loginOrRegister": "登录/注册",
   "logoutFailed": "退出登录失败",
@@ -433,5 +444,9 @@
   "myAccount": "我的账户",
   "editNickname": "编辑昵称",
   "enterNickname": "输入昵称",
-  "archive": "归档"
+  "archive": "归档",
+  "verify": "验证",
+  "active": "未归档",
+  "archived": "已归档",
+  "unarchiveToProceed": "此操作将取消归档账户并回滚余额，是否继续？"
 }

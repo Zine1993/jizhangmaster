@@ -1,4 +1,6 @@
 {
+  "periodOverview": "Aperçu de la période",
+  "tapToSeeValues": "Touchez les barres pour voir les valeurs",
   "tapToViewValues": "Touchez les barres pour voir les valeurs",
   "common": {
     "appName": "LivreEmotion",
@@ -21,6 +23,7 @@
     "noData": "Aucune donnée",
     "others": "Autres",
     "overspent": "Dépassement",
+    "debt": "Dette",
     "recentTransactions": "Transactions récentes",
     "noTransactions": "Aucune transaction",
     "addFirst": "Ajoutez votre première transaction !",
@@ -53,7 +56,6 @@
     "budgetOverlapDetected": "Chevauchement de budget détecté. Vérifiez et ajustez.",
     "emotionCloudTitle": "Nuage d'émotions",
     "noEmotionData": "Aucune donnée d'émotion pour cette période",
-    "emotionCloudSummary": "Émotion dominante : « {{dominant}} », ton général : {{tone}}. Aussi fréquents : « {{top2}}{{sep}}{{top3}} ».",
     "good": "Bon",
     "needAttention": "Attention requise",
     "steady": "Stable",
@@ -108,7 +110,14 @@
     "insight.health.flow.advice.ok": "Flux de trésorerie sain. Continuez ainsi.",
     "insight.health.saving.advice.strong": "Épargne solide. Grande résilience.",
     "insight.health.saving.advice.keep": "Épargne stable. Continuez à accumuler.",
-    "insight.health.saving.advice.weak": "Épargne faible. Créez un fonds d'urgence."
+    "insight.health.saving.advice.weak": "Épargne faible. Créez un fonds d'urgence.",
+    "listSeparator": ", ",
+    "insight.emotion.summary.main": "Émotion dominante : {{dominant}}, avec un ton général de {{tone}}.",
+    "insight.emotion.summary.others": "Aussi fréquents : {{others}}.",
+    "insight.emotion.summary.guidance.positive": "Votre humeur a été principalement positive. Continuez votre excellent travail !",
+    "insight.emotion.summary.guidance.negative": "Votre humeur a été principalement négative. Il pourrait être utile de réfléchir à ce qui s'est passé.",
+    "insight.emotion.summary.guidance.mixed": "Vous avez ressenti un mélange d'émotions. C'est normal, et le suivi vous aide à comprendre les schémas.",
+    "longPressToDeleteHint": "Touchez pour supprimer"
   },
   "auth": {
     "login": "Connexion",
@@ -397,6 +406,7 @@
     "korean": "Coréen",
     "language": "Langue",
     "lightTheme": "Clair",
+  "darkTheme": "Sombre",
     "loggedInAccount": "Compte connecté",
     "loginOrRegister": "Connexion/Inscription",
     "logoutFailed": "Échec de la déconnexion",
@@ -452,5 +462,8 @@
     "enterNickname": "Entrez le pseudo",
     "archive": "Archivé",
     "verify": "Vérifier",
-    "validate": "Valider"
+    "validate": "Valider",
+    "active": "Actif",
+    "archived": "Archivé",
+    "unarchiveToProceed": "Cette action désarchivera le compte et annulera l'impact sur le solde. Continuer ?"
   }

@@ -47,7 +47,7 @@ const StatusBarSync = ({ color }: { color: string }) => {
 
 
 
-export default function GradientHeader({
+function GradientHeader({
   title,
   subtitle,
   left,
@@ -343,3 +343,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
 });
+
+export default React.memo(GradientHeader);

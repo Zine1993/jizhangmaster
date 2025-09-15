@@ -1,4 +1,6 @@
 {
+  "periodOverview": "Period Overview",
+  "tapToSeeValues": "Tap bars to see values",
   "tapToViewValues": "Tap bars to see values",
   "common": {
     "appName": "MoodLedger",
@@ -21,6 +23,7 @@
     "noData": "No data yet",
     "others": "Others",
     "overspent": "Overspent",
+    "debt": "Debt",
     "recentTransactions": "Recent Transactions",
     "noTransactions": "No transactions yet",
     "addFirst": "Add your first transaction!",
@@ -53,7 +56,6 @@
     "budgetOverlapDetected": "Budget period overlap detected. Please review and adjust.",
     "emotionCloudTitle": "Emotion Cloud",
     "noEmotionData": "No emotion data for this period",
-    "emotionCloudSummary": "This period's dominant emotion is \"{{dominant}}\", with an overall tone of: {{tone}}. Also common: \"{{top2}}{{sep}}{{top3}}\".",
     "good": "Good",
     "needAttention": "Needs attention",
     "steady": "Steady",
@@ -108,7 +110,14 @@
     "insight.health.flow.advice.ok": "Cashflow looks healthy. Keep it up.",
     "insight.health.saving.advice.strong": "Savings are strong. Great resilience.",
     "insight.health.saving.advice.keep": "Savings are steady. Keep building.",
-    "insight.health.saving.advice.weak": "Savings are low. Build an emergency fund."
+    "insight.health.saving.advice.weak": "Savings are low. Build an emergency fund.",
+    "listSeparator": ", ",
+    "insight.emotion.summary.main": "Dominant emotion: {{dominant}}, with an overall tone of {{tone}}.",
+    "insight.emotion.summary.others": "Also common: {{others}}.",
+    "insight.emotion.summary.guidance.positive": "Your mood has been predominantly positive. Keep up the great work!",
+    "insight.emotion.summary.guidance.negative": "Your mood has been predominantly negative. It might be helpful to reflect on what's been happening.",
+    "insight.emotion.summary.guidance.mixed": "You've experienced a mix of emotions. This is normal, and tracking helps you understand the patterns.",
+    "longPressToDeleteHint": "Tap to delete"
   },
   "auth": {
     "login": "Log in",
@@ -380,6 +389,7 @@
   "korean": "Korean",
   "language": "Language",
   "lightTheme": "Light",
+  "darkTheme": "Dark",
   "loggedInAccount": "Logged in account",
   "loginOrRegister": "Login / Sign up",
   "logoutFailed": "Logout failed",
@@ -435,5 +445,8 @@
   "enterNickname": "Enter nickname",
   "archive": "Archive",
   "verify": "Verify",
-  "validate": "Validate"
+  "validate": "Validate",
+  "active": "Active",
+  "archived": "Archived",
+  "unarchiveToProceed": "This will unarchive the account and revert the balance impact. Continue?"
 }

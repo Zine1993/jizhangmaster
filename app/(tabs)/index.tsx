@@ -167,6 +167,9 @@ export default function HomeScreen() {
               <Wallet size={48} color={colors.textTertiary} />
               <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>{t('noTransactions')}</Text>
               <Text style={[styles.emptyStateSubText, { color: colors.textTertiary }]}>{t('addFirst')}</Text>
+              <Text style={[styles.emptyStateSubText, { color: colors.textTertiary, marginTop: 24 }]}>
+                {t('longPressToDeleteHint')}
+              </Text>
             </View>
           ) : (
             <FlatList
