@@ -48,6 +48,8 @@ export interface Account {
   creditLimit?: number;
   createdAt: Date;
   archived?: boolean;
+  // 自动创建的默认账户标记：true 时会随语言切换更新名称
+  isAutoDefault?: boolean;
 }
 interface TransactionContextType {
   transactions: Transaction[];
@@ -462,12 +464,16 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
       const stored = await AsyncStorage.getItem(ACCOUNT_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
+        // 多语言默认名集合：用于一次性迁移识别“自动默认账户”
+        const defaultNameCandidates = new Set<string>([
+          t('accounts.defaultName'),
+          'My Wallet','我的钱包','マイウォレット','내 지갑','Mi Cartera','Mon Portefeuille','Mein Wallet'
+        ]);
         const list: Account[] = (Array.isArray(parsed) ? parsed : []).map((a: any) => {
           const rawName = (a && a.name != null) ? String(a.name) : '';
           const localizedDefault = t('accounts.defaultName');
-          // 仅空名兜底：已有名称一律保留（不随语言切换）
           const fixedName = rawName && rawName.trim().length > 0 ? rawName : localizedDefault;
-          return {
+          const acc: Account = {
             id: String(a.id),
             name: fixedName,
             type: (a?.type as AccountType) ?? 'cash',
@@ -476,37 +482,24 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
             creditLimit: (typeof a?.creditLimit === 'number') ? Number(a.creditLimit) : undefined,
             createdAt: new Date(a?.createdAt ?? Date.now()),
             archived: !!a?.archived,
-          } as Account;
+            isAutoDefault: a?.isAutoDefault
+          };
+          // 一次性迁移：若未标记且名称属于默认名集合，则补上 isAutoDefault=true
+          if (acc.isAutoDefault == null) {
+            acc.isAutoDefault = defaultNameCandidates.has(fixedName);
+          }
+          return acc;
         });
         if (list.length) {
           setAccounts(list);
           return;
         }
       }
-      // 无账户则创建默认现金钱包
-      setAccounts([{
-        id: genUUIDv4(),
-        name: t('accounts.defaultName'),
-        type: 'cash',
-        currency,
-        initialBalance: 0,
-
-        creditLimit: undefined,
-        archived: false,
-        createdAt: new Date(),
-      }]);
+      // 无账户则不再自动创建默认账户
+      setAccounts([]);
     } catch {
-      setAccounts([{
-        id: genUUIDv4(),
-        name: t('accounts.defaultName'),
-        type: 'cash',
-        currency,
-        initialBalance: 0,
-
-        creditLimit: undefined,
-        archived: false,
-        createdAt: new Date(),
-      }]);
+      // 异常时也不再自动创建默认账户
+      setAccounts([]);
     }
   };
 
@@ -968,7 +961,8 @@ export function TransactionProvider({ children }: TransactionProviderProps) {
     if (accounts.some(a => String(a.name ?? '').trim().toLowerCase() === nameKey)) {
       throw new Error('ACCOUNT_NAME_DUPLICATE');
     }
-    const a: Account = { ...account, id: genUUIDv4(), createdAt: new Date(), archived: false };
+    // 默认货币兜底：未显式传入时默认 USD
+    const a: Account = { ...account, currency: (account as any).currency || 'USD', id: genUUIDv4(), createdAt: new Date(), archived: false };
     setAccounts(prev => {
       const next = [a, ...prev];
       triggerAccountSync(next);

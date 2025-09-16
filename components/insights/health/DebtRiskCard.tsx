@@ -19,7 +19,8 @@ export default function DebtRiskCard({ monthlyIncome, debts, hint }: DebtProps) 
   const { colors } = useTheme();
 
   const totalDebt = debts.reduce((s, d) => s + Math.max(0, d.amount || 0), 0);
-  const ratio = monthlyIncome > 0 ? totalDebt / monthlyIncome : 1;
+  const hasData = monthlyIncome > 0 || totalDebt > 0;
+  const ratio = hasData ? (monthlyIncome > 0 ? totalDebt / monthlyIncome : 1) : 0;
   const level =
     ratio <= 0.3 ? 'safe' : ratio <= 0.6 ? 'warn' : 'danger';
   const levelText =
@@ -33,9 +34,9 @@ export default function DebtRiskCard({ monthlyIncome, debts, hint }: DebtProps) 
     t('insight.health.debt.advice.danger');
 
   // 简化堆叠条
-  const max = Math.max(totalDebt, monthlyIncome, 1);
-  const incW = Math.round((monthlyIncome / max) * 220);
-  const debtW = Math.round((totalDebt / max) * 220);
+  const max = Math.max(hasData ? totalDebt : 0, hasData ? monthlyIncome : 0, 1);
+  const incW = Math.round(((hasData ? monthlyIncome : 0) / max) * 220);
+  const debtW = Math.round(((hasData ? totalDebt : 0) / max) * 220);
 
   const colorLevel = level === 'danger' ? colors.expense : level === 'warn' ? '#F59E0B' : colors.income;
 
@@ -59,7 +60,7 @@ export default function DebtRiskCard({ monthlyIncome, debts, hint }: DebtProps) 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ color: colors.textSecondary }}>{t('income')}: </Text>
           <AmountText
-            value={formatCurrency(monthlyIncome, currency)}
+            value={hasData ? formatCurrency(monthlyIncome, currency) : '—'}
             color={colors.textSecondary}
             style={{}}
             align="left"
@@ -68,7 +69,7 @@ export default function DebtRiskCard({ monthlyIncome, debts, hint }: DebtProps) 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ color: colors.textSecondary }}>{t('debt')}: </Text>
           <AmountText
-            value={formatCurrency(totalDebt, currency)}
+            value={hasData ? formatCurrency(totalDebt, currency) : '—'}
             color={colors.textSecondary}
             style={{}}
             align="left"
@@ -77,10 +78,10 @@ export default function DebtRiskCard({ monthlyIncome, debts, hint }: DebtProps) 
       </View>
 
       <View style={{ marginTop: 10, padding: 8, borderRadius: 8, backgroundColor: colorLevel + '22' }}>
-        <Text style={{ color: colorLevel, fontWeight: '700' }}>{t('insight.health.debt.ratio')}: {(ratio*100).toFixed(0)}% · {levelText}</Text>
+        <Text style={{ color: colorLevel, fontWeight: '700' }}>{t('insight.health.debt.ratio')}: {hasData ? `${(ratio*100).toFixed(0)}% · ${levelText}` : '—'}</Text>
       </View>
 
-      {debts.length > 0 && (
+      {hasData && debts.length > 0 && (
         <View style={{ marginTop: 8, gap: 4 }}>
           {debts.slice(0, 3).map((d, i) => (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>

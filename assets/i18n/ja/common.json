@@ -464,5 +464,8 @@
   "validate": "検証する",
   "active": "未アーカイブ",
   "archived": "アーカイブ済み",
-  "unarchiveToProceed": "この操作で口座のアーカイブを解除し、残高影響を元に戻します。続行しますか？"
+  "unarchiveToProceed": "この操作で口座のアーカイブを解除し、残高影響を元に戻します。続行しますか？",
+  "transaction.noAccountHint": "利用可能なアカウントがありません。アカウント管理で追加してください。",
+  "transaction.gotoAccountManage": "アカウント管理へ",
+  "virtual_card": "バーチャルカード"
 }

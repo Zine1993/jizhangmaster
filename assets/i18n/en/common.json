@@ -448,5 +448,8 @@
   "validate": "Validate",
   "active": "Active",
   "archived": "Archived",
-  "unarchiveToProceed": "This will unarchive the account and revert the balance impact. Continue?"
+  "unarchiveToProceed": "This will unarchive the account and revert the balance impact. Continue?",
+  "transaction.noAccountHint": "No available accounts. Please add one in Account Management.",
+  "transaction.gotoAccountManage": "Go to Account Management",
+  "virtual_card": "Virtual card"
 }

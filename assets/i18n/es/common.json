@@ -464,5 +464,8 @@
   "validate": "Validar",
   "active": "Activo",
   "archived": "Archivado",
-  "unarchiveToProceed": "Esta acción desarchivará la cuenta y revertirá el impacto en el saldo. ¿Continuar?"
+  "unarchiveToProceed": "Esta acción desarchivará la cuenta y revertirá el impacto en el saldo. ¿Continuar?",
+  "transaction.noAccountHint": "No hay cuentas disponibles. Agrega una en la gestión de cuentas.",
+  "transaction.gotoAccountManage": "Ir a la gestión de cuentas",
+  "virtual_card": "Tarjeta virtual"
 }

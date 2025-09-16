@@ -26,6 +26,8 @@ import { displayNameFor } from '@/lib/i18n';
 
 export default function InsightsScreen() {
   const { transactions, accounts, getUsageDaysCount, currency } = useTransactions();
+  const availableAccounts = React.useMemo(() => (accounts || []).filter((a: any) => !a?.archived), [accounts]);
+  const hasAccounts = availableAccounts.length > 0;
   const { colors } = useTheme();
   const { t, language } = useLanguage();
   const router = useRouter();
@@ -457,17 +459,17 @@ export default function InsightsScreen() {
               })();
 
               // 传入数据充足性提示
-              const ratioHint = hasThisMonthTx ? null : t('dataHint.thisMonthRequired');
-              const debtHint = (debts && debts.length > 0 && monthIncome > 0) ? null : t('dataHint.debtSetup');
-              const flowHint = monthHistoryCount >= 3 ? null : t('dataHint.historyFew');
-              const savingHint = (typeof liquid === 'number' && monthExpenseAvg > 0) ? null : t('dataHint.savingSetup');
+              const ratioHint = hasAccounts ? (hasThisMonthTx ? null : t('dataHint.thisMonthRequired')) : t('noData');
+              const debtHint = hasAccounts ? ((debts && debts.length > 0 && monthIncome > 0) ? null : t('dataHint.debtSetup')) : t('noData');
+              const flowHint = hasAccounts ? (monthHistoryCount >= 3 ? null : t('dataHint.historyFew')) : t('noData');
+              const savingHint = hasAccounts ? ((typeof liquid === 'number' && monthExpenseAvg > 0) ? null : t('dataHint.savingSetup')) : t('noData');
 
               return (
                 <>
-                  <IncomeExpenseRatioCard agg={{ income: monthIncome, expense: monthExpense }} hint={ratioHint || undefined} />
-                  <DebtRiskCard monthlyIncome={Math.max(monthIncome, 0)} debts={debts} hint={debtHint || undefined} />
-                  <CashflowForecastCard history={history} hint={flowHint || undefined} />
-                  <SavingsHealthCard liquidSavings={Math.max(liquid,0)} monthlyExpenseAvg={Math.max(monthExpenseAvg,0)} hint={savingHint || undefined} />
+                  <IncomeExpenseRatioCard agg={{ income: hasAccounts ? monthIncome : 0, expense: hasAccounts ? monthExpense : 0 }} hint={ratioHint || undefined} />
+                  <DebtRiskCard monthlyIncome={hasAccounts ? Math.max(monthIncome, 0) : 0} debts={hasAccounts ? debts : []} hint={debtHint || undefined} />
+                  <CashflowForecastCard history={hasAccounts ? history : []} hint={flowHint || undefined} />
+                  <SavingsHealthCard liquidSavings={hasAccounts ? Math.max(liquid,0) : 0} monthlyExpenseAvg={hasAccounts ? Math.max(monthExpenseAvg,0) : 0} hint={savingHint || undefined} />
                 </>
               );
             })()}

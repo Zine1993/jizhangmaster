@@ -17,7 +17,8 @@ export default function SavingsHealthCard({ liquidSavings, monthlyExpenseAvg, hi
   const { currency } = useTransactions();
   const { colors } = useTheme();
 
-  const months = monthlyExpenseAvg > 0 ? liquidSavings / monthlyExpenseAvg : 0;
+  const hasData = (liquidSavings || 0) > 0 || (monthlyExpenseAvg || 0) > 0;
+  const months = hasData && monthlyExpenseAvg > 0 ? liquidSavings / monthlyExpenseAvg : 0;
   const target = months >= 6 ? 6 : 3; // 简化阈值显示
   const pct = Math.max(0, Math.min(1, months / target));
 
@@ -39,14 +40,18 @@ export default function SavingsHealthCard({ liquidSavings, monthlyExpenseAvg, hi
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
         <Text style={{ color: colors.textSecondary }}>
-          {t('insight.health.saving.months', { n: months.toFixed(1) })}
+          {hasData ? t('insight.health.saving.months', { n: months.toFixed(1) }) : '—'}
         </Text>
-        <AmountText
-          value={formatCurrency(liquidSavings, currency)}
-          color={colors.textSecondary}
-          style={{}}
-          align="right"
-        />
+        {hasData ? (
+          <AmountText
+            value={formatCurrency(liquidSavings, currency)}
+            color={colors.textSecondary}
+            style={{}}
+            align="right"
+          />
+        ) : (
+          <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>—</Text>
+        )}
       </View>
       <Text style={{ color: colors.textSecondary, marginTop: 4 }} numberOfLines={2}>{advice}</Text>
     </View>

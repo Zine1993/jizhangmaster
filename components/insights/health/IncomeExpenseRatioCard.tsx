@@ -16,7 +16,8 @@ export default function IncomeExpenseRatioCard({ agg, hint }: RatioProps) {
 
   const income = Math.max(0, agg.income || 0);
   const expense = Math.max(0, agg.expense || 0);
-  const ratio = expense > 0 ? income / expense : (income > 0 ? 3 : 0); // 避免除0
+  const hasData = income > 0 || expense > 0;
+  const ratio = hasData ? (expense > 0 ? income / expense : (income > 0 ? 3 : 0)) : 0; // 避免除0
   const grade =
     ratio >= 2 ? t('insight.health.ratio.excellent') :
     ratio >= 1.5 ? t('insight.health.ratio.good') :
@@ -30,7 +31,7 @@ export default function IncomeExpenseRatioCard({ agg, hint }: RatioProps) {
     t('insight.health.ratio.advice.raiseIncome');
 
   // 简化双柱图
-  const maxVal = Math.max(income, expense, 1);
+  const maxVal = Math.max(hasData ? income : 0, hasData ? expense : 0, 1);
   const hIncome = Math.round((income / maxVal) * 72);
   const hExpense = Math.round((expense / maxVal) * 72);
 
@@ -44,28 +45,36 @@ export default function IncomeExpenseRatioCard({ agg, hint }: RatioProps) {
       )}
       <View style={styles.chartRow}>
         <View style={styles.barWrap}>
-          <View style={[styles.bar, { height: hIncome, backgroundColor: colors.income }]} />
+          <View style={[styles.bar, { height: hasData ? hIncome : 2, backgroundColor: hasData ? colors.income : colors.border }]} />
           <Text style={[styles.barLabel, { color: colors.textSecondary }]} numberOfLines={1}>{t('income')}</Text>
-          <AmountText
-            value={formatCurrency(income, currency)}
-            color={colors.text}
-            style={{ fontWeight: '700' }}
-            align="center"
-          />
+          {hasData ? (
+            <AmountText
+              value={formatCurrency(income, currency)}
+              color={colors.text}
+              style={{ fontWeight: '700' }}
+              align="center"
+            />
+          ) : (
+            <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>—</Text>
+          )}
         </View>
         <View style={styles.barWrap}>
-          <View style={[styles.bar, { height: hExpense, backgroundColor: colors.expense }]} />
+          <View style={[styles.bar, { height: hasData ? hExpense : 2, backgroundColor: hasData ? colors.expense : colors.border }]} />
           <Text style={[styles.barLabel, { color: colors.textSecondary }]} numberOfLines={1}>{t('expense')}</Text>
-          <AmountText
-            value={formatCurrency(expense, currency)}
-            color={colors.text}
-            style={{ fontWeight: '700' }}
-            align="center"
-          />
+          {hasData ? (
+            <AmountText
+              value={formatCurrency(expense, currency)}
+              color={colors.text}
+              style={{ fontWeight: '700' }}
+              align="center"
+            />
+          ) : (
+            <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>—</Text>
+          )}
         </View>
         <View style={styles.badge}>
           <Text style={{ color: colors.textSecondary }}>{t('insight.health.ratio.ratio')}</Text>
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{(ratio).toFixed(2)}×</Text>
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>{hasData ? (ratio).toFixed(2) + '×' : '—'}</Text>
           <Text style={{ color: colors.primary, fontWeight: '700' }}>{grade}</Text>
         </View>
       </View>

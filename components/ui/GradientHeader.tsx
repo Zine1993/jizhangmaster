@@ -1,10 +1,10 @@
 import React, { ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, InteractionManager } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { Mail } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { StatusBar as ExpoStatusBar, setStatusBarStyle } from 'expo-status-bar';
-import { useFocusEffect } from '@react-navigation/native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,21 +28,15 @@ type Props = {
 };
 
 const StatusBarSync = ({ color }: { color: string }) => {
-  useFocusEffect(useCallback(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      setStatusBarStyle('light');
+  useEffect(() => {
+    let raf = requestAnimationFrame(() => {
+      try {
+        setStatusBarStyle('light');
+      } catch {}
     });
-    return () => {
-      // @ts-ignore 兼容旧版无 cancel
-      task?.cancel?.();
-    };
-  }, [color]));
-  return (
-    <ExpoStatusBar
-      style="light"
-      animated
-    />
-  );
+    return () => cancelAnimationFrame(raf);
+  }, [color]);
+  return <ExpoStatusBar style="light" animated />;
 };
 
 
@@ -106,13 +100,24 @@ function GradientHeader({
   // 轮播动画
   useEffect(() => {
     if (variant !== 'emojiTicker') return;
-    const id = setInterval(() => {
-      Animated.timing(fade, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
-        setMsgIndex((i) => (i + 1) % msgs.length);
-        Animated.timing(fade, { toValue: 1, duration: 180, useNativeDriver: true }).start();
-      });
-    }, intervalMs);
-    return () => clearInterval(id);
+    let mounted = true;
+    let starter: ReturnType<typeof setTimeout> | null = null;
+    let id: ReturnType<typeof setInterval> | null = null;
+    // 延迟一帧，避免在插入阶段 setState
+    starter = setTimeout(() => {
+      if (!mounted) return;
+      id = setInterval(() => {
+        Animated.timing(fade, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
+          setMsgIndex((i) => (i + 1) % msgs.length);
+          Animated.timing(fade, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+        });
+      }, intervalMs);
+    }, 16);
+    return () => {
+      mounted = false;
+      if (starter) clearTimeout(starter);
+      if (id) clearInterval(id);
+    };
   }, [variant, intervalMs, msgs.length, fade]);
 
   return (

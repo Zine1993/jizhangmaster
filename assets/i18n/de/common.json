@@ -464,5 +464,8 @@
   "validate": "Validieren",
   "active": "Aktiv",
   "archived": "Archiviert",
-  "unarchiveToProceed": "Dies hebt die Archivierung des Kontos auf und macht die Saldenwirkung rückgängig. Fortfahren?"
+  "unarchiveToProceed": "Dies hebt die Archivierung des Kontos auf und macht die Saldenwirkung rückgängig. Fortfahren?",
+  "transaction.noAccountHint": "Keine verfügbaren Konten. Bitte fügen Sie eines in der Kontoverwaltung hinzu.",
+  "transaction.gotoAccountManage": "Zur Kontoverwaltung",
+  "virtual_card": "Virtuelle Karte"
 }

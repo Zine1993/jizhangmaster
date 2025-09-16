@@ -10,14 +10,11 @@ export default function Root() {
     const checkOnboardingStatus = async () => {
       try {
         const hasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
-        if (hasCompletedOnboarding) {
-          router.replace('/(tabs)');
-        } else {
-          router.replace('/onboarding');
-        }
+        // 统一进入主应用 Tab
+        router.replace('/(tabs)');
       } catch (error) {
         console.error('Failed to check onboarding status', error);
-        router.replace('/onboarding');
+        router.replace('/(tabs)');
       }
     };
 

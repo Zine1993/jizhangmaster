@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,9 +22,92 @@ export default function AddAccountScreen() {
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('cash');
   const [initialBalance, setInitialBalance] = useState('');
-  const [currency, setCurrency] = useState('CNY'); // Default currency
+  const [currency, setCurrency] = useState('USD'); // Default currency
+  const userChangedCurrencyRef = useRef(false);
   const [creditLimit, setCreditLimit] = useState('');
-  const currencyOptions = ['USD','EUR','JPY','GBP','CNY','AUD','CAD'] as const;
+  const currencyOptions = ['USD','EUR','JPY','GBP','CNY','TWD','KRW','AUD','CAD'] as const;
+
+  // 统一处理币种符号渲染（图标或文本）
+  const CurrencySymbol = ({ code, color }: { code: string; color: string }) => {
+    if (code === 'EUR') return <Euro size={18} color={color} />;
+    if (code === 'JPY' || code === 'CNY') return <JapaneseYen size={18} color={color} />;
+    if (code === 'GBP') return <PoundSterling size={18} color={color} />;
+    if (code === 'TWD') return <Text style={{ color, fontSize: 16, fontWeight: '600' }}>NT$</Text>;
+    if (code === 'KRW') return <Text style={{ color, fontSize: 16, fontWeight: '600' }}>₩</Text>;
+    // USD/AUD/CAD/其他
+    return <DollarSign size={18} color={color} />;
+  };
+
+  // 根据语言映射默认币种
+  const getDefaultCurrencyByLang = useCallback((langCode?: string) => {
+    const lc = (langCode || '').toLowerCase();
+    if (lc.startsWith('zh')) {
+      // 区分简繁
+      if (lc.includes('tw') || lc.includes('hk') || lc.includes('hant')) return 'TWD';
+      return 'CNY';
+    }
+    if (lc.startsWith('ja')) return 'JPY';
+    if (lc.startsWith('ko')) return 'KRW';
+    if (lc.startsWith('de')) return 'EUR';
+    if (lc.startsWith('fr')) return 'EUR';
+    if (lc.startsWith('es')) return 'EUR';
+    if (lc.startsWith('en')) return 'USD';
+    return 'USD';
+  }, []);
+
+  // 仅用系统/环境语言判断，避免误判
+  const getEnvLang = useCallback(() => {
+    try {
+      const intlLang = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().locale : '';
+      const navLang = (global as any)?.navigator?.language || (global as any)?.navigator?.languages?.[0] || '';
+      return String(intlLang || navLang || '').toLowerCase();
+    } catch {
+      return '';
+    }
+  }, []);
+
+  // 严格基于“自称”判定当前语言，避免误判
+  const safeDetectLang = useCallback(() => {
+    try {
+      const selfNames: Record<string, string> = {
+        zh: '中文',
+        ja: '日本語',
+        ko: '한국어',
+        de: 'Deutsch',
+        fr: 'Français',
+        es: 'Español',
+        en: 'English',
+      };
+      // 优先拿这些键的翻译（这些键在你的 i18n 已存在）
+      const pool = {
+        zh: String(t('chinese') || ''),
+        en: String(t('english') || ''),
+        ja: String(t('japanese') || ''),
+        ko: String(t('korean') || ''),
+        de: String(t('german') || ''),
+        fr: String(t('french') || ''),
+        es: String(t('spanish') || ''),
+      };
+      for (const [lang, val] of Object.entries(pool)) {
+        if (val && val.trim() === selfNames[lang]) return lang;
+      }
+    } catch {}
+    return '';
+  }, [t]);
+
+  // 首次挂载时初始化币种（若用户未改动）
+  useEffect(() => {
+    try {
+      if (!userChangedCurrencyRef.current) {
+        const langStrict = safeDetectLang();
+        const lang = langStrict || getEnvLang();
+        const def = getDefaultCurrencyByLang(lang);
+        setCurrency(def as any);
+      }
+    } catch {}
+    // 仅在首次执行
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
 
@@ -195,15 +278,7 @@ export default function AddAccountScreen() {
               style={[styles.dropdownBtn, { borderColor: colors.border }]}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                {currency === 'EUR' ? (
-                  <Euro size={18} color={colors.textSecondary} />
-                ) : currency === 'JPY' || currency === 'CNY' ? (
-                  <JapaneseYen size={18} color={colors.textSecondary} />
-                ) : currency === 'GBP' ? (
-                  <PoundSterling size={18} color={colors.textSecondary} />
-                ) : (
-                  <DollarSign size={18} color={colors.textSecondary} />
-                )}
+                <CurrencySymbol code={currency} color={colors.textSecondary} />
                 <Text style={{ color: colors.text }} numberOfLines={1} ellipsizeMode="tail">
                 {currency}
               </Text>
@@ -225,18 +300,10 @@ export default function AddAccountScreen() {
                     <TouchableOpacity
                       key={code}
                       style={styles.optionRow}
-                      onPress={() => { setCurrency(code as any); setShowCurrencyModal(false); }}
+                      onPress={() => { userChangedCurrencyRef.current = true; setCurrency(code as any); setShowCurrencyModal(false); }}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        {code === 'EUR' ? (
-                          <Euro size={18} color={colors.textSecondary} />
-                        ) : code === 'JPY' || code === 'CNY' ? (
-                          <JapaneseYen size={18} color={colors.textSecondary} />
-                        ) : code === 'GBP' ? (
-                          <PoundSterling size={18} color={colors.textSecondary} />
-                        ) : (
-                          <DollarSign size={18} color={colors.textSecondary} />
-                        )}
+                        <CurrencySymbol code={code} color={colors.textSecondary} />
                         <Text style={{ color: colors.text }}>{code}</Text>
                       </View>
                       {selected && <Check size={18} color={colors.primary} />}

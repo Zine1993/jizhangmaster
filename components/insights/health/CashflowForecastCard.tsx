@@ -17,6 +17,7 @@ export default function CashflowForecastCard({ history, hint }: FlowProps) {
 
   // 简单移动平均预测未来3期
   const vals = history.map(p => p.value);
+  const hasData = vals.some(v => Math.abs(v) > 0);
   const avg = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
   const sigma = vals.length ? Math.sqrt(vals.reduce((s, v) => s + Math.pow(v - avg, 2), 0) / vals.length) : 0;
 
@@ -45,7 +46,7 @@ export default function CashflowForecastCard({ history, hint }: FlowProps) {
           const color = p.value >= 0 ? colors.income : colors.expense;
           return (
             <View key={i} style={{ width: 14, height: 80, justifyContent: 'flex-end', alignItems: 'center' }}>
-              <View style={{ width: 12, height: h, backgroundColor: color, borderRadius: 4 }} />
+              <View style={{ width: 12, height: hasData ? h : 2, backgroundColor: hasData ? color : colors.border, borderRadius: 4 }} />
             </View>
           );
         })}
@@ -54,16 +55,18 @@ export default function CashflowForecastCard({ history, hint }: FlowProps) {
           const risky = p.value < 0;
           return (
             <View key={'f'+i} style={{ width: 14, height: 80, justifyContent: 'flex-end', alignItems: 'center' }}>
-              <View style={{ position: 'absolute', top: 0, bottom: 0, width: 12, backgroundColor: (risky ? colors.expense : colors.income) + '20', borderRadius: 4 }} />
-              <View style={{ width: 12, height: h, borderRadius: 4, borderWidth: 2, borderColor: risky ? colors.expense : colors.income }} />
+              <View style={{ position: 'absolute', top: 0, bottom: 0, width: 12, backgroundColor: hasData ? (risky ? colors.expense : colors.income) + '20' : colors.border, borderRadius: 4 }} />
+              <View style={{ width: 12, height: hasData ? h : 2, borderRadius: 4, borderWidth: hasData ? 2 : 0, borderColor: risky ? colors.expense : colors.income }} />
             </View>
           );
         })}
       </View>
       <Text style={{ color: colors.textSecondary, marginTop: 8 }} numberOfLines={2}>
-        {forecast.some(f => f.value < 0)
-          ? t('insight.health.flow.advice.risk')
-          : t('insight.health.flow.advice.ok')}
+        {hasData
+          ? (forecast.some(f => f.value < 0)
+            ? t('insight.health.flow.advice.risk')
+            : t('insight.health.flow.advice.ok'))
+          : '—'}
       </Text>
     </View>
   );

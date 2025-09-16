@@ -81,14 +81,17 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
   const isEditing = !!editTransaction;
   const scrollRef = useRef<any>(null);
 
+  const availableAccounts = useMemo(() => (accounts || []).filter(a => !a.archived), [accounts]);
   const selectedAccount = useMemo(() => {
-    return accounts?.find(a => a.id === accountId);
-  }, [accountId, accounts]);
+    return availableAccounts.find(a => a.id === accountId);
+  }, [accountId, availableAccounts]);
 
   const currencySymbol = useMemo(() => {
-    // 优先用所选账户币种，统一用标准符号（USD -> $）
+    // 无账户时显示中性占位
+    if (!availableAccounts.length) return '—';
+    // 有账户时优先用所选账户币种
     return getCurrencySymbolFor({ accountId, currency: selectedAccount?.currency });
-  }, [accountId, selectedAccount?.currency, getCurrencySymbolFor]);
+  }, [availableAccounts.length, accountId, selectedAccount?.currency, getCurrencySymbolFor]);
 
   useEffect(() => {
     if (editTransaction && visible) {
@@ -142,7 +145,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
 
     const finalAccountId = accountId || accounts?.[0]?.id;
     if (!finalAccountId) {
-      Alert.alert(t('noAccountAvailableTitle'), t('noAccountAvailableMessage'));
+      Alert.alert(t('noAccountAvailableTitle') || t('tip'), t('transaction.noAccountHint'));
       return;
     }
     const finalAccount = accounts?.find(a => a.id === finalAccountId);
@@ -183,6 +186,10 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
         addTransaction(tx);
       } catch (e: any) {
         const msg = String(e?.message || '');
+        if (msg === 'NO_ACCOUNT') {
+          Alert.alert(t('noAccountAvailableTitle') || t('tip'), t('transaction.noAccountHint'));
+          return;
+        }
         if (msg === 'INSUFFICIENT_FUNDS' || msg === 'CREDIT_LIMIT_EXCEEDED') {
           Alert.alert(t('insufficientFunds'));
           return;
@@ -326,7 +333,7 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('account')}</Text>
             <View style={styles.emotionContainer}>
-              {(accounts || []).filter(a => !a.archived).map((a) => (
+              {availableAccounts.map((a) => (
                 <TouchableOpacity
                   activeOpacity={0.8}
                   key={a.id}
@@ -341,6 +348,32 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
                 </TouchableOpacity>
               ))}
             </View>
+            {availableAccounts.length === 0 && (
+              <View style={{ marginTop: 8 }}>
+                <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+                  {t('transaction.noAccountHint')}
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    try {
+                      onClose?.();
+                      setTimeout(() => {
+                        try {
+                          const mod = require('expo-router');
+                          const router = mod?.router || mod?.useRouter?.();
+                          router?.push?.('/accounts');
+                        } catch {}
+                      }, 150);
+                    } catch {}
+                  }}
+                >
+                  <Text style={{ color: colors.primary, marginTop: 6, fontSize: 13 }}>
+                  {t('transaction.gotoAccountManage')}
+                </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <View style={styles.section}>
@@ -411,6 +444,37 @@ export default function AddTransactionModal({ visible, onClose, editTransaction,
               numberOfLines={3}
             />
           </View>
+
+          {/* 无账户提示：当无可用账户时显示 */}
+          {(!accounts || accounts.filter(a => !a.archived).length === 0) && (
+            <View style={{ paddingHorizontal: 16, marginTop: -8 }}>
+              <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+                {t('transaction.noAccountHint')}
+              </Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  try {
+                    onClose?.();
+                    setTimeout(() => {
+                      try {
+                        // 使用 expo-router 跳转
+                        // 这里采用动态 import 避免在 Modal 顶层直接调用 hook
+                        // 如果你更倾向于直接使用 useRouter，可将路由实例提升到组件顶部。
+                        const mod = require('expo-router');
+                        const router = mod?.router || mod?.useRouter?.();
+                        router?.push?.('/accounts');
+                      } catch {}
+                    }, 150);
+                  } catch {}
+                }}
+              >
+                <Text style={{ color: colors.primary, marginTop: 6, fontSize: 13 }}>
+                {t('transaction.gotoAccountManage')}
+              </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
 
         <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>

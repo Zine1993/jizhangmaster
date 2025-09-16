@@ -120,9 +120,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (user && !onboarded) {
-    return <Redirect href="/onboarding" />;
-  }
+  // Onboarding 已移除：不再重定向，直接进入应用
+  // if (user && !onboarded) {
+  //   return <Redirect href="/onboarding" />;
+  // }
 
   if (user || skipped) {
     return <>{children}</>;

@@ -465,5 +465,8 @@
     "validate": "Valider",
     "active": "Actif",
     "archived": "Archivé",
-    "unarchiveToProceed": "Cette action désarchivera le compte et annulera l'impact sur le solde. Continuer ?"
+    "unarchiveToProceed": "Cette action désarchivera le compte et annulera l'impact sur le solde. Continuer ?",
+    "transaction.noAccountHint": "Aucun compte disponible. Veuillez en ajouter un dans la gestion des comptes.",
+    "transaction.gotoAccountManage": "Aller à la gestion des comptes",
+    "virtual_card": "Carte virtuelle"
   }

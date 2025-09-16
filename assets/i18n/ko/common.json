@@ -464,5 +464,8 @@
   "validate": "유효성 검사",
   "active": "보관 해제",
   "archived": "보관됨",
-  "unarchiveToProceed": "이 작업은 계정을 보관 해제하고 잔액 영향을 되돌립니다. 계속할까요?"
+  "unarchiveToProceed": "이 작업은 계정을 보관 해제하고 잔액 영향을 되돌립니다. 계속할까요?",
+  "transaction.noAccountHint": "사용 가능한 계정이 없습니다. 계정 관리에서 추가하세요.",
+  "transaction.gotoAccountManage": "계정 관리로 이동",
+  "virtual_card": "가상카드"
 }

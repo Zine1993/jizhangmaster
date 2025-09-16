@@ -29,7 +29,6 @@ export default function RootLayout() {
                       <AuthGate>
                         <Stack screenOptions={{ headerShown: false }}>
                           <Stack.Screen name="(tabs)" />
-                          <Stack.Screen name="onboarding" />
                           <Stack.Screen name="+not-found" />
                         </Stack>
                         <StatusBar style="auto" />
